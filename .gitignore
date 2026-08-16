@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+
+node_modules/
+dist/
+coverage/
+
+# Local scanner state, not source. Records local paths; app/ is public.
+.aislop/
+
+*.log
+.DS_Store

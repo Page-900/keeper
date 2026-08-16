@@ -1,0 +1,139 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { createBrickkenClient } from '../src/brickken/client.js';
+import { readRequestLog } from '../src/brickken/log.js';
+import { captureError } from './support/capture-error.js';
+
+const FAKE_KEY = 'keeper-test-value-that-is-not-a-key-4471';
+const TOKEN_INFO = { tokenSymbols: ['SUNL'], tokenizerEmails: ['tokenizer@example.com'] };
+
+let logDirectory: string;
+let logFile: string;
+
+const jsonResponse = (body: unknown, status = 200): Response =>
+  new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+
+/** A fresh Response per call, because a body can only be read once, exactly as on the wire. */
+const respondWith = (respond: () => Response): ReturnType<typeof vi.fn> => {
+  const transport = vi.fn(() => Promise.resolve(respond()));
+  vi.stubGlobal('fetch', transport);
+  return transport;
+};
+
+beforeEach(() => {
+  logDirectory = mkdtempSync(join(tmpdir(), 'keeper-evidence-'));
+  logFile = join(logDirectory, 'requests.jsonl');
+  vi.stubEnv('BRICKKEN_API_KEY', FAKE_KEY);
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+  vi.unstubAllGlobals();
+  rmSync(logDirectory, { recursive: true, force: true });
+});
+
+describe('the Brickken wrapper', () => {
+  it('sends the key as the x-api-key header the API documents', async () => {
+    const transport = respondWith(() => jsonResponse(TOKEN_INFO));
+
+    await createBrickkenClient(logFile).getTokenInfo('SUNL');
+
+    const [url, init] = transport.mock.calls[0] as [URL, RequestInit];
+    expect(url.toString()).toBe('https://api.sandbox.brickken.com/get-token-info?tokenSymbol=SUNL');
+    expect(init.headers).toEqual({ 'x-api-key': FAKE_KEY });
+  });
+
+  it('returns the documented body once its shape has been checked', async () => {
+    respondWith(() => jsonResponse(TOKEN_INFO));
+
+    expect(await createBrickkenClient(logFile).getTokenInfo('SUNL')).toEqual(TOKEN_INFO);
+  });
+
+  it('refuses a body of the wrong shape rather than passing it on as usable state', async () => {
+    respondWith(() => jsonResponse({ tokenSymbols: 'SUNL' }));
+
+    const error = await captureError(() => createBrickkenClient(logFile).getTokenInfo('SUNL'));
+
+    expect(error.kind).toBe('brickkenUnreadable');
+  });
+
+  it('fails closed on a missing API key without sending anything', async () => {
+    const transport = respondWith(() => jsonResponse(TOKEN_INFO));
+    vi.stubEnv('BRICKKEN_API_KEY', '');
+
+    const error = await captureError(() => createBrickkenClient(logFile).getTokenInfo('SUNL'));
+
+    expect(error.kind).toBe('secretMissing');
+    expect(transport).not.toHaveBeenCalled();
+    expect(readRequestLog(logFile)).toEqual([]);
+  });
+});
+
+describe('what reached Brickken is provable from the log', () => {
+  it('records every call with its surface, path, and status', async () => {
+    respondWith(() => jsonResponse(TOKEN_INFO));
+    const client = createBrickkenClient(logFile);
+
+    await client.getTokenInfo('SUNL');
+    await client.getTokenInfo('SUNL');
+
+    expect(readRequestLog(logFile)).toEqual([
+      expect.objectContaining({
+        surface: 'rest',
+        method: 'GET',
+        path: '/get-token-info?tokenSymbol=SUNL',
+        outcome: 'success',
+        status: 200,
+      }),
+      expect.objectContaining({ outcome: 'success', status: 200 }),
+    ]);
+  });
+
+  it('records a refused call too, or the log cannot answer what we sent them', async () => {
+    respondWith(() => jsonResponse({ message: 'nope' }, 500));
+
+    const error = await captureError(() => createBrickkenClient(logFile).getTokenInfo('SUNL'));
+
+    expect(error.kind).toBe('brickkenRejected');
+    expect(readRequestLog(logFile)).toEqual([
+      expect.objectContaining({ outcome: 'failure', status: 500 }),
+    ]);
+  });
+
+  it('records a call the network never completed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.reject(new Error('connect ECONNREFUSED'))),
+    );
+
+    const error = await captureError(() => createBrickkenClient(logFile).getTokenInfo('SUNL'));
+
+    expect(error.kind).toBe('brickkenUnreachable');
+    expect(readRequestLog(logFile)).toEqual([expect.objectContaining({ outcome: 'failure' })]);
+  });
+
+  it('writes no API key into the evidence file', async () => {
+    respondWith(() => jsonResponse(TOKEN_INFO));
+
+    await createBrickkenClient(logFile).getTokenInfo('SUNL');
+
+    expect(JSON.stringify(readRequestLog(logFile))).not.toContain(FAKE_KEY);
+  });
+});
+
+describe('a rate limit is reported, never retried', () => {
+  it('stops on 429 instead of trying again', async () => {
+    const transport = respondWith(
+      () => new Response('', { status: 429, headers: { 'retry-after': '60' } }),
+    );
+
+    const error = await captureError(() => createBrickkenClient(logFile).getTokenInfo('SUNL'));
+
+    expect(error.kind).toBe('brickkenRateLimited');
+    expect(error.message).toContain('60');
+    expect(transport).toHaveBeenCalledTimes(1);
+  });
+});
