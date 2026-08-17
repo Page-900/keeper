@@ -46,14 +46,38 @@ const buildReader = () => createPublicClient({ chain, transport: transport() });
 const buildWallet = (role: SignerRole) =>
   createWalletClient({ account: accountFor(role), chain, transport: transport() });
 
+const confirmedEndpoints = new Set<string>();
+
+const PUBLIC_ENDPOINT = 'the public endpoint';
+
+/** viem is told which chain it talks to and never asks, so a wrong URL would read as Sepolia. */
+async function requireConfiguredChain(client: {
+  getChainId: () => Promise<number>;
+}): Promise<void> {
+  const endpoint = readOptionalSecret('SEPOLIA_RPC_URL') ?? PUBLIC_ENDPOINT;
+  if (confirmedEndpoints.has(endpoint)) return;
+  const served = await client.getChainId();
+  if (served !== CHAIN_ID) throw new KeeperError('wrongChain', `chain ${String(served)}`);
+  confirmedEndpoints.add(endpoint);
+}
+
 /** A client is only handed out inside the scrubber, so no call site has to remember to redact. */
 const withReader = <T>(use: (reader: ReturnType<typeof buildReader>) => Promise<T>): Promise<T> =>
-  withoutSecrets(() => use(buildReader()));
+  withoutSecrets(async () => {
+    const reader = buildReader();
+    await requireConfiguredChain(reader);
+    return use(reader);
+  });
 
 const withWallet = <T>(
   role: SignerRole,
   use: (wallet: ReturnType<typeof buildWallet>) => Promise<T>,
-): Promise<T> => withoutSecrets(() => use(buildWallet(role)));
+): Promise<T> =>
+  withoutSecrets(async () => {
+    const wallet = buildWallet(role);
+    await requireConfiguredChain(wallet);
+    return use(wallet);
+  });
 
 export const signerAddress = (role: SignerRole): `0x${string}` => accountFor(role).address;
 

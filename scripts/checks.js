@@ -42,9 +42,10 @@ export const CHECKS = [
   {
     id: 'chain',
     title: 'Live chain read',
-    proves: 'This project reaches the Sepolia test network and reads its latest block.',
+    proves:
+      'This project reaches the Sepolia test network, confirms the endpoint really serves it, and reads its latest block.',
     whenFailed:
-      'The test network could not be read. Check the internet connection first, then the endpoint named in .env. Nothing else in this table depends on it.',
+      'The test network could not be read, or the endpoint in .env serves a different network. Check the internet connection first, then the endpoint named in .env. Nothing else in this table depends on it.',
   },
 ];
 
