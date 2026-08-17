@@ -5,6 +5,7 @@
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "types": ["node"],
+    "allowJs": true,
 
     "strict": true,
     "noUncheckedIndexedAccess": true,

@@ -2,6 +2,7 @@ export const ERROR_COPY = {
   addressUnissued: 'Brickken onboarding has not issued this address yet',
   secretMissing: 'A required value is missing from app/.env',
   secretMalformed: 'A value in app/.env is not in the form this project requires',
+  secretExists: 'A value in app/.env is already set, and this project never overwrites one',
   brickkenUnreachable: 'The Brickken API could not be reached',
   brickkenRejected: 'The Brickken API refused the request',
   brickkenRateLimited: 'The Brickken API rate limit was reached, and this project never retries',

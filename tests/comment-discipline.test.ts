@@ -12,9 +12,9 @@ const WIDTH = 100;
 const PER_FILE = 10;
 
 const sources = (): string[] =>
-  execFileSync('git', ['ls-files', 'src', 'tests'], { encoding: 'utf8', cwd: APP_ROOT })
+  execFileSync('git', ['ls-files', 'src', 'tests', 'scripts'], { encoding: 'utf8', cwd: APP_ROOT })
     .split('\n')
-    .filter((file) => file.endsWith('.ts'));
+    .filter((file) => file.endsWith('.ts') || file.endsWith('.js'));
 
 const linesOf = (file: string): string[] => readFileSync(join(APP_ROOT, file), 'utf8').split('\n');
 

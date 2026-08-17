@@ -1,10 +1,17 @@
 import { createPublicClient, createWalletClient, http } from 'viem';
-import { privateKeyToAccount } from 'viem/accounts';
+import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { sepolia } from 'viem/chains';
 
 import { CHAIN_ID } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
-import { readOptionalSecret, readSecret, scrubError, withoutSecrets } from '../shared/secrets.js';
+import {
+  readOptionalSecret,
+  readSecret,
+  readSecretFile,
+  scrubError,
+  withoutSecrets,
+  writeSecret,
+} from '../shared/secrets.js';
 
 /** The principal grants and revokes; the agent is msg.sender into the executor. */
 export type SignerRole = 'principal' | 'agent';
@@ -49,6 +56,16 @@ const withWallet = <T>(
 ): Promise<T> => withoutSecrets(() => use(buildWallet(role)));
 
 export const signerAddress = (role: SignerRole): `0x${string}` => accountFor(role).address;
+
+/** The key is written, read back off disk, and never returned, so only the address leaves here. */
+export function createSignerKey(role: SignerRole): `0x${string}` {
+  const variable = KEY_VARIABLE[role];
+  const key = generatePrivateKey();
+  writeSecret(variable, key);
+  const stored = readSecretFile(variable);
+  if (!isPrivateKey(stored) || stored !== key) throw new KeeperError('writeUnconfirmed', variable);
+  return privateKeyToAccount(stored).address;
+}
 
 export async function blockNumber(): Promise<bigint> {
   return withReader((reader) => reader.getBlockNumber());

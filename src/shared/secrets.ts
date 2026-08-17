@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { inspect } from 'node:util';
 
@@ -41,6 +41,29 @@ export function readSecret(name: string): string {
   const value = readOptionalSecret(name);
   if (value === undefined) throw new KeeperError('secretMissing', name);
   return value;
+}
+
+const valueIn = (text: string, name: string): string =>
+  text
+    .split(/\r?\n/)
+    .find((line) => line.startsWith(`${name}=`))
+    ?.slice(name.length + 1)
+    .trim() ?? '';
+
+export const readSecretFile = (name: string, file = ENV_FILE): string =>
+  valueIn(readFileSync(file, 'utf8'), name);
+
+/** One line is replaced and every other byte is left alone, so a neighbour cannot be lost. */
+export function writeSecret(name: string, value: string, file = ENV_FILE): void {
+  const text = readFileSync(file, 'utf8');
+  const lines = text.split(/\r?\n/);
+  if (!lines.some((line) => line.startsWith(`${name}=`)))
+    throw new KeeperError('secretMissing', name);
+  if (valueIn(text, name) !== '') throw new KeeperError('secretExists', name);
+  const eol = text.includes('\r\n') ? '\r\n' : '\n';
+  const written = lines.map((line) => (line.startsWith(`${name}=`) ? `${name}=${value}` : line));
+  writeFileSync(file, written.join(eol));
+  remember(value);
 }
 
 export function scrub(text: string): string {

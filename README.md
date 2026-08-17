@@ -30,7 +30,7 @@ Every blocked attempt is reported with the layer that actually blocked it. The m
 
 ## Status
 
-Early. The repo, CI gates, the config module, and the chain client are done. Nothing else is built, no transaction has been sent, and no mandate has been granted. The on-chain work is blocked on Brickken sandbox onboarding.
+Early. The repo, CI gates, the config module, the chain client, and the transaction pipeline are done. Nothing else is built, no transaction has been sent, and no mandate has been granted. The on-chain work is blocked on Brickken sandbox onboarding.
 
 Transaction hashes and the list of Brickken surfaces used will appear here, generated from recorded logs rather than typed by hand. Nothing is published that the chain has not confirmed.
 
@@ -46,6 +46,8 @@ npm run ci
 ```
 
 `npm run ci` runs format, lint, typecheck, tests, build, and a code quality scan, failing on the first red. No API key is needed for the tests.
+
+If you want to see the state of the build rather than debug it, run `npm run verify`. It runs the same chain plus a live read of the Sepolia chain, then prints a pass or fail table in plain English. It does not stop at the first failure, and a check that never ran is printed as a failure rather than left off the table, so the command can never report a pass for a partial run.
 
 For chain work, copy `.env.example` to `.env` and fill in your own values. `.env` is git ignored, and a test fails the build if it ever enters the git index.
 
