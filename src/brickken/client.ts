@@ -1,9 +1,12 @@
 import { BRICKKEN_API_BASE_URL } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
-import { readSecret, scrubError } from '../shared/secrets.js';
+import { readSecret, registerSecret, scrub, scrubError } from '../shared/secrets.js';
 import { EVIDENCE_FILE, recordRequest } from './log.js';
 
 const API_KEY_VARIABLE = 'BRICKKEN_API_KEY';
+
+/** GET /get-token-info echoes tokenizer emails back, so this one has to be redactable. */
+const TOKENIZER_EMAIL_VARIABLE = 'TOKENIZER_EMAIL';
 
 /** What GET /get-token-info returns. It carries no balances. */
 export interface TokenInfo {
@@ -20,12 +23,21 @@ const isTokenInfo = (body: unknown): body is TokenInfo =>
   isStringArray((body as Partial<TokenInfo>).tokenSymbols) &&
   isStringArray((body as Partial<TokenInfo>).tokenizerEmails);
 
+const EXPLANATION_LIMIT = 300;
+
+/** A refusal without the API's own reason costs a round trip to guess at. */
+async function explanation(response: Response): Promise<string> {
+  const body = await response.text().catch(() => '');
+  return body === '' ? '' : `: ${scrub(body).slice(0, EXPLANATION_LIMIT)}`;
+}
+
 async function getJson(
   logFile: string,
   path: string,
   query: Record<string, string>,
 ): Promise<unknown> {
   const key = readSecret(API_KEY_VARIABLE);
+  registerSecret(TOKENIZER_EMAIL_VARIABLE);
   const url = new URL(path, BRICKKEN_API_BASE_URL);
   for (const [name, value] of Object.entries(query)) url.searchParams.set(name, value);
   const attempt = {
@@ -57,7 +69,7 @@ async function getJson(
   if (!response.ok) {
     throw new KeeperError(
       'brickkenRejected',
-      `GET ${path} returned HTTP ${String(response.status)}`,
+      `GET ${path} returned HTTP ${String(response.status)}${await explanation(response)}`,
     );
   }
 

@@ -43,6 +43,9 @@ export function readSecret(name: string): string {
   return value;
 }
 
+/** A value is only redactable once it has been read, so this reads it and hands it to nobody. */
+export const registerSecret = (name: string): void => void readOptionalSecret(name);
+
 const valueIn = (text: string, name: string): string =>
   text
     .split(/\r?\n/)
