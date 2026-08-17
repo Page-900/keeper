@@ -34,6 +34,13 @@ export const CHECKS = [
     script: 'test:contracts',
   },
   {
+    id: 'rehearsal',
+    title: 'Rehearsal',
+    proves:
+      'The whole flow runs end to end against the registry as it is really deployed, on a private copy of the test network that nothing outside this machine can see.',
+    script: 'test:fork',
+  },
+  {
     id: 'build',
     title: 'Build',
     proves: 'The project compiles into something that can be run.',

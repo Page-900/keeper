@@ -1,6 +1,13 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
+import {
+  CHAIN_ID,
+  MANDATE_WINDOW_SECONDS,
+  MAX_CUMULATIVE_VALUE,
+  MAX_TRANSACTION_VALUE,
+  PRINCIPAL_HOLDING,
+} from '../src/shared/config.js';
 import * as publicApi from '../src/index.js';
 
 const SRC = new URL('../src/', import.meta.url);
@@ -41,6 +48,31 @@ describe('deployed addresses and chain ids live in exactly one place', () => {
       .filter((file) => read(file).includes('brickken.com'));
 
     expect(offenders).toEqual([]);
+  });
+});
+
+const REHEARSAL = new URL('../contracts/test/ForkRehearsal.t.sol', import.meta.url);
+
+const solidityConstant = (name: string): string => {
+  const found = new RegExp(`constant ${name} = ([^;]+);`).exec(readFileSync(REHEARSAL, 'utf8'));
+  expect(found, `${name} is not declared in the rehearsal`).not.toBeNull();
+  return found?.[1] ?? '';
+};
+
+const baseUnits = (literal: string): bigint => {
+  const [whole = '0', exponent = '0'] = literal.split('e');
+  return BigInt(whole) * 10n ** BigInt(exponent);
+};
+
+describe('the rehearsal is measured against the numbers the agent will use', () => {
+  it('grants the same caps, holding, window, and chain the config module declares', () => {
+    expect(baseUnits(solidityConstant('PER_TRANSACTION_CAP'))).toBe(MAX_TRANSACTION_VALUE);
+    expect(baseUnits(solidityConstant('CUMULATIVE_CAP'))).toBe(MAX_CUMULATIVE_VALUE);
+    expect(baseUnits(solidityConstant('HOLDING'))).toBe(PRINCIPAL_HOLDING);
+    expect(solidityConstant('WINDOW_SECONDS')).toBe(
+      `${String(MANDATE_WINDOW_SECONDS / 86400)} days`,
+    );
+    expect(solidityConstant('SEPOLIA')).toBe(String(CHAIN_ID));
   });
 });
 

@@ -1,6 +1,11 @@
-import type { HardhatUserConfig } from 'hardhat/config';
+import { configVariable, type HardhatUserConfig } from 'hardhat/config';
 
 const config: HardhatUserConfig = {
+  test: {
+    solidity: {
+      forking: { rpcEndpoints: { sepolia: configVariable('SEPOLIA_RPC_URL', { default: '' }) } },
+    },
+  },
   solidity: {
     version: '0.8.29',
     settings: {
