@@ -5,6 +5,8 @@ import {
   MANDATE_WINDOW_SECONDS,
   MAX_CUMULATIVE_VALUE,
   MAX_TRANSACTION_VALUE,
+  PRINCIPAL_HOLDING,
+  SUNL_SUPPLY,
   UNCAPPED,
   addressSlots,
   requireAddress,
@@ -43,6 +45,16 @@ describe('demo mandate caps', () => {
 
   it('lets a single transaction spend less than the lifetime total', () => {
     expect(MAX_TRANSACTION_VALUE).toBeLessThan(MAX_CUMULATIVE_VALUE);
+  });
+
+  it('keeps every cap under what the principal holds, or no cap can ever be reached', () => {
+    expect(MAX_TRANSACTION_VALUE).toBeLessThan(PRINCIPAL_HOLDING);
+    expect(MAX_CUMULATIVE_VALUE).toBeLessThan(PRINCIPAL_HOLDING);
+  });
+
+  it('leaves the balance above the lifetime cap, so a refusal is the mandate and not an empty wallet', () => {
+    expect(PRINCIPAL_HOLDING).toBeGreaterThan(MAX_CUMULATIVE_VALUE);
+    expect(PRINCIPAL_HOLDING).toBeLessThanOrEqual(SUNL_SUPPLY);
   });
 
   it('carries every amount as bigint', () => {

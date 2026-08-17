@@ -14,11 +14,16 @@ export const SUNL_DECIMALS = 18;
 
 const sunl = (whole: bigint): bigint => whole * 10n ** BigInt(SUNL_DECIMALS);
 
+export const SUNL_SUPPLY = sunl(10_000n);
+
+/** What the investor holds, and therefore the ceiling a cap has to sit under to fire. */
+export const PRINCIPAL_HOLDING = sunl(2_000n);
+
 /** Deliberately low, so a successful attack on the public demo stays cheap. */
-export const MAX_TRANSACTION_VALUE = sunl(1_000n);
+export const MAX_TRANSACTION_VALUE = sunl(250n);
 
 /** Lifetime total across the whole window, never a monthly or rolling allowance. */
-export const MAX_CUMULATIVE_VALUE = sunl(5_000n);
+export const MAX_CUMULATIVE_VALUE = sunl(1_000n);
 
 /** uint48 seconds, as the EIP defines it. */
 export const MANDATE_WINDOW_SECONDS = 30 * 24 * 60 * 60;
