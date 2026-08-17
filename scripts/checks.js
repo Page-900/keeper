@@ -28,6 +28,12 @@ export const CHECKS = [
     script: 'test',
   },
   {
+    id: 'contracts',
+    title: 'Contract tests',
+    proves: 'Every test written against the smart contract passes.',
+    script: 'test:contracts',
+  },
+  {
     id: 'build',
     title: 'Build',
     proves: 'The project compiles into something that can be run.',

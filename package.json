@@ -14,10 +14,11 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:contracts": "hardhat test solidity",
     "scan": "aislop ci",
     "verify": "node scripts/verify.js",
     "wallets": "node scripts/wallets.js",
-    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run scan"
+    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run test:contracts && npm run build && npm run scan"
   },
   "lint-staged": {
     "*.{ts,js}": [
@@ -33,9 +34,12 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@openzeppelin/contracts": "5.6.1",
     "@types/node": "26.2.0",
     "aislop": "0.14.1",
     "eslint": "10.8.1",
+    "forge-std": "git+https://github.com/foundry-rs/forge-std.git#v1.9.7",
+    "hardhat": "3.13.0",
     "husky": "9.1.7",
     "lint-staged": "17.3.0",
     "prettier": "3.9.6",

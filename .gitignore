@@ -5,6 +5,8 @@
 node_modules/
 dist/
 coverage/
+artifacts/
+cache/
 
 # Local scanner state, not source. Records local paths; app/ is public.
 .aislop/
