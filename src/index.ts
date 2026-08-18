@@ -6,12 +6,19 @@ export {
   confirmTransaction,
   sendTransaction,
   signerAddress,
+  type ActionSpec,
   type ConfirmationStatus,
   type OutboundTransaction,
   type SignerRole,
 } from './chain/client.js';
 export { ANCHOR_FILE, type Anchor, type AnchorAction } from './chain/anchors.js';
-export { deployExecutor, executorArtifact, type Deployment } from './chain/executor.js';
+export {
+  deployExecutor,
+  executorArtifact,
+  registerAction,
+  type Deployment,
+  type Registration,
+} from './chain/executor.js';
 export { submitSequence, type Sequence, type Submitter } from './chain/pipeline.js';
 export {
   BRICKKEN_API_BASE_URL,
@@ -19,6 +26,7 @@ export {
   MANDATE_WINDOW_SECONDS,
   MAX_CUMULATIVE_VALUE,
   MAX_TRANSACTION_VALUE,
+  PERMITTED_ACTION,
   PRINCIPAL_HOLDING,
   SUNL_DECIMALS,
   SUNL_SUPPLY,

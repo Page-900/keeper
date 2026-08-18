@@ -1,4 +1,4 @@
-import { getAddress } from 'viem';
+import { getAddress, toFunctionSelector } from 'viem';
 
 import { KeeperError } from './errors.js';
 
@@ -35,6 +35,17 @@ export const MAX_CUMULATIVE_VALUE = sunl(1_000n);
 /** uint48 seconds, as the EIP defines it. */
 export const MANDATE_WINDOW_SECONDS = 30 * 24 * 60 * 60;
 
+const TRANSFER_FROM = 'transferFrom(address,address,uint256)';
+
+/** The only call the executor forwards. The amount is its third argument, so the index is 2. */
+export const PERMITTED_ACTION = Object.freeze({
+  signature: TRANSFER_FROM,
+  selector: toFunctionSelector(TRANSFER_FROM),
+  supported: true,
+  hasAmount: true,
+  amountIndex: 2,
+});
+
 export type AddressSlot = `0x${string}` | null;
 
 export type AddressName =
@@ -45,7 +56,7 @@ export const addressSlots: Readonly<Record<AddressName, AddressSlot>> = Object.f
   principal: null,
   agent: null,
   asset: null,
-  executor: null,
+  executor: '0x914f32af870b11739c68cbc8c4561c139a820c41',
   agentMandate: '0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e',
   complianceProvider: '0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278',
 });

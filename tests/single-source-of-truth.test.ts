@@ -6,9 +6,12 @@ import {
   MANDATE_WINDOW_SECONDS,
   MAX_CUMULATIVE_VALUE,
   MAX_TRANSACTION_VALUE,
+  PERMITTED_ACTION,
   PRINCIPAL_HOLDING,
   requireAddress,
 } from '../src/shared/config.js';
+import { ANCHOR_FILE, type Anchor } from '../src/chain/anchors.js';
+import { readRecords } from '../src/shared/jsonl.js';
 import * as publicApi from '../src/index.js';
 
 const SRC = new URL('../src/', import.meta.url);
@@ -52,11 +55,13 @@ describe('deployed addresses and chain ids live in exactly one place', () => {
   });
 });
 
-const REHEARSAL = new URL('../contracts/test/ForkRehearsal.t.sol', import.meta.url);
+const CONTRACT_TESTS = new URL('../contracts/test/', import.meta.url);
+const REHEARSAL = 'ForkRehearsal.t.sol';
 
-const solidityConstant = (name: string): string => {
-  const found = new RegExp(`constant ${name} = ([^;]+);`).exec(readFileSync(REHEARSAL, 'utf8'));
-  expect(found, `${name} is not declared in the rehearsal`).not.toBeNull();
+const solidityConstant = (name: string, file = REHEARSAL): string => {
+  const source = readFileSync(new URL(file, CONTRACT_TESTS), 'utf8');
+  const found = new RegExp(`constant ${name} = ([^;]+);`).exec(source);
+  expect(found, `${name} is not declared in ${file}`).not.toBeNull();
   return found?.[1] ?? '';
 };
 
@@ -79,6 +84,23 @@ describe('the rehearsal is measured against the numbers the agent will use', () 
   it('rehearses against the addresses the config module declares, never a stale copy', () => {
     expect(solidityConstant('REGISTRY')).toBe(requireAddress('agentMandate'));
     expect(solidityConstant('COMPLIANCE')).toBe(requireAddress('complianceProvider'));
+  });
+
+  it('reads the gated amount from the same argument every contract test does', () => {
+    const index = String(PERMITTED_ACTION.amountIndex);
+
+    expect(solidityConstant('AMOUNT_INDEX')).toBe(index);
+    expect(solidityConstant('AMOUNT_INDEX', 'AgentExecutor.t.sol')).toBe(index);
+  });
+});
+
+describe('an address this project deployed is the one the chain recorded', () => {
+  it('points the executor slot at the contract the evidence log says was deployed', () => {
+    const deployed = readRecords<Anchor>(ANCHOR_FILE).find(
+      (anchor) => anchor.action === 'deploy-executor' && anchor.status === 'success',
+    );
+
+    expect(deployed?.contract?.toLowerCase()).toBe(requireAddress('executor').toLowerCase());
   });
 });
 

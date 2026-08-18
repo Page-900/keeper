@@ -4,9 +4,15 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { Anchor } from '../src/chain/anchors.js';
-import type { Artifact, Receipt, SignerRole } from '../src/chain/client.js';
-import { deployExecutor, executorArtifact, type ExecutorChain } from '../src/chain/executor.js';
-import { CHAIN_ID, requireAddress } from '../src/shared/config.js';
+import type { ActionSpec, Artifact, Receipt, SignerRole } from '../src/chain/client.js';
+import {
+  deployExecutor,
+  executorArtifact,
+  registerAction,
+  type ActionChain,
+  type ExecutorChain,
+} from '../src/chain/executor.js';
+import { CHAIN_ID, PERMITTED_ACTION, requireAddress } from '../src/shared/config.js';
 import { appendRecord, readRecords } from '../src/shared/jsonl.js';
 import { captureError } from './support/capture-error.js';
 
@@ -194,5 +200,120 @@ describe('the evidence log survives whatever is already in it', () => {
     await deployExecutor({ chain, file, artifact: ARTIFACT });
 
     expect(anchors()).toHaveLength(2);
+  });
+});
+
+const SET_ACTION_HASH = hash('5e7');
+
+const EXECUTOR_SLOT = requireAddress('executor');
+
+interface Call {
+  role: SignerRole;
+  contract: `0x${string}`;
+  functionName: string;
+  args: readonly unknown[];
+}
+
+const REGISTERED: ActionSpec = { supported: true, hasAmount: true, amountIndex: 2 };
+
+const fakeOwner = (
+  overrides: { receipt?: Receipt; spec?: Partial<ActionSpec> } = {},
+): { calls: Call[]; reads: number; chain: ActionChain } => {
+  const calls: Call[] = [];
+  const counted = { reads: 0 };
+  return {
+    calls,
+    get reads() {
+      return counted.reads;
+    },
+    chain: {
+      write: (role, contract, _artifact, functionName, args) => {
+        calls.push({ role, contract, functionName, args });
+        return Promise.resolve(SET_ACTION_HASH);
+      },
+      receipt: () => Promise.resolve(overrides.receipt ?? receipt({ contractAddress: null })),
+      readAction: () => {
+        counted.reads += 1;
+        return Promise.resolve({ ...REGISTERED, ...overrides.spec });
+      },
+    },
+  };
+};
+
+const registered = (spec: Partial<ActionSpec>) => async (): Promise<unknown> =>
+  registerAction({ chain: fakeOwner({ spec }).chain, file, artifact: ARTIFACT });
+
+describe('the permitted action is registered by the owner, never by the agent', () => {
+  it('sets transferFrom on the deployed executor with the amount read from argument 2', async () => {
+    const owner = fakeOwner();
+
+    const registration = await registerAction({ chain: owner.chain, file, artifact: ARTIFACT });
+
+    expect(owner.calls).toEqual([
+      {
+        role: 'principal',
+        contract: EXECUTOR_SLOT,
+        functionName: 'setAction',
+        args: [PERMITTED_ACTION.selector, true, true, 2],
+      },
+    ]);
+    expect(registration).toEqual({
+      transactionHash: SET_ACTION_HASH,
+      blockNumber: '11510500',
+      spec: REGISTERED,
+    });
+  });
+
+  it('captures the registration in the evidence log against the executor it configured', async () => {
+    const owner = fakeOwner();
+
+    await registerAction({ chain: owner.chain, file, artifact: ARTIFACT });
+
+    expect(anchors()).toEqual([
+      {
+        at: expect.any(String) as string,
+        action: 'register-action',
+        chainId: CHAIN_ID,
+        transactionHash: SET_ACTION_HASH,
+        blockNumber: '11510500',
+        status: 'success',
+        contract: EXECUTOR_SLOT,
+      },
+    ]);
+  });
+
+  it('records a reverted registration and reads nothing back, because nothing was configured', async () => {
+    const owner = fakeOwner({ receipt: receipt({ status: 'reverted', contractAddress: null }) });
+
+    const error = await captureError(() =>
+      registerAction({ chain: owner.chain, file, artifact: ARTIFACT }),
+    );
+
+    expect(error.kind).toBe('writeUnconfirmed');
+    expect(anchors()[0]?.status).toBe('reverted');
+    expect(owner.reads).toBe(0);
+  });
+});
+
+describe('all three fields are read back, because a wrong one disables the cap silently', () => {
+  it('refuses an action the executor does not report as supported', async () => {
+    const error = await captureError(registered({ supported: false }));
+
+    expect(error.kind).toBe('readBackMismatch');
+    expect(error.detail).toContain('supported');
+  });
+
+  it('refuses an action gated at amount zero, which is what hasAmount false means', async () => {
+    const error = await captureError(registered({ hasAmount: false }));
+
+    expect(error.kind).toBe('readBackMismatch');
+    expect(error.detail).toContain('hasAmount');
+  });
+
+  it('refuses an amount index that reads the recipient address as the amount', async () => {
+    const error = await captureError(registered({ amountIndex: 1 }));
+
+    expect(error.kind).toBe('readBackMismatch');
+    expect(error.detail).toContain('amountIndex');
   });
 });

@@ -6,6 +6,7 @@ import {
   MAX_CUMULATIVE_VALUE,
   MAX_TRANSACTION_VALUE,
   PRINCIPAL_HOLDING,
+  PERMITTED_ACTION,
   SUNL_SUPPLY,
   UNCAPPED,
   addressSlots,
@@ -69,7 +70,7 @@ describe('demo mandate caps', () => {
   });
 });
 
-const UNISSUED: AddressName[] = ['principal', 'agent', 'asset', 'executor'];
+const UNISSUED: AddressName[] = ['principal', 'agent', 'asset'];
 
 describe('address slots, empty until onboarding issues them or a deploy fills them', () => {
   it('leaves every slot nothing has issued empty rather than zero-filled', () => {
@@ -78,18 +79,38 @@ describe('address slots, empty until onboarding issues them or a deploy fills th
     }
   });
 
-  it('holds the two contracts that were read off the chain before anything was built on them', () => {
+  it('holds the contracts that were read off the chain, and the one this project deployed', () => {
     expect(requireAddress('agentMandate')).toMatch(/^0x[0-9a-fA-F]{40}$/);
     expect(requireAddress('complianceProvider')).toMatch(/^0x[0-9a-fA-F]{40}$/);
+    expect(requireAddress('executor')).toMatch(/^0x[0-9a-fA-F]{40}$/);
   });
 
   it('fails closed on an unissued slot instead of returning a zero address', () => {
-    expect(() => requireAddress('executor')).toThrow(/executor/);
+    expect(() => requireAddress('asset')).toThrow(/asset/);
   });
 
   it('refuses a runtime write rather than accepting a repointed executor', () => {
+    const deployed = requireAddress('executor');
+
     expect(Object.isFrozen(addressSlots)).toBe(true);
     expect(Reflect.set(addressSlots, 'executor', `0x${'ad'.repeat(20)}`)).toBe(false);
-    expect(addressSlots.executor).toBeNull();
+    expect(requireAddress('executor')).toBe(deployed);
+  });
+});
+
+describe('the one action the executor may forward', () => {
+  it('computes the transferFrom selector rather than trusting a copied one', () => {
+    expect(PERMITTED_ACTION.selector).toBe('0x23b872dd');
+    expect(PERMITTED_ACTION.signature).toBe('transferFrom(address,address,uint256)');
+  });
+
+  it('reads the amount from the third argument, where transferFrom carries it', () => {
+    expect(PERMITTED_ACTION.amountIndex).toBe(2);
+    expect(PERMITTED_ACTION.hasAmount).toBe(true);
+  });
+
+  it('gates on an amount, or the cap is switched off while every check still passes', () => {
+    expect(PERMITTED_ACTION.hasAmount).not.toBe(false);
+    expect(Object.isFrozen(PERMITTED_ACTION)).toBe(true);
   });
 });

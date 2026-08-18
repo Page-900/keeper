@@ -155,6 +155,50 @@ export async function deployContract(
   return withWallet(role, (wallet) => wallet.deployContract({ abi, bytecode, args }));
 }
 
+export async function writeContract(
+  role: SignerRole,
+  contract: `0x${string}`,
+  artifact: Artifact,
+  functionName: string,
+  args: readonly unknown[],
+): Promise<`0x${string}`> {
+  return withWallet(role, (wallet) =>
+    wallet.writeContract({ address: contract, abi: artifact.abi, functionName, args }),
+  );
+}
+
+/** How the executor reads the gated amount out of one selector's calldata. */
+export interface ActionSpec {
+  supported: boolean;
+  hasAmount: boolean;
+  amountIndex: number;
+}
+
+export async function readAction(
+  contract: `0x${string}`,
+  artifact: Artifact,
+  selector: `0x${string}`,
+): Promise<ActionSpec> {
+  const value = await withReader((reader) =>
+    reader.readContract({
+      address: contract,
+      abi: artifact.abi,
+      functionName: 'actions',
+      args: [selector],
+    }),
+  );
+  if (!Array.isArray(value) || value.length !== 3)
+    throw new KeeperError('readBackMismatch', 'actions() did not return an action');
+  const [supported, hasAmount, amountIndex] = value as unknown[];
+  if (
+    typeof supported !== 'boolean' ||
+    typeof hasAmount !== 'boolean' ||
+    typeof amountIndex !== 'number'
+  )
+    throw new KeeperError('readBackMismatch', 'actions() returned fields of another shape');
+  return { supported, hasAmount, amountIndex };
+}
+
 /** Reads a no-argument getter and refuses anything that is not an address. */
 export async function readAddress(
   contract: `0x${string}`,

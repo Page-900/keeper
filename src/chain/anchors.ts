@@ -18,7 +18,7 @@ export interface Anchor {
   /** Decimal string, because JSON numbers are approximate and chain values are not. */
   blockNumber: string;
   status: 'success' | 'reverted';
-  /** Null whenever the transaction deployed nothing, which a reverted deploy does not. */
+  /** The contract the claim is about, and null when the transaction created none. */
   contract: `0x${string}` | null;
 }
 
