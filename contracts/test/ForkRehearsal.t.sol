@@ -146,6 +146,10 @@ contract ForkRehearsalTest is Test {
         executor.execute(address(asset), transferCall(amount));
     }
 
+    function testTheDeployedRegistryDeclaresTheStandardInterfaceItIsReadThrough() public view {
+        assertTrue(IAgentMandate(REGISTRY).supportsInterface(type(IAgentMandate).interfaceId));
+    }
+
     function testTheDeployedRegistryHoldsTheMandateWeGranted() public view {
         IAgentMandate.Mandate memory granted = mandate();
 

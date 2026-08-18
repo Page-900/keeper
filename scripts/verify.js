@@ -9,7 +9,21 @@ const readLatestBlock = async () => {
   return `Read block ${await blockNumber()}.`;
 };
 
-const RUNNERS = { chain: readLatestBlock };
+const ROLES = ['principal', 'agent'];
+
+const confirmWallets = async () => {
+  const { signerAddress } = await import('../dist/chain/client.js');
+  const { requireAddress } = await import('../dist/shared/config.js');
+  for (const role of ROLES) {
+    const signer = signerAddress(role);
+    const published = requireAddress(role);
+    if (signer !== published)
+      throw new Error(`The ${role} key signs as ${signer}, and the code publishes ${published}.`);
+  }
+  return `Both wallets match.`;
+};
+
+const RUNNERS = { chain: readLatestBlock, wallets: confirmWallets };
 
 function runScript(script) {
   const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';

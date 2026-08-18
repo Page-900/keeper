@@ -53,8 +53,8 @@ export type AddressName =
 
 /** The only place a deployed address may live. */
 export const addressSlots: Readonly<Record<AddressName, AddressSlot>> = Object.freeze({
-  principal: null,
-  agent: null,
+  principal: '0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc',
+  agent: '0x29d78c8c5E7ad231a21A64170cA07e419f0C5aBa',
   asset: null,
   executor: '0x914f32af870b11739c68cbc8c4561c139a820c41',
   agentMandate: '0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e',

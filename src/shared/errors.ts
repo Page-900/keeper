@@ -13,7 +13,7 @@ export const ERROR_COPY = {
   writeUnconfirmed: 'A write could not be shown to have landed, so the sequence stopped there',
   readBackMismatch: 'The chain reports something other than what this project meant to write',
   alreadyDeployed: 'This contract is deployed once, and the evidence log already records that',
-  artifactUnusable: 'The compiled contract could not be read, so there is nothing to deploy',
+  artifactUnusable: 'The compiled contract could not be read',
 } as const;
 
 export type ErrorKind = keyof typeof ERROR_COPY;

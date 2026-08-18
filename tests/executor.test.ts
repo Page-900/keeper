@@ -5,9 +5,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { Anchor } from '../src/chain/anchors.js';
 import type { ActionSpec, Artifact, Receipt, SignerRole } from '../src/chain/client.js';
+import { EXECUTOR_ARTIFACT, compiledArtifact } from '../src/chain/artifacts.js';
 import {
   deployExecutor,
-  executorArtifact,
   registerAction,
   type ActionChain,
   type ExecutorChain,
@@ -165,7 +165,7 @@ describe('a deployed address is trusted only after the chain reads its own state
 
 describe('the bytecode comes from the compiler and from nowhere else', () => {
   it('reads the compiled contract this repository builds', () => {
-    const artifact = executorArtifact();
+    const artifact = compiledArtifact(EXECUTOR_ARTIFACT);
 
     expect(artifact.bytecode.startsWith('0x60')).toBe(true);
     expect(artifact.abi.length).toBeGreaterThan(0);
@@ -175,11 +175,11 @@ describe('the bytecode comes from the compiler and from nowhere else', () => {
     const empty = join(directory, 'AgentExecutor.json');
     writeFileSync(empty, JSON.stringify({ abi: [] }), 'utf8');
 
-    expect(() => executorArtifact(empty)).toThrow(/nothing to deploy/);
+    expect(() => compiledArtifact(empty)).toThrow(/could not be read/);
   });
 
   it('refuses a missing file rather than deploying nothing', () => {
-    expect(() => executorArtifact(join(directory, 'absent.json'))).toThrow(/nothing to deploy/);
+    expect(() => compiledArtifact(join(directory, 'absent.json'))).toThrow(/could not be read/);
   });
 });
 

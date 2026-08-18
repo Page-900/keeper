@@ -1,11 +1,8 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
 import { PERMITTED_ACTION, requireAddress } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { readRecords } from '../shared/jsonl.js';
-import { scrubError } from '../shared/secrets.js';
 import { ANCHOR_FILE, recordAnchor, type Anchor, type AnchorAction } from './anchors.js';
+import { EXECUTOR_ARTIFACT, compiledArtifact } from './artifacts.js';
 import {
   deployContract,
   readAction,
@@ -22,24 +19,6 @@ import {
 const OWNER: SignerRole = 'principal';
 const DEPLOY: AnchorAction = 'deploy-executor';
 const REGISTER: AnchorAction = 'register-action';
-
-const ARTIFACT_FILE = fileURLToPath(
-  new URL('../../artifacts/contracts/AgentExecutor.sol/AgentExecutor.json', import.meta.url),
-);
-
-/** The compiler is the only source of the bytecode and the interface, so neither can drift. */
-export function executorArtifact(file: string = ARTIFACT_FILE): Artifact {
-  let parsed: Partial<Artifact>;
-  try {
-    parsed = JSON.parse(readFileSync(file, 'utf8')) as Partial<Artifact>;
-  } catch (cause) {
-    throw new KeeperError('artifactUnusable', `${file}: ${scrubError(cause).message}`);
-  }
-  const { abi, bytecode } = parsed;
-  if (!Array.isArray(abi) || typeof bytecode !== 'string' || !bytecode.startsWith('0x'))
-    throw new KeeperError('artifactUnusable', `${file} holds no compiled contract`);
-  return { abi, bytecode };
-}
 
 export interface ExecutorChain {
   deploy: (
@@ -95,7 +74,7 @@ async function confirmConstructorArguments(
 export async function deployExecutor({
   chain = CHAIN,
   file = ANCHOR_FILE,
-  artifact = executorArtifact(),
+  artifact = compiledArtifact(EXECUTOR_ARTIFACT),
 }: DeployOptions = {}): Promise<Deployment> {
   const already = readRecords<Anchor>(file).find(
     (anchor) => anchor.action === DEPLOY && anchor.status === 'success',
@@ -178,7 +157,7 @@ function confirmAction(found: ActionSpec): void {
 export async function registerAction({
   chain = ACTION_CHAIN,
   file = ANCHOR_FILE,
-  artifact = executorArtifact(),
+  artifact = compiledArtifact(EXECUTOR_ARTIFACT),
 }: RegisterOptions = {}): Promise<Registration> {
   const executor = requireAddress('executor');
   const transactionHash = await chain.write(OWNER, executor, artifact, 'setAction', [

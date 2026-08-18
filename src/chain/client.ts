@@ -199,6 +199,24 @@ export async function readAction(
   return { supported, hasAmount, amountIndex };
 }
 
+export async function readValue(
+  contract: `0x${string}`,
+  artifact: Artifact,
+  functionName: string,
+  args: readonly unknown[],
+  atBlock: bigint,
+): Promise<unknown> {
+  return withReader((reader) =>
+    reader.readContract({
+      address: contract,
+      abi: artifact.abi,
+      functionName,
+      args,
+      blockNumber: atBlock,
+    }),
+  );
+}
+
 /** Reads a no-argument getter and refuses anything that is not an address. */
 export async function readAddress(
   contract: `0x${string}`,

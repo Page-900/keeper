@@ -70,13 +70,17 @@ describe('demo mandate caps', () => {
   });
 });
 
-const UNISSUED: AddressName[] = ['principal', 'agent', 'asset'];
+const UNISSUED: AddressName[] = ['asset'];
 
 describe('address slots, empty until onboarding issues them or a deploy fills them', () => {
   it('leaves every slot nothing has issued empty rather than zero-filled', () => {
     for (const name of UNISSUED) {
       expect(addressSlots[name], `slot ${name} should be empty`).toBeNull();
     }
+  });
+
+  it('keeps the agent off the principal wallet, which is what the whole demonstration rests on', () => {
+    expect(requireAddress('agent')).not.toBe(requireAddress('principal'));
   });
 
   it('holds the contracts that were read off the chain, and the one this project deployed', () => {

@@ -53,6 +53,14 @@ export const CHECKS = [
     script: 'scan',
   },
   {
+    id: 'wallets',
+    title: 'Wallet addresses',
+    proves:
+      'The principal and agent addresses this project publishes are the two wallets it can really sign with.',
+    whenFailed:
+      'An address in the code is not the wallet the matching key in .env signs with, or .env is missing. Nothing was sent anywhere.',
+  },
+  {
     id: 'chain',
     title: 'Live chain read',
     proves:

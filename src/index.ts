@@ -12,13 +12,19 @@ export {
   type SignerRole,
 } from './chain/client.js';
 export { ANCHOR_FILE, type Anchor, type AnchorAction } from './chain/anchors.js';
+export { EXECUTOR_ARTIFACT, REGISTRY_ARTIFACT, compiledArtifact } from './chain/artifacts.js';
 export {
   deployExecutor,
-  executorArtifact,
   registerAction,
   type Deployment,
   type Registration,
 } from './chain/executor.js';
+export {
+  MANDATE_FIELDS,
+  REGISTRY_READ_FILE,
+  readRegistryState,
+  type RegistryRead,
+} from './chain/registry.js';
 export { submitSequence, type Sequence, type Submitter } from './chain/pipeline.js';
 export {
   BRICKKEN_API_BASE_URL,

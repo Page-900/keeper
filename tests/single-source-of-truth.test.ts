@@ -11,6 +11,7 @@ import {
   requireAddress,
 } from '../src/shared/config.js';
 import { ANCHOR_FILE, type Anchor } from '../src/chain/anchors.js';
+import { MANDATE_FIELDS } from '../src/chain/registry.js';
 import { readRecords } from '../src/shared/jsonl.js';
 import * as publicApi from '../src/index.js';
 
@@ -91,6 +92,19 @@ describe('the rehearsal is measured against the numbers the agent will use', () 
 
     expect(solidityConstant('AMOUNT_INDEX')).toBe(index);
     expect(solidityConstant('AMOUNT_INDEX', 'AgentExecutor.t.sol')).toBe(index);
+  });
+});
+
+const INTERFACE = new URL('../contracts/interfaces/IAgentMandate.sol', import.meta.url);
+
+const mandateStructFields = (): string[] => {
+  const body = /struct Mandate \{([^}]*)\}/.exec(readFileSync(INTERFACE, 'utf8'))?.[1] ?? '';
+  return [...body.matchAll(/\s(\w+);/g)].map((field) => field[1] ?? '');
+};
+
+describe('the mandate is decoded in the order the standard declares it', () => {
+  it('names the same twelve fields, in the same order, as the interface it is read through', () => {
+    expect(mandateStructFields()).toEqual([...MANDATE_FIELDS]);
   });
 });
 
