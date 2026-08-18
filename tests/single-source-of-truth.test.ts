@@ -19,6 +19,7 @@ const SRC = new URL('../src/', import.meta.url);
 const CONFIG = 'shared/config.ts';
 const CHAIN_CLIENT = 'chain/client.ts';
 const BRICKKEN_CLIENT = 'brickken/client.ts';
+const TOKENIZATION = 'brickken/tokenization.ts';
 
 const read = (file: string): string => readFileSync(new URL(file, SRC), 'utf8');
 
@@ -122,6 +123,7 @@ describe('the public entry point is not a way to read secrets', () => {
   it('keeps the env readers off the barrel, so importing keeper grants no access to .env', () => {
     expect(Object.keys(publicApi)).not.toContain('readSecret');
     expect(Object.keys(publicApi)).not.toContain('readOptionalSecret');
+    expect(Object.keys(publicApi)).not.toContain('signerKey');
   });
 });
 
@@ -139,6 +141,14 @@ describe('external vendors are wrapped, never called by business logic', () => {
 
     expect(source.match(/createPublicClient\(/g)).toHaveLength(1);
     expect(source.match(/createWalletClient\(/g)).toHaveLength(1);
+  });
+
+  it('imports the Brickken SDK only in the module that wraps it', () => {
+    const offenders = sourceFiles()
+      .filter((file) => file !== TOKENIZATION)
+      .filter((file) => read(file).includes("from 'brickken-sdk"));
+
+    expect(offenders).toEqual([]);
   });
 
   it('reaches the network only in the Brickken wrapper', () => {

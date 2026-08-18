@@ -49,13 +49,20 @@ const SECRET_SHAPE: RegExp[] = [
 ];
 
 const ANCHOR_LOG = 'evidence/chain-anchors.jsonl';
+const REQUEST_LOG = 'evidence/brickken-requests.jsonl';
 
-/** A transaction hash is shaped exactly like a key, and it is the one we exist to publish. */
-const PUBLISHED_HASH = /"transactionHash":"0x[0-9a-fA-F]{64}"/g;
+/** A hash and a prepared id are shaped exactly like a key, and both exist to be published. */
+const PUBLISHED: Record<string, RegExp[]> = {
+  [ANCHOR_LOG]: [/(?<="transactionHash":")0x[0-9a-fA-F]{64}(?=")/g],
+  [REQUEST_LOG]: [
+    /(?<="txId":")0x[0-9a-fA-F]{64}(?=")/g,
+    /(?<=[?&](?:hash|txId)=)0x[0-9a-fA-F]{64}/g,
+  ],
+};
 
 const scannable = (file: string): string => {
   const text = readFileSync(join(APP_ROOT, file), 'utf8');
-  return file === ANCHOR_LOG ? text.replace(PUBLISHED_HASH, '"transactionHash":""') : text;
+  return (PUBLISHED[file] ?? []).reduce((clean, published) => clean.replace(published, ''), text);
 };
 
 const leakingLines = (file: string): string[] =>

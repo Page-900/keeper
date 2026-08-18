@@ -70,12 +70,13 @@ describe('demo mandate caps', () => {
   });
 });
 
-const UNISSUED: AddressName[] = ['asset'];
+const SLOTS = Object.keys(addressSlots) as AddressName[];
 
 describe('address slots, empty until onboarding issues them or a deploy fills them', () => {
-  it('leaves every slot nothing has issued empty rather than zero-filled', () => {
-    for (const name of UNISSUED) {
-      expect(addressSlots[name], `slot ${name} should be empty`).toBeNull();
+  it('holds a real address in every slot, and never a zero-filled one', () => {
+    for (const name of SLOTS) {
+      expect(addressSlots[name], `slot ${name}`).toMatch(/^0x[0-9a-fA-F]{40}$/);
+      expect(BigInt(addressSlots[name] ?? '0x0'), `slot ${name}`).not.toBe(0n);
     }
   });
 
@@ -90,7 +91,9 @@ describe('address slots, empty until onboarding issues them or a deploy fills th
   });
 
   it('fails closed on an unissued slot instead of returning a zero address', () => {
-    expect(() => requireAddress('asset')).toThrow(/asset/);
+    const unissued = { ...addressSlots, asset: null };
+
+    expect(() => requireAddress('asset', unissued)).toThrow(/asset/);
   });
 
   it('refuses a runtime write rather than accepting a repointed executor', () => {

@@ -1,6 +1,7 @@
 import {
   createPublicClient,
   createWalletClient,
+  erc20Abi,
   getAddress,
   http,
   isAddress,
@@ -36,13 +37,17 @@ const chain = sepolia satisfies { id: typeof CHAIN_ID };
 /** A provider URL embeds an API key, so it is a secret; reads fall back to the public endpoint. */
 const transport = () => http(readOptionalSecret('SEPOLIA_RPC_URL'));
 
-function accountFor(role: SignerRole) {
+export function signerKey(role: SignerRole): `0x${string}` {
   const variable = KEY_VARIABLE[role];
   const key = readSecret(variable);
   if (!isPrivateKey(key))
     throw new KeeperError('secretMalformed', `${variable} is not 32 hex bytes`);
+  return key;
+}
+
+function signerAccount(role: SignerRole) {
   try {
-    return privateKeyToAccount(key);
+    return privateKeyToAccount(signerKey(role));
   } catch (cause) {
     throw scrubError(cause);
   }
@@ -51,7 +56,7 @@ function accountFor(role: SignerRole) {
 const buildReader = () => createPublicClient({ chain, transport: transport() });
 
 const buildWallet = (role: SignerRole) =>
-  createWalletClient({ account: accountFor(role), chain, transport: transport() });
+  createWalletClient({ account: signerAccount(role), chain, transport: transport() });
 
 const confirmedEndpoints = new Set<string>();
 
@@ -86,7 +91,7 @@ const withWallet = <T>(
     return use(wallet);
   });
 
-export const signerAddress = (role: SignerRole): `0x${string}` => accountFor(role).address;
+export const signerAddress = (role: SignerRole): `0x${string}` => signerAccount(role).address;
 
 /** The key is written, read back off disk, and never returned, so only the address leaves here. */
 export function createSignerKey(role: SignerRole): `0x${string}` {
@@ -229,4 +234,49 @@ export async function readAddress(
   if (typeof value !== 'string' || !isAddress(value))
     throw new KeeperError('readBackMismatch', `${functionName}() did not return an address`);
   return getAddress(value);
+}
+
+export interface TokenIdentity {
+  symbol: string;
+  decimals: number;
+}
+
+export async function readTokenIdentity(contract: `0x${string}`): Promise<TokenIdentity> {
+  return withReader(async (reader) => {
+    const token = { address: contract, abi: erc20Abi } as const;
+    const [symbol, decimals] = await Promise.all([
+      reader.readContract({ ...token, functionName: 'symbol' }),
+      reader.readContract({ ...token, functionName: 'decimals' }),
+    ]);
+    return { symbol, decimals };
+  });
+}
+
+export async function readTokenBalance(
+  contract: `0x${string}`,
+  holder: `0x${string}`,
+): Promise<bigint> {
+  return withReader((reader) =>
+    reader.readContract({
+      address: contract,
+      abi: erc20Abi,
+      functionName: 'balanceOf',
+      args: [holder],
+    }),
+  );
+}
+
+export async function readTokenAllowance(
+  contract: `0x${string}`,
+  owner: `0x${string}`,
+  spender: `0x${string}`,
+): Promise<bigint> {
+  return withReader((reader) =>
+    reader.readContract({
+      address: contract,
+      abi: erc20Abi,
+      functionName: 'allowance',
+      args: [owner, spender],
+    }),
+  );
 }

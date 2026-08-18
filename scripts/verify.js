@@ -23,7 +23,95 @@ const confirmWallets = async () => {
   return `Both wallets match.`;
 };
 
-const RUNNERS = { chain: readLatestBlock, wallets: confirmWallets };
+const confirmAsset = async () => {
+  const { readTokenIdentity } = await import('../dist/chain/client.js');
+  const { SUNL_DECIMALS, SUNL_SYMBOL, requireAddress } = await import('../dist/shared/config.js');
+  const address = requireAddress('asset');
+  const { symbol, decimals } = await readTokenIdentity(address);
+  if (symbol !== SUNL_SYMBOL)
+    throw new Error(`${address} calls itself ${symbol}, not ${SUNL_SYMBOL}.`);
+  if (decimals !== SUNL_DECIMALS)
+    throw new Error(
+      `${symbol} has ${decimals} decimals, and every limit here is written in ${SUNL_DECIMALS}.`,
+    );
+  return `${symbol} answers at ${address} with ${decimals} decimals.`;
+};
+
+const confirmRecord = async () => {
+  const { createBrickkenClient } = await import('../dist/brickken/client.js');
+  const { SUNL_DECIMALS, SUNL_NAME, SUNL_SUPPLY_WHOLE, SUNL_SYMBOL, requireAddress } =
+    await import('../dist/shared/config.js');
+  const held = await createBrickkenClient().getTokenInfo(SUNL_SYMBOL);
+  const intended = {
+    tokenSymbol: SUNL_SYMBOL,
+    tokenName: SUNL_NAME,
+    decimals: SUNL_DECIMALS,
+    maxSupply: Number(SUNL_SUPPLY_WHOLE),
+    companyWallet: requireAddress('principal').toLowerCase(),
+  };
+  for (const [field, expected] of Object.entries(intended)) {
+    const found = field === 'companyWallet' ? String(held[field]).toLowerCase() : held[field];
+    if (found !== expected)
+      throw new Error(`Brickken report ${field} as ${found}, and this project uses ${expected}.`);
+  }
+  return `${held.tokenName} is held as ${held.tokenSymbol}, ${held.maxSupply} tokens.`;
+};
+
+const confirmHolding = async () => {
+  const { readTokenBalance } = await import('../dist/chain/client.js');
+  const { PRINCIPAL_HOLDING, SUNL_SYMBOL, requireAddress } =
+    await import('../dist/shared/config.js');
+  const holder = requireAddress('principal');
+  const held = await readTokenBalance(requireAddress('asset'), holder);
+  if (held !== PRINCIPAL_HOLDING)
+    throw new Error(
+      `${holder} holds ${held} base units, and this project is written around ${PRINCIPAL_HOLDING}.`,
+    );
+  return `${holder} holds ${held / 10n ** 18n} ${SUNL_SYMBOL}.`;
+};
+
+const confirmAllowed = async () => {
+  const { createBrickkenClient } = await import('../dist/brickken/client.js');
+  const { SUNL_SYMBOL, requireAddress } = await import('../dist/shared/config.js');
+  const holder = requireAddress('principal');
+  const { isWhitelisted, source } = await createBrickkenClient().getWhitelistStatus(
+    SUNL_SYMBOL,
+    holder,
+  );
+  if (!isWhitelisted) throw new Error(`Brickken do not clear ${holder} to hold ${SUNL_SYMBOL}.`);
+  return `Cleared, and they read it from the ${source}.`;
+};
+
+const confirmAllowance = async () => {
+  const { readTokenAllowance } = await import('../dist/chain/client.js');
+  const { MAX_CUMULATIVE_VALUE, PRINCIPAL_HOLDING, SUNL_SYMBOL, requireAddress } =
+    await import('../dist/shared/config.js');
+  const spender = requireAddress('executor');
+  const allowed = await readTokenAllowance(
+    requireAddress('asset'),
+    requireAddress('principal'),
+    spender,
+  );
+  if (allowed !== PRINCIPAL_HOLDING)
+    throw new Error(
+      `The executor may spend ${allowed} base units, and this project approved ${PRINCIPAL_HOLDING}.`,
+    );
+  if (allowed <= MAX_CUMULATIVE_VALUE)
+    throw new Error(
+      'The permission is not above the mandate total, so a refusal could not be attributed.',
+    );
+  return `${spender} may spend ${allowed / 10n ** 18n} ${SUNL_SYMBOL}.`;
+};
+
+const RUNNERS = {
+  allowance: confirmAllowance,
+  holding: confirmHolding,
+  allowed: confirmAllowed,
+  chain: readLatestBlock,
+  wallets: confirmWallets,
+  asset: confirmAsset,
+  record: confirmRecord,
+};
 
 function runScript(script) {
   const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';

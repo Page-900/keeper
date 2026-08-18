@@ -10,7 +10,26 @@ import { captureError } from './support/capture-error.js';
 
 const FAKE_KEY = 'keeper-test-value-that-is-not-a-key-4471';
 const OPERATOR_EMAIL = 'keeper-test-tokenizer-8823@example.com';
-const TOKEN_INFO = { tokenSymbols: ['SUNL'], tokenizerEmails: ['tokenizer@example.com'] };
+const TOKEN_INFO = {
+  uuid: 'e2f0d0f7-0000-4000-8000-000000000000',
+  tokenSymbol: 'SUNL',
+  tokenName: 'Sunrise Lodge',
+  tokenizerEmail: 'tokenizer@example.com',
+  allowedTokenDecimals: 18,
+  initialTokenSupply: 0,
+  maxTokenSupply: 10000,
+  companyWalletAddress: `0x${'ab'.repeat(20)}`,
+};
+
+const READ_BACK = {
+  tokenSymbol: 'SUNL',
+  tokenName: 'Sunrise Lodge',
+  decimals: 18,
+  maxSupply: 10000,
+  companyWallet: `0x${'ab'.repeat(20)}`,
+};
+
+const HOLDER = `0x${'cd'.repeat(20)}`;
 
 let logDirectory: string;
 let logFile: string;
@@ -48,14 +67,14 @@ describe('the Brickken wrapper', () => {
     expect(init.headers).toEqual({ 'x-api-key': FAKE_KEY });
   });
 
-  it('returns the documented body once its shape has been checked', async () => {
+  it('reads the fields it needs and leaves the tokenizer email behind', async () => {
     respondWith(() => jsonResponse(TOKEN_INFO));
 
-    expect(await createBrickkenClient(logFile).getTokenInfo('SUNL')).toEqual(TOKEN_INFO);
+    expect(await createBrickkenClient(logFile).getTokenInfo('SUNL')).toEqual(READ_BACK);
   });
 
   it('refuses a body of the wrong shape rather than passing it on as usable state', async () => {
-    respondWith(() => jsonResponse({ tokenSymbols: 'SUNL' }));
+    respondWith(() => jsonResponse({ ...TOKEN_INFO, maxTokenSupply: '10000' }));
 
     const error = await captureError(() => createBrickkenClient(logFile).getTokenInfo('SUNL'));
 
@@ -157,5 +176,37 @@ describe('a rate limit is reported, never retried', () => {
     expect(error.kind).toBe('brickkenRateLimited');
     expect(error.message).toContain('60');
     expect(transport).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the whitelist answer is read as an answer, never as a truthy body', () => {
+  it('reports the clearance and where Brickken read it from', async () => {
+    respondWith(() =>
+      jsonResponse({ isWhitelisted: true, source: 'blockchain', tokenSymbol: 'SUNL' }),
+    );
+
+    const status = await createBrickkenClient(logFile).getWhitelistStatus('SUNL', HOLDER);
+
+    expect(status).toEqual({ isWhitelisted: true, source: 'blockchain' });
+  });
+
+  it('refuses a body that answers with anything but a yes or a no', async () => {
+    respondWith(() => jsonResponse({ isWhitelisted: 'true' }));
+
+    const error = await captureError(() =>
+      createBrickkenClient(logFile).getWhitelistStatus('SUNL', HOLDER),
+    );
+
+    expect(error.kind).toBe('brickkenUnreadable');
+  });
+
+  it('carries a refusal through rather than reading it as not whitelisted', async () => {
+    respondWith(() => jsonResponse({ message: 'nope' }, 404));
+
+    const error = await captureError(() =>
+      createBrickkenClient(logFile).getWhitelistStatus('SUNL', HOLDER),
+    );
+
+    expect(error.kind).toBe('brickkenRejected');
   });
 });

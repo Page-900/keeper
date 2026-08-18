@@ -61,6 +61,44 @@ export const CHECKS = [
       'An address in the code is not the wallet the matching key in .env signs with, or .env is missing. Nothing was sent anywhere.',
   },
   {
+    id: 'asset',
+    title: 'The token',
+    proves:
+      'The token this project acts on is really on the test network, under the symbol and the decimals its limits are written in.',
+    whenFailed: 'The token address in the code is not answering as the token this project expects.',
+  },
+  {
+    id: 'record',
+    title: "Brickken's record",
+    proves:
+      'Brickken hold this token under our own account, with the same name, supply, and decimals the code uses.',
+    whenFailed: 'Brickken describe this token differently from the way this project describes it.',
+  },
+  {
+    id: 'holding',
+    title: 'The investor holding',
+    proves:
+      'The investor wallet really holds the balance every limit in this project is measured against, and the test network says so.',
+    whenFailed:
+      'The balance on the test network is not the holding this project is written around.',
+  },
+  {
+    id: 'allowed',
+    title: 'Allowed to hold it',
+    proves:
+      'Brickken record the investor wallet as cleared to hold this token, which is the check their own contract makes before any transfer.',
+    whenFailed:
+      'The investor wallet is not cleared to hold the token, so no transfer of it can settle.',
+  },
+  {
+    id: 'allowance',
+    title: 'The spending permission',
+    proves:
+      'The investor has allowed the executor contract to move this much of the token, and it is more than the mandate ever permits, so a refused transfer is always the mandate refusing it.',
+    whenFailed:
+      'The executor is not allowed to move the token, so every agent action would fail for a reason that has nothing to do with the mandate.',
+  },
+  {
     id: 'chain',
     title: 'Live chain read',
     proves:

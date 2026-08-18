@@ -15,4 +15,6 @@ export interface RequestRecord {
   /** Whether Brickken accepted the request, not whether we could use what came back. */
   outcome: 'success' | 'failure';
   status?: number;
+  /** Their id for a prepared write. It is 32 bytes of hex, so it never rides in the path. */
+  txId?: string;
 }

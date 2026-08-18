@@ -14,6 +14,8 @@ export const ERROR_COPY = {
   readBackMismatch: 'The chain reports something other than what this project meant to write',
   alreadyDeployed: 'This contract is deployed once, and the evidence log already records that',
   artifactUnusable: 'The compiled contract could not be read',
+  brickkenUnsettled: 'Brickken has not reported a transaction hash for this write yet',
+  alreadyCreated: 'This token is created once, and the evidence log already records that',
 } as const;
 
 export type ErrorKind = keyof typeof ERROR_COPY;

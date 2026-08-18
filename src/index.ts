@@ -1,5 +1,18 @@
 export { createBrickkenClient, type BrickkenClient, type TokenInfo } from './brickken/client.js';
 export { EVIDENCE_FILE, type BrickkenSurface, type RequestRecord } from './brickken/log.js';
+export {
+  approveExecutor,
+  createToken,
+  mintHolding,
+  prepareExecutorApproval,
+  prepareHoldingMint,
+  prepareTokenCreation,
+  whitelistHolder,
+  type AmountWord,
+  type Prepared,
+  type Settlement,
+  type Tokenization,
+} from './brickken/tokenization.js';
 export { appendRecord, readRecords } from './shared/jsonl.js';
 export {
   blockNumber,
@@ -34,8 +47,14 @@ export {
   MAX_TRANSACTION_VALUE,
   PERMITTED_ACTION,
   PRINCIPAL_HOLDING,
+  HOLDER_EMAIL,
+  PRINCIPAL_HOLDING_WHOLE,
   SUNL_DECIMALS,
+  SUNL_NAME,
   SUNL_SUPPLY,
+  SUNL_SUPPLY_WHOLE,
+  SUNL_SYMBOL,
+  SUNL_TOKEN_TYPE,
   UNCAPPED,
   addressSlots,
   explorerAddress,
