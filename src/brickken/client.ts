@@ -1,7 +1,8 @@
 import { BRICKKEN_API_BASE_URL } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
+import { appendRecord } from '../shared/jsonl.js';
 import { readSecret, registerSecret, scrub, scrubError } from '../shared/secrets.js';
-import { EVIDENCE_FILE, recordRequest } from './log.js';
+import { EVIDENCE_FILE, type RequestRecord } from './log.js';
 
 const API_KEY_VARIABLE = 'BRICKKEN_API_KEY';
 
@@ -51,15 +52,17 @@ async function getJson(
   try {
     response = await fetch(url, { headers: { 'x-api-key': key } });
   } catch (cause) {
-    recordRequest(logFile, { ...attempt, outcome: 'failure' });
+    const unreachable: RequestRecord = { ...attempt, outcome: 'failure' };
+    appendRecord(logFile, unreachable);
     throw new KeeperError('brickkenUnreachable', `GET ${path}: ${scrubError(cause).message}`);
   }
 
-  recordRequest(logFile, {
+  const answered: RequestRecord = {
     ...attempt,
     outcome: response.ok ? 'success' : 'failure',
     status: response.status,
-  });
+  };
+  appendRecord(logFile, answered);
 
   // Retry-After is reported, never obeyed: this client does not retry.
   if (response.status === 429) {

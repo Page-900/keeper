@@ -1,4 +1,11 @@
-import { createPublicClient, createWalletClient, http } from 'viem';
+import {
+  createPublicClient,
+  createWalletClient,
+  getAddress,
+  http,
+  isAddress,
+  type Abi,
+} from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { sepolia } from 'viem/chains';
 
@@ -107,6 +114,18 @@ export interface OutboundTransaction {
 
 export type ConfirmationStatus = 'success' | 'reverted';
 
+/** A compiled contract, as the Solidity compiler emits it. Never written by hand. */
+export interface Artifact {
+  abi: Abi;
+  bytecode: `0x${string}`;
+}
+
+export interface Receipt {
+  status: ConfirmationStatus;
+  blockNumber: bigint;
+  contractAddress: `0x${string}` | null;
+}
+
 export async function sendTransaction(
   role: SignerRole,
   transaction: OutboundTransaction,
@@ -115,7 +134,37 @@ export async function sendTransaction(
   return withWallet(role, (wallet) => wallet.sendTransaction({ to, data, value, nonce, gas }));
 }
 
+export async function transactionReceipt(hash: `0x${string}`): Promise<Receipt> {
+  const { status, blockNumber, contractAddress } = await withReader((reader) =>
+    reader.waitForTransactionReceipt({ hash }),
+  );
+  return { status, blockNumber, contractAddress: contractAddress ?? null };
+}
+
 export async function confirmTransaction(hash: `0x${string}`): Promise<ConfirmationStatus> {
-  const receipt = await withReader((reader) => reader.waitForTransactionReceipt({ hash }));
-  return receipt.status;
+  const { status } = await transactionReceipt(hash);
+  return status;
+}
+
+export async function deployContract(
+  role: SignerRole,
+  artifact: Artifact,
+  args: readonly unknown[],
+): Promise<`0x${string}`> {
+  const { abi, bytecode } = artifact;
+  return withWallet(role, (wallet) => wallet.deployContract({ abi, bytecode, args }));
+}
+
+/** Reads a no-argument getter and refuses anything that is not an address. */
+export async function readAddress(
+  contract: `0x${string}`,
+  artifact: Artifact,
+  functionName: string,
+): Promise<`0x${string}`> {
+  const value = await withReader((reader) =>
+    reader.readContract({ address: contract, abi: artifact.abi, functionName }),
+  );
+  if (typeof value !== 'string' || !isAddress(value))
+    throw new KeeperError('readBackMismatch', `${functionName}() did not return an address`);
+  return getAddress(value);
 }

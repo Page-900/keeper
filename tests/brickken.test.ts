@@ -4,7 +4,8 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createBrickkenClient } from '../src/brickken/client.js';
-import { readRequestLog } from '../src/brickken/log.js';
+import type { RequestRecord } from '../src/brickken/log.js';
+import { readRecords } from '../src/shared/jsonl.js';
 import { captureError } from './support/capture-error.js';
 
 const FAKE_KEY = 'keeper-test-value-that-is-not-a-key-4471';
@@ -69,7 +70,7 @@ describe('the Brickken wrapper', () => {
 
     expect(error.kind).toBe('secretMissing');
     expect(transport).not.toHaveBeenCalled();
-    expect(readRequestLog(logFile)).toEqual([]);
+    expect(readRecords<RequestRecord>(logFile)).toEqual([]);
   });
 });
 
@@ -81,7 +82,7 @@ describe('what reached Brickken is provable from the log', () => {
     await client.getTokenInfo('SUNL');
     await client.getTokenInfo('SUNL');
 
-    expect(readRequestLog(logFile)).toEqual([
+    expect(readRecords<RequestRecord>(logFile)).toEqual([
       expect.objectContaining({
         surface: 'rest',
         method: 'GET',
@@ -99,7 +100,7 @@ describe('what reached Brickken is provable from the log', () => {
     const error = await captureError(() => createBrickkenClient(logFile).getTokenInfo('SUNL'));
 
     expect(error.kind).toBe('brickkenRejected');
-    expect(readRequestLog(logFile)).toEqual([
+    expect(readRecords<RequestRecord>(logFile)).toEqual([
       expect.objectContaining({ outcome: 'failure', status: 500 }),
     ]);
   });
@@ -121,7 +122,9 @@ describe('what reached Brickken is provable from the log', () => {
     const error = await captureError(() => createBrickkenClient(logFile).getTokenInfo('SUNL'));
 
     expect(error.kind).toBe('brickkenUnreachable');
-    expect(readRequestLog(logFile)).toEqual([expect.objectContaining({ outcome: 'failure' })]);
+    expect(readRecords<RequestRecord>(logFile)).toEqual([
+      expect.objectContaining({ outcome: 'failure' }),
+    ]);
   });
 
   it('redacts the tokenizer email when the API echoes it back in a refusal', async () => {
@@ -139,7 +142,7 @@ describe('what reached Brickken is provable from the log', () => {
 
     await createBrickkenClient(logFile).getTokenInfo('SUNL');
 
-    expect(JSON.stringify(readRequestLog(logFile))).not.toContain(FAKE_KEY);
+    expect(JSON.stringify(readRecords<RequestRecord>(logFile))).not.toContain(FAKE_KEY);
   });
 });
 

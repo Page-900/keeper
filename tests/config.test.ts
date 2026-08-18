@@ -10,6 +10,7 @@ import {
   UNCAPPED,
   addressSlots,
   requireAddress,
+  type AddressName,
 } from '../src/shared/config.js';
 
 describe('chain', () => {
@@ -68,11 +69,18 @@ describe('demo mandate caps', () => {
   });
 });
 
-describe('address slots, empty until onboarding issues them', () => {
-  it('starts every slot empty rather than zero-filled', () => {
-    for (const [name, value] of Object.entries(addressSlots)) {
-      expect(value, `slot ${name} should be empty`).toBeNull();
+const UNISSUED: AddressName[] = ['principal', 'agent', 'asset', 'executor'];
+
+describe('address slots, empty until onboarding issues them or a deploy fills them', () => {
+  it('leaves every slot nothing has issued empty rather than zero-filled', () => {
+    for (const name of UNISSUED) {
+      expect(addressSlots[name], `slot ${name} should be empty`).toBeNull();
     }
+  });
+
+  it('holds the two contracts that were read off the chain before anything was built on them', () => {
+    expect(requireAddress('agentMandate')).toMatch(/^0x[0-9a-fA-F]{40}$/);
+    expect(requireAddress('complianceProvider')).toMatch(/^0x[0-9a-fA-F]{40}$/);
   });
 
   it('fails closed on an unissued slot instead of returning a zero address', () => {

@@ -7,6 +7,7 @@ import {
   MAX_CUMULATIVE_VALUE,
   MAX_TRANSACTION_VALUE,
   PRINCIPAL_HOLDING,
+  requireAddress,
 } from '../src/shared/config.js';
 import * as publicApi from '../src/index.js';
 
@@ -73,6 +74,11 @@ describe('the rehearsal is measured against the numbers the agent will use', () 
       `${String(MANDATE_WINDOW_SECONDS / 86400)} days`,
     );
     expect(solidityConstant('SEPOLIA')).toBe(String(CHAIN_ID));
+  });
+
+  it('rehearses against the addresses the config module declares, never a stale copy', () => {
+    expect(solidityConstant('REGISTRY')).toBe(requireAddress('agentMandate'));
+    expect(solidityConstant('COMPLIANCE')).toBe(requireAddress('complianceProvider'));
   });
 });
 

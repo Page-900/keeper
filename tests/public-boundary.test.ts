@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -48,16 +48,48 @@ const SECRET_SHAPE: RegExp[] = [
   /\b0x[0-9a-fA-F]{64}\b/,
 ];
 
+const ANCHOR_LOG = 'evidence/chain-anchors.jsonl';
+
+/** A transaction hash is shaped exactly like a key, and it is the one we exist to publish. */
+const PUBLISHED_HASH = /"transactionHash":"0x[0-9a-fA-F]{64}"/g;
+
+const scannable = (file: string): string => {
+  const text = readFileSync(join(APP_ROOT, file), 'utf8');
+  return file === ANCHOR_LOG ? text.replace(PUBLISHED_HASH, '"transactionHash":""') : text;
+};
+
 const leakingLines = (file: string): string[] =>
-  readFileSync(join(APP_ROOT, file), 'utf8')
+  scannable(file)
     .split('\n')
     .flatMap((line, index) =>
       SECRET_SHAPE.some((pattern) => pattern.test(line)) ? [`${file}:${String(index + 1)}`] : [],
     );
 
+const ENV_FILE = join(APP_ROOT, '.env');
+
+/** Shape rules guess. This compares against the real values, on the machine that holds them. */
+const envValues = (): string[] =>
+  existsSync(ENV_FILE)
+    ? readFileSync(ENV_FILE, 'utf8')
+        .split(/\r?\n/)
+        .filter((line) => /^[A-Z][A-Z0-9_]*=/.test(line))
+        .map((line) => line.slice(line.indexOf('=') + 1).trim())
+        .filter((value) => value.length >= 16)
+    : [];
+
 describe('nothing we hold in confidence reaches git', () => {
   it('carries no real email address and no 32-byte hex secret in any tracked file', () => {
     const offenders = trackedFiles().flatMap(leakingLines);
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('carries no value from the local env file, in any shape or field', () => {
+    const secrets = envValues();
+    const offenders = trackedFiles().filter((file) => {
+      const text = readFileSync(join(APP_ROOT, file), 'utf8');
+      return secrets.some((secret) => text.includes(secret));
+    });
 
     expect(offenders).toEqual([]);
   });

@@ -7,6 +7,13 @@ export const CHAIN_ID = 11155111;
 
 export const BRICKKEN_API_BASE_URL = 'https://api.sandbox.brickken.com';
 
+const EXPLORER_BASE_URL = 'https://sepolia.etherscan.io';
+
+export const explorerTransaction = (hash: string): string => `${EXPLORER_BASE_URL}/tx/${hash}`;
+
+export const explorerAddress = (address: string): string =>
+  `${EXPLORER_BASE_URL}/address/${address}`;
+
 /** ERC-8226 reads type(uint256).max as unlimited, so a cap of zero is the strictest. */
 export const UNCAPPED = 2n ** 256n - 1n;
 
@@ -39,8 +46,8 @@ export const addressSlots: Readonly<Record<AddressName, AddressSlot>> = Object.f
   agent: null,
   asset: null,
   executor: null,
-  agentMandate: null,
-  complianceProvider: null,
+  agentMandate: '0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e',
+  complianceProvider: '0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278',
 });
 
 /** 32-byte eligibility reference issued with the principal's registration. */
