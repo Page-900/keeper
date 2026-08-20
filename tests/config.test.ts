@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CHAIN_ID,
+  MANDATE_ACTIONS,
+  MANDATE_METADATA,
   MANDATE_WINDOW_SECONDS,
+  SIGNATURE_DEADLINE_SECONDS,
+  mandateWindow,
   MAX_CUMULATIVE_VALUE,
   MAX_TRANSACTION_VALUE,
   PRINCIPAL_HOLDING,
@@ -64,9 +68,51 @@ describe('demo mandate caps', () => {
     expect(typeof MAX_CUMULATIVE_VALUE).toBe('bigint');
   });
 
-  it('fits a short window into uint48 seconds', () => {
-    expect(MANDATE_WINDOW_SECONDS).toBeGreaterThan(0);
-    expect(MANDATE_WINDOW_SECONDS).toBeLessThan(2 ** 48 - 1);
+  it('carries the window as a number, because uint48 seconds fit one exactly', () => {
+    expect(Number.isSafeInteger(MANDATE_WINDOW_SECONDS)).toBe(true);
+  });
+});
+
+const NOW = 1_780_000_000;
+
+describe('the validity window, measured where grantMandate actually reverts', () => {
+  it('puts validUntil past the current time, which is half of InvalidExpiry', () => {
+    expect(mandateWindow(NOW).validUntil).toBeGreaterThan(NOW);
+  });
+
+  it('puts validUntil past validFrom, which is the other half', () => {
+    const { validFrom, validUntil } = mandateWindow(NOW);
+    expect(validUntil).toBeGreaterThan(validFrom);
+  });
+
+  it('keeps the whole window inside uint48 seconds', () => {
+    expect(mandateWindow(NOW).validUntil).toBeLessThan(2 ** 48 - 1);
+  });
+
+  it('starts the mandate at the moment it is signed', () => {
+    expect(mandateWindow(NOW).validFrom).toBe(NOW);
+  });
+});
+
+describe('the signed action, as the executor labels it', () => {
+  it('pads the selector to 32 bytes on the right, the way bytes32(selector) casts', () => {
+    expect(MANDATE_ACTIONS).toEqual([`${PERMITTED_ACTION.selector}${'0'.repeat(56)}`]);
+  });
+
+  it('grants exactly one action, because the executor forwards exactly one call', () => {
+    expect(MANDATE_ACTIONS).toHaveLength(1);
+  });
+});
+
+describe('the optional metadata pointer', () => {
+  it('stays empty, because no off-chain legal text is published to point at', () => {
+    expect(MANDATE_METADATA).toBe(`0x${'0'.repeat(64)}`);
+  });
+});
+
+describe('the signature deadline is not the mandate lifetime', () => {
+  it('expires the signature long before the mandate it grants', () => {
+    expect(SIGNATURE_DEADLINE_SECONDS).toBeLessThan(BigInt(MANDATE_WINDOW_SECONDS));
   });
 });
 

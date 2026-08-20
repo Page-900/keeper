@@ -24,3 +24,5 @@
 {"at":"2026-08-18T20:29:54.714Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
 {"at":"2026-08-18T20:37:01.467Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
 {"at":"2026-08-18T20:37:06.440Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-19T16:42:03.593Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-19T16:42:10.950Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}

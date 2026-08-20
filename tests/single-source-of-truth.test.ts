@@ -18,6 +18,7 @@ import * as publicApi from '../src/index.js';
 const SRC = new URL('../src/', import.meta.url);
 const CONFIG = 'shared/config.ts';
 const CHAIN_CLIENT = 'chain/client.ts';
+const MANDATE = 'chain/mandate.ts';
 const BRICKKEN_CLIENT = 'brickken/client.ts';
 const TOKENIZATION = 'brickken/tokenization.ts';
 
@@ -128,10 +129,18 @@ describe('the public entry point is not a way to read secrets', () => {
 });
 
 describe('external vendors are wrapped, never called by business logic', () => {
-  it('imports viem only in the chain wrapper and the config module', () => {
+  it('imports viem only in the three modules that each own one use of it', () => {
     const offenders = sourceFiles()
-      .filter((file) => file !== CONFIG && file !== CHAIN_CLIENT)
+      .filter((file) => file !== CONFIG && file !== CHAIN_CLIENT && file !== MANDATE)
       .filter((file) => read(file).includes("from 'viem"));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('reaches the network from the chain wrapper and from nowhere else', () => {
+    const offenders = sourceFiles()
+      .filter((file) => file !== CHAIN_CLIENT)
+      .filter((file) => /createPublicClient|createWalletClient|http\(/.test(read(file)));
 
     expect(offenders).toEqual([]);
   });

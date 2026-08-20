@@ -1,5 +1,6 @@
 export const ERROR_COPY = {
   addressUnissued: 'Brickken onboarding has not issued this address yet',
+  identityRefUnissued: 'Brickken has not issued the eligibility reference for this principal yet',
   secretMissing: 'A required value is missing from app/.env',
   secretMalformed: 'A value in app/.env is not in the form this project requires',
   secretExists: 'A value in app/.env is already set, and this project never overwrites one',

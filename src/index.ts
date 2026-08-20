@@ -40,9 +40,25 @@ export {
 } from './chain/registry.js';
 export { submitSequence, type Sequence, type Submitter } from './chain/pipeline.js';
 export {
+  GRANT_MANDATE_TYPES,
+  grantMandateDigest,
+  grantMandateDomain,
+  grantMandateMessage,
+  grantMandateTypedData,
+  mandateSummary,
+  requireIdentityRef,
+  type GrantMandateMessage,
+  type MandateRow,
+} from './chain/mandate.js';
+export {
   BRICKKEN_API_BASE_URL,
   CHAIN_ID,
+  MANDATE_ACTIONS,
+  MANDATE_METADATA,
   MANDATE_WINDOW_SECONDS,
+  SIGNATURE_DEADLINE_SECONDS,
+  mandateWindow,
+  type MandateWindow,
   MAX_CUMULATIVE_VALUE,
   MAX_TRANSACTION_VALUE,
   PERMITTED_ACTION,

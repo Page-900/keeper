@@ -1,8 +1,7 @@
-import { getAddress, toFunctionSelector } from 'viem';
+import { getAddress, pad, toFunctionSelector, zeroHash } from 'viem';
 
 import { KeeperError } from './errors.js';
 
-/** Sepolia only. */
 export const CHAIN_ID = 11155111;
 
 export const BRICKKEN_API_BASE_URL = 'https://api.sandbox.brickken.com';
@@ -36,7 +35,6 @@ export const HOLDER_EMAIL = 'holder@example.com';
 
 export const PRINCIPAL_HOLDING_WHOLE = 2_000n;
 
-/** What the investor holds, and therefore the ceiling a cap has to sit under to fire. */
 export const PRINCIPAL_HOLDING = sunl(PRINCIPAL_HOLDING_WHOLE);
 
 /** Deliberately low, so a successful attack on the public demo stays cheap. */
@@ -48,6 +46,17 @@ export const MAX_CUMULATIVE_VALUE = sunl(1_000n);
 /** uint48 seconds, as the EIP defines it. */
 export const MANDATE_WINDOW_SECONDS = 30 * 24 * 60 * 60;
 
+export const SIGNATURE_DEADLINE_SECONDS = 60n * 60n;
+
+export const MANDATE_METADATA = zeroHash;
+
+export type MandateWindow = { validFrom: number; validUntil: number };
+
+/** grantMandate reverts InvalidExpiry unless validUntil is past both now and validFrom. */
+export function mandateWindow(nowSeconds: number): MandateWindow {
+  return { validFrom: nowSeconds, validUntil: nowSeconds + MANDATE_WINDOW_SECONDS };
+}
+
 const TRANSFER_FROM = 'transferFrom(address,address,uint256)';
 
 /** The only call the executor forwards. The amount is its third argument, so the index is 2. */
@@ -58,6 +67,11 @@ export const PERMITTED_ACTION = Object.freeze({
   hasAmount: true,
   amountIndex: 2,
 });
+
+/** The executor labels the action bytes32(selector), and that cast pads on the right. */
+export const MANDATE_ACTIONS: readonly `0x${string}`[] = Object.freeze([
+  pad(PERMITTED_ACTION.selector, { dir: 'right', size: 32 }),
+]);
 
 export type AddressSlot = `0x${string}` | null;
 
