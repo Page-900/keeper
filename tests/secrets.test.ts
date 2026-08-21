@@ -23,6 +23,13 @@ describe('reading a secret', () => {
     expect(readOptionalSecret('KEEPER_TEST_SECRET')).toBeUndefined();
   });
 
+  it('treats a whitespace-only variable as missing, so the scrubber never learns a space', () => {
+    vi.stubEnv('KEEPER_TEST_SECRET', '   ');
+
+    expect(readOptionalSecret('KEEPER_TEST_SECRET')).toBeUndefined();
+    expect(scrub('a b c')).toBe('a b c');
+  });
+
   it('returns the value when it is set', () => {
     vi.stubEnv('KEEPER_TEST_SECRET', FAKE_RPC_URL);
 

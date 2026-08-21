@@ -13,6 +13,8 @@
     "lint": "eslint . --max-warnings=0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "compile": "hardhat build",
+    "pretest": "npm run compile",
     "test": "vitest run",
     "test:contracts": "hardhat test solidity contracts/test/AgentExecutor.t.sol",
     "test:fork": "node --env-file-if-exists=.env node_modules/hardhat/dist/src/cli.js test solidity contracts/test/ForkRehearsal.t.sol",

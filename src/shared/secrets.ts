@@ -32,7 +32,7 @@ const asPattern = (value: string): RegExp =>
 export function readOptionalSecret(name: string): string | undefined {
   loadEnvFileOnce();
   const value = process.env[name];
-  if (value === undefined || value === '') return undefined;
+  if (value === undefined || value.trim() === '') return undefined;
   remember(value);
   return value;
 }
