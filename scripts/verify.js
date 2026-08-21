@@ -103,11 +103,27 @@ const confirmAllowance = async () => {
   return `${spender} may spend ${allowed / 10n ** 18n} ${SUNL_SYMBOL}.`;
 };
 
+const confirmWindow = async () => {
+  const { readRegistryState } = await import('../dist/chain/registry.js');
+  const { MANDATE_MUST_HOLD_UNTIL, MANDATE_MUST_HOLD_UNTIL_ISO, mandateWindow } =
+    await import('../dist/shared/config.js');
+  const state = await readRegistryState();
+  const subject = state.mandateGranted ? 'The granted mandate' : 'A mandate granted now';
+  const endsAt = state.mandateGranted
+    ? BigInt(state.mandateValidUntil)
+    : BigInt(mandateWindow(Math.floor(Date.now() / 1000)).validUntil);
+  const readable = new Date(Number(endsAt) * 1000).toISOString();
+  if (endsAt <= MANDATE_MUST_HOLD_UNTIL)
+    throw new Error(`${subject} ends at ${readable}, before ${MANDATE_MUST_HOLD_UNTIL_ISO}.`);
+  return `${subject} runs to ${readable}, past ${MANDATE_MUST_HOLD_UNTIL_ISO}.`;
+};
+
 const RUNNERS = {
   allowance: confirmAllowance,
   holding: confirmHolding,
   allowed: confirmAllowed,
   chain: readLatestBlock,
+  window: confirmWindow,
   wallets: confirmWallets,
   asset: confirmAsset,
   record: confirmRecord,

@@ -108,6 +108,7 @@ describe('the registry is asked what it holds for this project, and the answer i
       agent: AGENT,
       blockNumber: '11514300',
       mandateGranted: false,
+      mandateValidUntil: '0',
       agentFrozen: false,
       principalNonce: '0',
     });
@@ -138,6 +139,12 @@ describe('the registry is asked what it holds for this project, and the answer i
     const granted = read({ values: { getMandate: ungranted({ validUntil: 1_800_000_000 }) } });
 
     expect((await granted.run()).mandateGranted).toBe(true);
+  });
+
+  it('captures when the granted mandate ends, because that date decides if the demo is live', async () => {
+    const granted = read({ values: { getMandate: ungranted({ validUntil: 1_800_000_000 }) } });
+
+    expect((await granted.run()).mandateValidUntil).toBe('1800000000');
   });
 });
 

@@ -99,6 +99,14 @@ export const CHECKS = [
       'The executor is not allowed to move the token, so every agent action would fail for a reason that has nothing to do with the mandate.',
   },
   {
+    id: 'window',
+    title: 'The mandate window',
+    proves:
+      'The permission the investor gives would still be live on the date this demonstration has to survive to, so nobody opens a dead demo and reads it as a broken one.',
+    whenFailed:
+      'A mandate granted now would expire before that date, or the mandate already granted expires before it. Lengthen the window before granting, never after.',
+  },
+  {
     id: 'chain',
     title: 'Live chain read',
     proves:

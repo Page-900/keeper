@@ -44,7 +44,11 @@ export const MAX_TRANSACTION_VALUE = sunl(250n);
 export const MAX_CUMULATIVE_VALUE = sunl(1_000n);
 
 /** uint48 seconds, as the EIP defines it. */
-export const MANDATE_WINDOW_SECONDS = 30 * 24 * 60 * 60;
+export const MANDATE_WINDOW_SECONDS = 60 * 24 * 60 * 60;
+
+export const MANDATE_MUST_HOLD_UNTIL_ISO = '2026-09-30T23:59:59Z';
+
+export const MANDATE_MUST_HOLD_UNTIL = BigInt(Date.parse(MANDATE_MUST_HOLD_UNTIL_ISO) / 1000);
 
 export const SIGNATURE_DEADLINE_SECONDS = 60n * 60n;
 

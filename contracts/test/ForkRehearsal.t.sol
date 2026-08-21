@@ -45,7 +45,7 @@ contract ForkRehearsalTest is Test {
 
     bytes4 internal constant TRANSFER_FROM = ERC20.transferFrom.selector;
     uint8 internal constant AMOUNT_INDEX = 2;
-    uint48 internal constant WINDOW_SECONDS = 30 days;
+    uint48 internal constant WINDOW_SECONDS = 60 days;
     uint256 internal constant HOLDING = 2000e18;
     uint256 internal constant PER_TRANSACTION_CAP = 250e18;
     uint256 internal constant CUMULATIVE_CAP = 1000e18;
@@ -206,6 +206,38 @@ contract ForkRehearsalTest is Test {
             abi.encodeWithSelector(AgentExecutor.CannotExecute.selector, agent, address(asset), TRANSFER_FROM, 1)
         );
         executor.execute(address(asset), transferCall(1));
+    }
+
+    function testTheMandateStopsTheAgentOnceItsWindowHasPassed() public {
+        execute(PER_TRANSACTION_CAP);
+
+        vm.warp(mandate().validUntil + 1);
+
+        assertFalse(
+            IAgentMandate(REGISTRY).canExecute(
+                agent, principal, address(asset), bytes32(TRANSFER_FROM), PER_TRANSACTION_CAP
+            )
+        );
+
+        vm.prank(agent);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AgentExecutor.CannotExecute.selector, agent, address(asset), TRANSFER_FROM, PER_TRANSACTION_CAP
+            )
+        );
+        executor.execute(address(asset), transferCall(PER_TRANSACTION_CAP));
+
+        assertEq(asset.balanceOf(recipient), PER_TRANSACTION_CAP);
+    }
+
+    function testTheMandateStillRunsOnTheLastSecondOfItsWindow() public {
+        vm.warp(mandate().validUntil);
+
+        assertTrue(
+            IAgentMandate(REGISTRY).canExecute(
+                agent, principal, address(asset), bytes32(TRANSFER_FROM), PER_TRANSACTION_CAP
+            )
+        );
     }
 
     function testAPrincipalSignatureLetsAnyoneElseSubmitTheGrant() public {

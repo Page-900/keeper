@@ -4,6 +4,8 @@ import {
   CHAIN_ID,
   MANDATE_ACTIONS,
   MANDATE_METADATA,
+  MANDATE_MUST_HOLD_UNTIL,
+  MANDATE_MUST_HOLD_UNTIL_ISO,
   MANDATE_WINDOW_SECONDS,
   SIGNATURE_DEADLINE_SECONDS,
   mandateWindow,
@@ -91,6 +93,18 @@ describe('the validity window, measured where grantMandate actually reverts', ()
 
   it('starts the mandate at the moment it is signed', () => {
     expect(mandateWindow(NOW).validFrom).toBe(NOW);
+  });
+
+  it('reaches past the date the demo has to survive to, from any day it is granted', () => {
+    const lastDayItCouldBeGranted = Number(MANDATE_MUST_HOLD_UNTIL);
+    expect(BigInt(mandateWindow(lastDayItCouldBeGranted).validUntil)).toBeGreaterThan(
+      MANDATE_MUST_HOLD_UNTIL,
+    );
+  });
+
+  it('reads the required date as the end of September in UTC', () => {
+    expect(MANDATE_MUST_HOLD_UNTIL_ISO).toBe('2026-09-30T23:59:59Z');
+    expect(MANDATE_MUST_HOLD_UNTIL).toBe(BigInt(Date.parse(MANDATE_MUST_HOLD_UNTIL_ISO) / 1000));
   });
 });
 

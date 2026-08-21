@@ -36,6 +36,7 @@ export interface RegistryRead {
   agent: `0x${string}`;
   blockNumber: string;
   mandateGranted: boolean;
+  mandateValidUntil: string;
   agentFrozen: boolean;
   principalNonce: string;
 }
@@ -120,6 +121,7 @@ export async function readRegistryState({
     agent,
     blockNumber: String(atBlock),
     mandateGranted: asWhole(mandate['validUntil'], 'getMandate().validUntil') > 0n,
+    mandateValidUntil: String(asWhole(mandate['validUntil'], 'getMandate().validUntil')),
     agentFrozen: frozen,
     principalNonce: String(nonce),
   };
