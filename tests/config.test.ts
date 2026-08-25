@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  BRICKKEN_API_BASE_URL,
   CHAIN_ID,
   MANDATE_ACTIONS,
   MANDATE_METADATA,
@@ -179,5 +180,18 @@ describe('the one action the executor may forward', () => {
   it('gates on an amount, or the cap is switched off while every check still passes', () => {
     expect(PERMITTED_ACTION.hasAmount).not.toBe(false);
     expect(Object.isFrozen(PERMITTED_ACTION)).toBe(true);
+  });
+});
+
+describe('every call this project makes goes to the sandbox, never to the live platform', () => {
+  it('names the sandbox host, so no edit can retarget a write without failing here', () => {
+    expect(BRICKKEN_API_BASE_URL).toBe('https://api.sandbox.brickken.com');
+  });
+
+  it('keeps the host on its own subdomain, so a live host cannot pass as a sandbox one', () => {
+    const { protocol, hostname } = new URL(BRICKKEN_API_BASE_URL);
+
+    expect(protocol).toBe('https:');
+    expect(hostname.startsWith('api.sandbox.')).toBe(true);
   });
 });
