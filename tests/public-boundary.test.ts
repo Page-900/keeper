@@ -21,7 +21,10 @@ const PRIVATE_REFERENCE: RegExp[] = [
 ];
 
 const trackedFiles = (): string[] =>
-  execFileSync('git', ['ls-files'], { encoding: 'utf8', cwd: APP_ROOT })
+  execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], {
+    encoding: 'utf8',
+    cwd: APP_ROOT,
+  })
     .split('\n')
     .filter((file) => file !== '' && file !== THIS_FILE && !GENERATED.includes(file));
 
