@@ -103,7 +103,8 @@ export const typedDataDigest = (envelope: {
 
 export type MandateRow = { label: string; value: string };
 
-const whole = (amount: bigint): string => `${formatUnits(amount, SUNL_DECIMALS)} ${SUNL_SYMBOL}`;
+export const sunlAmount = (amount: bigint): string =>
+  `${formatUnits(amount, SUNL_DECIMALS)} ${SUNL_SYMBOL}`;
 
 const utc = (seconds: number | bigint): string =>
   `${new Date(Number(seconds) * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z')} UTC`;
@@ -112,8 +113,8 @@ export const mandateSummary = (message: GrantMandateMessage): MandateRow[] => [
   { label: 'Who may act', value: message.agent },
   { label: 'Whose tokens it moves', value: message.principal },
   { label: 'Which token', value: `${SUNL_SYMBOL} at ${message.asset}` },
-  { label: 'Most it may move at once', value: whole(message.maxTransactionValue) },
-  { label: 'Most it may move in total, ever', value: whole(message.maxCumulativeValue) },
+  { label: 'Most it may move at once', value: sunlAmount(message.maxTransactionValue) },
+  { label: 'Most it may move in total, ever', value: sunlAmount(message.maxCumulativeValue) },
   { label: 'The only thing it may do', value: PERMITTED_ACTION.signature },
   { label: 'Starts', value: utc(message.validFrom) },
   { label: 'Ends', value: utc(message.validUntil) },

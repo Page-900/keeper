@@ -184,6 +184,13 @@ const confirmMoved = async () => {
   return `${whole(moved)} ${SUNL_SYMBOL} moved, and the investor has ${whole(left)} left.`;
 };
 
+const confirmRefusal = async () => {
+  const { proveRefusal } = await import('../dist/chain/refusal.js');
+  const { sunlAmount } = await import('../dist/chain/mandate.js');
+  const { allowedAmount, refusedAmount, revert } = await proveRefusal();
+  return `${sunlAmount(BigInt(allowedAmount))} passes, ${sunlAmount(BigInt(refusedAmount))} is refused with ${revert.error}.`;
+};
+
 const confirmWindow = async () => {
   const { MANDATE_MUST_HOLD_UNTIL, MANDATE_MUST_HOLD_UNTIL_ISO, mandateWindow } =
     await import('../dist/shared/config.js');
@@ -207,6 +214,7 @@ const RUNNERS = {
   recorder: confirmRecorder,
   mandate: confirmMandate,
   moved: confirmMoved,
+  refusal: confirmRefusal,
   window: confirmWindow,
   wallets: confirmWallets,
   asset: confirmAsset,

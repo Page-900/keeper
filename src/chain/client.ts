@@ -1,4 +1,6 @@
 import {
+  BaseError,
+  ContractFunctionRevertedError,
   createPublicClient,
   createWalletClient,
   encodeFunctionData,
@@ -221,7 +223,46 @@ export async function readAction(
   return { supported, hasAmount, amountIndex };
 }
 
-/** Reverts with the reason the chain would give, and costs nothing, so it runs before a send. */
+export interface RevertReason {
+  error: string;
+  args: string[];
+}
+
+/** The scrubber flattens viem's error, so the custom error is decoded before it escapes. */
+export function revertReason(cause: unknown): RevertReason {
+  const reverted =
+    cause instanceof BaseError
+      ? cause.walk((error) => error instanceof ContractFunctionRevertedError)
+      : null;
+  if (!(reverted instanceof ContractFunctionRevertedError) || reverted.data === undefined)
+    throw scrubError(cause);
+  return { error: reverted.data.errorName, args: (reverted.data.args ?? []).map(String) };
+}
+
+export async function simulateRefusal(
+  role: SignerRole,
+  contract: `0x${string}`,
+  artifact: Artifact,
+  functionName: string,
+  args: readonly unknown[],
+): Promise<RevertReason | null> {
+  const account = signerAccount(role);
+  return withReader(async (reader) => {
+    try {
+      await reader.simulateContract({
+        address: contract,
+        abi: artifact.abi,
+        functionName,
+        args,
+        account,
+      });
+      return null;
+    } catch (cause) {
+      return revertReason(cause);
+    }
+  });
+}
+
 export async function simulateCall(
   role: SignerRole,
   contract: `0x${string}`,
@@ -229,10 +270,12 @@ export async function simulateCall(
   functionName: string,
   args: readonly unknown[],
 ): Promise<void> {
-  const account = signerAccount(role);
-  await withReader((reader) =>
-    reader.simulateContract({ address: contract, abi: artifact.abi, functionName, args, account }),
-  );
+  const refused = await simulateRefusal(role, contract, artifact, functionName, args);
+  if (refused !== null)
+    throw new KeeperError(
+      'actionRefused',
+      `${functionName} would revert with ${refused.error}(${refused.args.join(', ')})`,
+    );
 }
 
 export async function readValue(

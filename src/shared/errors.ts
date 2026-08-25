@@ -17,6 +17,9 @@ export const ERROR_COPY = {
   payloadMismatch: 'Brickken describe the authority differently from the way this project does',
   brickkenUnsettled: 'Brickken has not reported a transaction hash for this write yet',
   alreadyCreated: 'This token is created once, and the evidence log already records that',
+  refusalUnattributable:
+    'A refusal could not be pinned to a single published limit, so nothing was recorded',
+  actionRefused: 'This call was tried for free first and did not go through, so nothing was sent',
 } as const;
 
 export type ErrorKind = keyof typeof ERROR_COPY;

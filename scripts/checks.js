@@ -131,6 +131,14 @@ export const CHECKS = [
       'The balances on the test network and the running total in the registry do not tell the same story. One of them is not being read correctly.',
   },
   {
+    id: 'refusal',
+    title: 'The limit still refuses',
+    proves:
+      'The registry still says no to one unit more than the agent is allowed to move at once, and still says yes at the limit itself, so the refusal shown in the demonstration is the one happening right now.',
+    whenFailed:
+      'The limit is no longer refusing the amount just above it, or is refusing the amount at it. Either the mandate was changed on the chain, or something other than the limit is now blocking the agent.',
+  },
+  {
     id: 'window',
     title: 'The mandate window',
     proves:
