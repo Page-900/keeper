@@ -1,5 +1,7 @@
 import { formatUnits, hashTypedData, type TypedDataDomain } from 'viem';
 
+export type { TypedDataDomain };
+
 import {
   CHAIN_ID,
   MANDATE_ACTIONS,
@@ -10,12 +12,9 @@ import {
   SIGNATURE_DEADLINE_SECONDS,
   SUNL_DECIMALS,
   SUNL_SYMBOL,
-  identityRef,
   mandateWindow,
   requireAddress,
 } from '../shared/config.js';
-import { KeeperError } from '../shared/errors.js';
-
 export const GRANT_MANDATE_TYPES = {
   GrantMandate: [
     { name: 'agent', type: 'address' },
@@ -49,11 +48,6 @@ export type GrantMandateMessage = {
   nonce: bigint;
   deadline: bigint;
 };
-
-export function requireIdentityRef(slot: `0x${string}` | null = identityRef): `0x${string}` {
-  if (slot === null) throw new KeeperError('identityRefUnissued', 'eligibility reference');
-  return slot;
-}
 
 export const grantMandateDomain = (): TypedDataDomain => ({
   name: 'RAMS',
@@ -94,6 +88,18 @@ export const grantMandateTypedData = (message: GrantMandateMessage) => ({
 
 export const grantMandateDigest = (message: GrantMandateMessage): `0x${string}` =>
   hashTypedData(grantMandateTypedData(message));
+
+/** viem hashes a domain chainId sent as a JSON string differently from the same number. */
+export const typedDataDigest = (envelope: {
+  domain: TypedDataDomain;
+  types: Record<string, readonly { name: string; type: string }[]>;
+  primaryType: string;
+  message: Record<string, unknown>;
+}): `0x${string}` =>
+  hashTypedData({
+    ...envelope,
+    domain: { ...envelope.domain, chainId: Number(envelope.domain.chainId) },
+  });
 
 export type MandateRow = { label: string; value: string };
 

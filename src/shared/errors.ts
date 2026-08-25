@@ -1,6 +1,5 @@
 export const ERROR_COPY = {
   addressUnissued: 'Brickken onboarding has not issued this address yet',
-  identityRefUnissued: 'Brickken has not issued the eligibility reference for this principal yet',
   secretMissing: 'A required value is missing from app/.env',
   secretMalformed: 'A value in app/.env is not in the form this project requires',
   secretExists: 'A value in app/.env is already set, and this project never overwrites one',
@@ -15,6 +14,7 @@ export const ERROR_COPY = {
   readBackMismatch: 'The chain reports something other than what this project meant to write',
   alreadyDeployed: 'This contract is deployed once, and the evidence log already records that',
   artifactUnusable: 'The compiled contract could not be read',
+  payloadMismatch: 'Brickken describe the authority differently from the way this project does',
   brickkenUnsettled: 'Brickken has not reported a transaction hash for this write yet',
   alreadyCreated: 'This token is created once, and the evidence log already records that',
 } as const;

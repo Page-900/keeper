@@ -12,6 +12,12 @@ export const EXECUTOR_ARTIFACT = compiled('AgentExecutor.sol/AgentExecutor.json'
 
 export const REGISTRY_ARTIFACT = compiled('interfaces/IAgentMandate.sol/IAgentMandate.json');
 
+export const ROLES_ARTIFACT = compiled('interfaces/IMandateRoles.sol/IMandateRoles.json');
+
+export const COMPLIANCE_ARTIFACT = compiled(
+  'interfaces/IComplianceProvider.sol/IComplianceProvider.json',
+);
+
 /** The compiler is the only source of the bytecode and the interface, so neither can drift. */
 export function compiledArtifact(file: string): Artifact {
   let parsed: Partial<Artifact>;

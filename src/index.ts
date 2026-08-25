@@ -7,12 +7,32 @@ export {
   prepareExecutorApproval,
   prepareHoldingMint,
   prepareTokenCreation,
+  whitelistCounterparty,
   whitelistHolder,
   type AmountWord,
   type Prepared,
-  type Settlement,
   type Tokenization,
 } from './brickken/tokenization.js';
+export { refuseRepeat, settledHash, type Settled, type Settlement } from './brickken/settlement.js';
+export {
+  grantMandate,
+  reviewGrant,
+  type GrantRun,
+  type GrantSurface,
+  type Reviewed,
+} from './brickken/grant.js';
+export {
+  readTypedData,
+  requireSamePayload,
+  type TypedDataEnvelope,
+} from './brickken/typed-data.js';
+export {
+  prepareAgentAction,
+  sendAgentAction,
+  type ActionRun,
+  type ExecuteSurface,
+  type PreparedAction,
+} from './brickken/execute.js';
 export { appendRecord, readRecords } from './shared/jsonl.js';
 export {
   blockNumber,
@@ -25,6 +45,12 @@ export {
   type SignerRole,
 } from './chain/client.js';
 export { ANCHOR_FILE, type Anchor, type AnchorAction } from './chain/anchors.js';
+export {
+  agentCalldata,
+  firstAction,
+  simulateAgentAction,
+  type AgentAction,
+} from './chain/action.js';
 export { EXECUTOR_ARTIFACT, REGISTRY_ARTIFACT, compiledArtifact } from './chain/artifacts.js';
 export {
   deployExecutor,
@@ -46,7 +72,6 @@ export {
   grantMandateMessage,
   grantMandateTypedData,
   mandateSummary,
-  requireIdentityRef,
   type GrantMandateMessage,
   type MandateRow,
 } from './chain/mandate.js';
@@ -65,6 +90,8 @@ export {
   MAX_TRANSACTION_VALUE,
   PERMITTED_ACTION,
   PRINCIPAL_HOLDING,
+  RECORDER_ROLE,
+  COUNTERPARTY_EMAIL,
   HOLDER_EMAIL,
   PRINCIPAL_HOLDING_WHOLE,
   SUNL_DECIMALS,

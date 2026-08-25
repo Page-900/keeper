@@ -1,0 +1,120 @@
+import { agentCalldata, firstAction, type AgentAction } from '../chain/action.js';
+import { ANCHOR_FILE, confirmAnchor, type AnchorAction } from '../chain/anchors.js';
+import { transactionReceipt, type Receipt } from '../chain/client.js';
+import { CHAIN_ID, requireAddress } from '../shared/config.js';
+import { KeeperError } from '../shared/errors.js';
+import { appendRecord } from '../shared/jsonl.js';
+import { scrubError } from '../shared/secrets.js';
+import { createBrickkenClient, type TransactionStatus } from './client.js';
+import { EVIDENCE_FILE, type RequestRecord } from './log.js';
+import {
+  PREPARE_PATH,
+  sdkClient,
+  type ExecuteInput,
+  type UnsignedTransactionLike,
+  type WriteOptions,
+  type WriteResult,
+} from './sdk.js';
+import { refuseRepeat, settledHash, type Settlement } from './settlement.js';
+
+/** The agent spends the authority; the principal only ever grants it. */
+const SIGNER = 'agent' as const;
+
+const ACTION: AnchorAction = 'agent-action';
+
+export interface ExecuteSurface {
+  execute: (input: ExecuteInput, options: WriteOptions) => Promise<WriteResult>;
+  settled: (txId: string) => Promise<TransactionStatus>;
+}
+
+const SURFACE: ExecuteSurface = {
+  execute: (input, options) => sdkClient(SIGNER).rams.execute(input, options),
+  settled: (txId) => createBrickkenClient().getTransactionStatus(txId),
+};
+
+const executeInput = ({ to, amount }: AgentAction): ExecuteInput => ({
+  chainId: CHAIN_ID,
+  agentMandateAddress: requireAddress('agentMandate'),
+  executorAddress: requireAddress('executor'),
+  asset: requireAddress('asset'),
+  from: requireAddress('principal'),
+  to,
+  amount: String(amount),
+});
+
+async function recorded<T>(file: string, run: () => Promise<T>): Promise<T> {
+  const attempt = { at: new Date().toISOString(), surface: 'sdk', method: 'ramsExecute' } as const;
+  const record = (outcome: RequestRecord['outcome']): RequestRecord => ({
+    ...attempt,
+    path: PREPARE_PATH,
+    outcome,
+  });
+  try {
+    const value = await run();
+    appendRecord(file, record('success'));
+    return value;
+  } catch (cause) {
+    appendRecord(file, record('failure'));
+    throw scrubError(cause);
+  }
+}
+
+export interface PreparedAction {
+  txId: string;
+  transactions: UnsignedTransactionLike[];
+  carriesOurCall: boolean;
+}
+
+const options = (execute: boolean): WriteOptions => ({
+  execute,
+  signerAddress: requireAddress('agent'),
+});
+
+/** Preparing is free and sending is one-shot, so what they would send is read first. */
+export async function prepareAgentAction(
+  action: AgentAction = firstAction(),
+  surface: ExecuteSurface = SURFACE,
+  file: string = EVIDENCE_FILE,
+): Promise<PreparedAction> {
+  const { txId, transactions } = await recorded(file, () =>
+    surface.execute(executeInput(action), options(false)),
+  );
+  if (txId === '' || transactions.length === 0)
+    throw new KeeperError('brickkenUnreadable', 'the prepare returned no transaction to sign');
+  const wanted = agentCalldata(action.to, action.amount).slice(2).toLowerCase();
+  const calldata = transactions
+    .map((transaction) => transaction.data)
+    .join('')
+    .toLowerCase();
+  return { txId, transactions, carriesOurCall: calldata.includes(wanted) };
+}
+
+export interface ActionRun {
+  action?: AgentAction;
+  surface?: ExecuteSurface;
+  anchors?: string;
+  file?: string;
+  receipt?: (hash: `0x${string}`) => Promise<Receipt>;
+}
+
+export async function sendAgentAction({
+  action = firstAction(),
+  surface = SURFACE,
+  anchors = ANCHOR_FILE,
+  file = EVIDENCE_FILE,
+  receipt = transactionReceipt,
+}: ActionRun = {}): Promise<Settlement> {
+  refuseRepeat(ACTION, anchors);
+  const prepared = await prepareAgentAction(action, surface, file);
+  if (!prepared.carriesOurCall)
+    throw new KeeperError('payloadMismatch', 'the prepared call is not the transfer we asked for');
+
+  const result = await recorded(file, () => surface.execute(executeInput(action), options(true)));
+  if (result.sent === undefined)
+    throw new KeeperError('writeUnconfirmed', 'the action prepared but never sent');
+
+  const transactionHash = await settledHash(surface, result.txId);
+  const { status } = await confirmAnchor(ACTION, transactionHash, { file: anchors, receipt });
+  if (status !== 'success') throw new KeeperError('writeUnconfirmed', `the action is ${status}`);
+  return { txId: result.txId, transactionHash };
+}

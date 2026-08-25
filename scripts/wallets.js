@@ -1,6 +1,6 @@
 import { createSignerKey } from '../dist/chain/client.js';
 
-const ROLES = ['principal', 'agent'];
+const ROLES = ['principal', 'agent', 'counterparty'];
 
 const print = (text) => process.stdout.write(`${text}\n`);
 

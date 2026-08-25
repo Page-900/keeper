@@ -1,6 +1,6 @@
 import {
-  Brickken,
   PREPARE_PATH,
+  sdkClient,
   type ApproveInput,
   type CreateTokenizationInput,
   type MintTokenInput,
@@ -8,15 +8,14 @@ import {
   type WhitelistInput,
   type WriteOptions,
   type WriteResult,
-} from 'brickken-sdk';
-import { fromPrivateKey } from 'brickken-sdk/adapters/private-key';
+} from './sdk.js';
 
-import { ANCHOR_FILE, confirmAnchor, type Anchor, type AnchorAction } from '../chain/anchors.js';
-import { signerAddress, signerKey, transactionReceipt } from '../chain/client.js';
+import { ANCHOR_FILE, confirmAnchor, type AnchorAction } from '../chain/anchors.js';
+import { signerAddress, transactionReceipt } from '../chain/client.js';
 import type { Receipt, SignerRole } from '../chain/client.js';
 import {
-  BRICKKEN_API_BASE_URL,
   CHAIN_ID,
+  COUNTERPARTY_EMAIL,
   HOLDER_EMAIL,
   PRINCIPAL_HOLDING,
   PRINCIPAL_HOLDING_WHOLE,
@@ -28,28 +27,20 @@ import {
   requireAddress,
 } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
-import { appendRecord, readRecords } from '../shared/jsonl.js';
+import { appendRecord } from '../shared/jsonl.js';
 import { readSecret, scrubError } from '../shared/secrets.js';
 import {
-  API_KEY_VARIABLE,
   TOKENIZER_EMAIL_VARIABLE,
   createBrickkenClient,
   type TransactionStatus,
 } from './client.js';
 import { EVIDENCE_FILE, type RequestRecord } from './log.js';
+import { refuseRepeat, settledHash, type Settlement } from './settlement.js';
 
 /** Whoever creates the token keeps its mint and whitelist powers for life, so never the agent. */
 const TOKENIZER: SignerRole = 'principal';
 
-const NO_RETRY = { attempts: 1, baseDelayMs: 0, jitter: false };
-
-const sandboxClient = (): Brickken =>
-  new Brickken({
-    baseUrl: BRICKKEN_API_BASE_URL,
-    apiKey: readSecret(API_KEY_VARIABLE),
-    signer: fromPrivateKey(signerKey(TOKENIZER)),
-    retry: NO_RETRY,
-  });
+const sandboxClient = () => sdkClient(TOKENIZER);
 
 export interface Tokenization {
   create: (input: CreateTokenizationInput, options: WriteOptions) => Promise<WriteResult>;
@@ -81,13 +72,17 @@ const creationInput = (sandbox: Tokenization): CreateTokenizationInput => ({
   tokenizerAddress: sandbox.tokenizer(),
 });
 
-const whitelistInput = (sandbox: Tokenization): WhitelistInput => ({
+const clearanceFor = (address: `0x${string}`, email: string): WhitelistInput => ({
   chainId: CHAIN_ID,
   tokenSymbol: SUNL_SYMBOL,
-  userToWhitelist: [
-    { investorAddress: sandbox.tokenizer(), investorEmail: HOLDER_EMAIL, whitelistStatus: true },
-  ],
+  userToWhitelist: [{ investorAddress: address, investorEmail: email, whitelistStatus: true }],
 });
+
+const whitelistInput = (sandbox: Tokenization): WhitelistInput =>
+  clearanceFor(sandbox.tokenizer(), HOLDER_EMAIL);
+
+const counterpartyInput = (): WhitelistInput =>
+  clearanceFor(requireAddress('counterparty'), COUNTERPARTY_EMAIL);
 
 /** needWhitelist is false because the whitelist is its own confirmed write, never a side effect. */
 const mintInput = (sandbox: Tokenization): MintTokenInput => ({
@@ -198,26 +193,6 @@ export const prepareHoldingMint = (run: WriteRun = {}): Promise<Prepared> =>
     scaled: PRINCIPAL_HOLDING,
   });
 
-export interface Settlement {
-  txId: string;
-  transactionHash: `0x${string}`;
-}
-
-/** The hash a send reports back is not the hash that mines, so their records are asked instead. */
-async function settledHash(sandbox: Tokenization, txId: string): Promise<`0x${string}`> {
-  const { status, transactionHash } = await sandbox.settled(txId);
-  if (status === 'rejected') throw new KeeperError('writeUnconfirmed', `Brickken rejected ${txId}`);
-  if (transactionHash === null) throw new KeeperError('brickkenUnsettled', txId);
-  return transactionHash;
-}
-
-function refuseRepeat(action: AnchorAction, anchors: string): void {
-  const already = readRecords<Anchor>(anchors).find(
-    (anchor) => anchor.action === action && anchor.status === 'success',
-  );
-  if (already !== undefined) throw new KeeperError('alreadyCreated', `${action} at ${already.at}`);
-}
-
 async function sendAndConfirm(
   action: AnchorAction,
   method: Method,
@@ -253,6 +228,12 @@ export const createToken = (run: WriteRun = {}): Promise<Settlement> =>
 export const whitelistHolder = (run: WriteRun = {}): Promise<Settlement> =>
   sendAndConfirm('whitelist-holder', 'whitelist', run, (sandbox, options) =>
     sandbox.whitelist(whitelistInput(sandbox), options),
+  );
+
+/** A transfer to an uncleared address fails at the token layer, which is not the mandate. */
+export const whitelistCounterparty = (run: WriteRun = {}): Promise<Settlement> =>
+  sendAndConfirm('whitelist-counterparty', 'whitelist', run, (sandbox, options) =>
+    sandbox.whitelist(counterpartyInput(), options),
   );
 
 export const mintHolding = (run: WriteRun = {}): Promise<Settlement> =>

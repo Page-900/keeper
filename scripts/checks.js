@@ -56,7 +56,7 @@ export const CHECKS = [
     id: 'wallets',
     title: 'Wallet addresses',
     proves:
-      'The principal and agent addresses this project publishes are the two wallets it can really sign with.',
+      'Every wallet address this project publishes is one it can really sign with, and not a number typed into a file.',
     whenFailed:
       'An address in the code is not the wallet the matching key in .env signs with, or .env is missing. Nothing was sent anywhere.',
   },
@@ -78,9 +78,9 @@ export const CHECKS = [
     id: 'holding',
     title: 'The investor holding',
     proves:
-      'The investor wallet really holds the balance every limit in this project is measured against, and the test network says so.',
+      'The investor wallet holds what it started with, less exactly what the agent has spent, and the test network says so.',
     whenFailed:
-      'The balance on the test network is not the holding this project is written around.',
+      'The balance on the test network is not the starting holding less what the registry says the agent spent.',
   },
   {
     id: 'allowed',
@@ -94,9 +94,41 @@ export const CHECKS = [
     id: 'allowance',
     title: 'The spending permission',
     proves:
-      'The investor has allowed the executor contract to move this much of the token, and it is more than the mandate ever permits, so a refused transfer is always the mandate refusing it.',
+      'The executor is still allowed to move more of the token than the mandate has left to give, so a refused transfer is always the mandate refusing it and never the permission running out.',
     whenFailed:
       'The executor is not allowed to move the token, so every agent action would fail for a reason that has nothing to do with the mandate.',
+  },
+  {
+    id: 'eligibility',
+    title: 'Cleared to be represented',
+    proves:
+      "Brickken's own compliance contract answers that the investor wallet is eligible under the exact reference they issued, which is the check their registry makes before it will accept a mandate at all.",
+    whenFailed:
+      'The compliance contract does not answer eligible for this wallet and this reference. A mandate granted now would be refused, and no agent action could follow.',
+  },
+  {
+    id: 'recorder',
+    title: 'Allowed to record',
+    proves:
+      'The registry lets our executor contract record what the agent spends, which is what keeps the running total honest.',
+    whenFailed:
+      'The executor cannot record, so an allowed action would still fail, after the mandate had already permitted it. That reads as a broken mandate and is not one.',
+  },
+  {
+    id: 'mandate',
+    title: 'The granted authority',
+    proves:
+      'The permission that is really on the test network is the one the investor approved: that agent, that token, that one action, those two limits, and not revoked.',
+    whenFailed:
+      'The mandate on the chain is not the one this project describes. Nothing here is safe to demonstrate until the two agree.',
+  },
+  {
+    id: 'moved',
+    title: 'What the agent moved',
+    proves:
+      "The tokens the agent moved really left the investor and arrived at the counterparty, and the registry's own running total agrees with the amount.",
+    whenFailed:
+      'The balances on the test network and the running total in the registry do not tell the same story. One of them is not being read correctly.',
   },
   {
     id: 'window',

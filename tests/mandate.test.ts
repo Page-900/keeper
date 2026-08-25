@@ -8,7 +8,6 @@ import {
   grantMandateMessage,
   grantMandateTypedData,
   mandateSummary,
-  requireIdentityRef,
 } from '../src/chain/mandate.js';
 import {
   MANDATE_ACTIONS,
@@ -16,7 +15,6 @@ import {
   MAX_TRANSACTION_VALUE,
   requireAddress,
 } from '../src/shared/config.js';
-import { KeeperError } from '../src/shared/errors.js';
 
 const NOW = 1_780_000_000;
 const REF = `0x${'ab'.repeat(32)}` as const;
@@ -83,17 +81,6 @@ describe('the digest moves when the bound moves', () => {
   it('changes when the nonce changes, so a signature cannot be replayed', () => {
     const replayed = { ...message(), nonce: 1n };
     expect(grantMandateDigest(replayed)).not.toBe(grantMandateDigest(message()));
-  });
-});
-
-describe('nothing is signed before Brickken issue the eligibility reference', () => {
-  it('refuses while the reference is unissued, and says which value is missing', () => {
-    expect(() => requireIdentityRef(null)).toThrow(KeeperError);
-    expect(() => requireIdentityRef(null)).toThrow(/eligibility reference/);
-  });
-
-  it('returns the reference once one exists', () => {
-    expect(requireIdentityRef(REF)).toBe(REF);
   });
 });
 

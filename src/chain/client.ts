@@ -1,6 +1,7 @@
 import {
   createPublicClient,
   createWalletClient,
+  encodeFunctionData,
   erc20Abi,
   getAddress,
   http,
@@ -21,12 +22,13 @@ import {
   writeSecret,
 } from '../shared/secrets.js';
 
-/** The principal grants and revokes; the agent is msg.sender into the executor. */
-export type SignerRole = 'principal' | 'agent';
+/** The principal grants authority, the agent spends it, the counterparty only receives. */
+export type SignerRole = 'principal' | 'agent' | 'counterparty';
 
 const KEY_VARIABLE: Record<SignerRole, string> = {
   principal: 'PRINCIPAL_PRIVATE_KEY',
   agent: 'AGENT_PRIVATE_KEY',
+  counterparty: 'COUNTERPARTY_PRIVATE_KEY',
 };
 
 const isPrivateKey = (value: string): value is `0x${string}` => /^0x[0-9a-fA-F]{64}$/.test(value);
@@ -103,11 +105,26 @@ export function createSignerKey(role: SignerRole): `0x${string}` {
   return privateKeyToAccount(stored).address;
 }
 
+export interface TypedDataRequest {
+  domain: Record<string, unknown>;
+  types: Record<string, readonly { name: string; type: string }[]>;
+  primaryType: string;
+  message: Record<string, unknown>;
+}
+
+export async function signTypedDataAs(
+  role: SignerRole,
+  request: TypedDataRequest,
+): Promise<`0x${string}`> {
+  return withWallet(role, (wallet) =>
+    wallet.signTypedData(request as Parameters<typeof wallet.signTypedData>[0]),
+  );
+}
+
 export async function blockNumber(): Promise<bigint> {
   return withReader((reader) => reader.getBlockNumber());
 }
 
-/** One transaction as Brickken prepares it. */
 export interface OutboundTransaction {
   to: `0x${string}`;
   data: `0x${string}`;
@@ -204,6 +221,20 @@ export async function readAction(
   return { supported, hasAmount, amountIndex };
 }
 
+/** Reverts with the reason the chain would give, and costs nothing, so it runs before a send. */
+export async function simulateCall(
+  role: SignerRole,
+  contract: `0x${string}`,
+  artifact: Artifact,
+  functionName: string,
+  args: readonly unknown[],
+): Promise<void> {
+  const account = signerAccount(role);
+  await withReader((reader) =>
+    reader.simulateContract({ address: contract, abi: artifact.abi, functionName, args, account }),
+  );
+}
+
 export async function readValue(
   contract: `0x${string}`,
   artifact: Artifact,
@@ -222,7 +253,6 @@ export async function readValue(
   );
 }
 
-/** Reads a no-argument getter and refuses anything that is not an address. */
 export async function readAddress(
   contract: `0x${string}`,
   artifact: Artifact,
@@ -265,6 +295,14 @@ export async function readTokenBalance(
     }),
   );
 }
+
+/** The only transferFrom calldata this project builds, so no caller hand-rolls a selector. */
+export const transferCalldata = (
+  from: `0x${string}`,
+  to: `0x${string}`,
+  amount: bigint,
+): `0x${string}` =>
+  encodeFunctionData({ abi: erc20Abi, functionName: 'transferFrom', args: [from, to, amount] });
 
 export async function readTokenAllowance(
   contract: `0x${string}`,

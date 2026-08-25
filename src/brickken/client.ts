@@ -133,6 +133,8 @@ export interface BrickkenClient {
   getTokenInfo(tokenSymbol: string): Promise<TokenInfo>;
   getTransactionStatus(txId: string): Promise<TransactionStatus>;
   getWhitelistStatus(tokenSymbol: string, investorAddress: string): Promise<WhitelistStatus>;
+  getRamsStatus(query: Record<string, string>): Promise<unknown>;
+  getGrantMandateTypedData(query: Record<string, string>): Promise<unknown>;
 }
 
 /** The only door to Brickken. */
@@ -159,6 +161,12 @@ export function createBrickkenClient(logFile: string = EVIDENCE_FILE): BrickkenC
       const path = '/get-transaction-status';
       const body = await getJson(logFile, path, { txId }, { path, txId });
       return readStatus(body);
+    },
+    getRamsStatus(query) {
+      return getJson(logFile, '/rams/status', { ...query });
+    },
+    getGrantMandateTypedData(query) {
+      return getJson(logFile, '/rams/typed-data/grant-mandate', query);
     },
   };
 }

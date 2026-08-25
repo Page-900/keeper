@@ -20,7 +20,7 @@ const CONFIG = 'shared/config.ts';
 const CHAIN_CLIENT = 'chain/client.ts';
 const MANDATE = 'chain/mandate.ts';
 const BRICKKEN_CLIENT = 'brickken/client.ts';
-const TOKENIZATION = 'brickken/tokenization.ts';
+const SDK = 'brickken/sdk.ts';
 
 const read = (file: string): string => readFileSync(new URL(file, SRC), 'utf8');
 
@@ -154,7 +154,7 @@ describe('external vendors are wrapped, never called by business logic', () => {
 
   it('imports the Brickken SDK only in the module that wraps it', () => {
     const offenders = sourceFiles()
-      .filter((file) => file !== TOKENIZATION)
+      .filter((file) => file !== SDK)
       .filter((file) => read(file).includes("from 'brickken-sdk"));
 
     expect(offenders).toEqual([]);

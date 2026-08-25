@@ -9,7 +9,7 @@ const readLatestBlock = async () => {
   return `Read block ${await blockNumber()}.`;
 };
 
-const ROLES = ['principal', 'agent'];
+const ROLES = ['principal', 'agent', 'counterparty'];
 
 const confirmWallets = async () => {
   const { signerAddress } = await import('../dist/chain/client.js');
@@ -20,7 +20,7 @@ const confirmWallets = async () => {
     if (signer !== published)
       throw new Error(`The ${role} key signs as ${signer}, and the code publishes ${published}.`);
   }
-  return `Both wallets match.`;
+  return `All ${ROLES.length} wallets match.`;
 };
 
 const confirmAsset = async () => {
@@ -63,11 +63,12 @@ const confirmHolding = async () => {
     await import('../dist/shared/config.js');
   const holder = requireAddress('principal');
   const held = await readTokenBalance(requireAddress('asset'), holder);
-  if (held !== PRINCIPAL_HOLDING)
+  const spent = BigInt((await registryState()).cumulativeUsed);
+  if (held !== PRINCIPAL_HOLDING - spent)
     throw new Error(
-      `${holder} holds ${held} base units, and this project is written around ${PRINCIPAL_HOLDING}.`,
+      `${holder} holds ${held} base units, and the holding minus what the agent spent is ${PRINCIPAL_HOLDING - spent}.`,
     );
-  return `${holder} holds ${held / 10n ** 18n} ${SUNL_SYMBOL}.`;
+  return `${holder} holds ${held / 10n ** 18n} ${SUNL_SYMBOL} of the ${PRINCIPAL_HOLDING / 10n ** 18n} it started with.`;
 };
 
 const confirmAllowed = async () => {
@@ -92,22 +93,101 @@ const confirmAllowance = async () => {
     requireAddress('principal'),
     spender,
   );
-  if (allowed !== PRINCIPAL_HOLDING)
+  const spent = BigInt((await registryState()).cumulativeUsed);
+  if (allowed !== PRINCIPAL_HOLDING - spent)
     throw new Error(
-      `The executor may spend ${allowed} base units, and this project approved ${PRINCIPAL_HOLDING}.`,
+      `The executor may spend ${allowed} base units, and the approval minus what it has spent is ${PRINCIPAL_HOLDING - spent}.`,
     );
-  if (allowed <= MAX_CUMULATIVE_VALUE)
+  if (allowed <= MAX_CUMULATIVE_VALUE - spent)
     throw new Error(
-      'The permission is not above the mandate total, so a refusal could not be attributed.',
+      'The permission is not above what the mandate still allows, so a refusal could not be attributed.',
     );
-  return `${spender} may spend ${allowed / 10n ** 18n} ${SUNL_SYMBOL}.`;
+  return `${spender} may still spend ${allowed / 10n ** 18n} ${SUNL_SYMBOL}, above the ${(MAX_CUMULATIVE_VALUE - spent) / 10n ** 18n} the mandate has left.`;
+};
+
+let reading;
+
+/** One read serves every row below it, so the table describes a single block. */
+const registryState = async () => {
+  const { readRegistryState } = await import('../dist/chain/registry.js');
+  reading ??= readRegistryState();
+  return reading;
+};
+
+const confirmEligibility = async () => {
+  const state = await registryState();
+  if (!state.principalEligible)
+    throw new Error(
+      `The compliance contract answers reason code ${state.eligibilityReason} for ${state.principal}.`,
+    );
+  const expiry =
+    state.eligibilityExpiresAt === '0'
+      ? 'with no expiry, so there is nothing to renew'
+      : `until ${new Date(Number(state.eligibilityExpiresAt) * 1000).toISOString()}`;
+  return `${state.principal} is eligible, ${expiry}.`;
+};
+
+const confirmRecorder = async () => {
+  const state = await registryState();
+  if (!state.executorMayRecord)
+    throw new Error(`The registry does not let ${state.executor} record an execution.`);
+  return `${state.executor} may record.`;
+};
+
+const confirmMandate = async () => {
+  const {
+    MANDATE_ACTIONS,
+    MAX_CUMULATIVE_VALUE,
+    MAX_TRANSACTION_VALUE,
+    SUNL_SYMBOL,
+    requireAddress,
+  } = await import('../dist/shared/config.js');
+  const state = await registryState();
+  if (!state.mandateGranted)
+    throw new Error('No mandate is granted, so there is nothing to check.');
+  const expected = {
+    'the agent': [state.mandateAgent, requireAddress('agent')],
+    'the token': [state.mandateAsset, requireAddress('asset')],
+    'the per-transfer limit': [state.maxTransactionValue, String(MAX_TRANSACTION_VALUE)],
+    'the total limit': [state.maxCumulativeValue, String(MAX_CUMULATIVE_VALUE)],
+  };
+  for (const [what, [found, meant]] of Object.entries(expected)) {
+    if (String(found).toLowerCase() !== String(meant).toLowerCase())
+      throw new Error(`The chain reports ${what} as ${found}, and this project uses ${meant}.`);
+  }
+  if (state.mandateRevoked) throw new Error('The mandate on the chain is revoked.');
+  if (!state.actionEnabled)
+    throw new Error(`The chain does not have ${MANDATE_ACTIONS[0]} enabled on the mandate.`);
+  const spent = BigInt(state.cumulativeUsed) / 10n ** 18n;
+  const total = MAX_CUMULATIVE_VALUE / 10n ** 18n;
+  return `One action, ${MAX_TRANSACTION_VALUE / 10n ** 18n} ${SUNL_SYMBOL} at a time, ${spent} of ${total} used.`;
+};
+
+const confirmMoved = async () => {
+  const { readTokenBalance } = await import('../dist/chain/client.js');
+  const { PRINCIPAL_HOLDING, SUNL_DECIMALS, SUNL_SYMBOL, requireAddress } =
+    await import('../dist/shared/config.js');
+  const state = await registryState();
+  const asset = requireAddress('asset');
+  const moved = BigInt(state.cumulativeUsed);
+  const held = await readTokenBalance(asset, requireAddress('counterparty'));
+  const left = await readTokenBalance(asset, requireAddress('principal'));
+  const whole = (amount) => amount / 10n ** BigInt(SUNL_DECIMALS);
+  if (held !== moved)
+    throw new Error(
+      `The counterparty holds ${whole(held)} and the registry recorded ${whole(moved)} as spent.`,
+    );
+  if (left !== PRINCIPAL_HOLDING - moved)
+    throw new Error(
+      `The investor holds ${whole(left)}, and ${whole(PRINCIPAL_HOLDING)} less ${whole(moved)} is not that.`,
+    );
+  return `${whole(moved)} ${SUNL_SYMBOL} moved, and the investor has ${whole(left)} left.`;
 };
 
 const confirmWindow = async () => {
-  const { readRegistryState } = await import('../dist/chain/registry.js');
   const { MANDATE_MUST_HOLD_UNTIL, MANDATE_MUST_HOLD_UNTIL_ISO, mandateWindow } =
     await import('../dist/shared/config.js');
-  const state = await readRegistryState();
+  const state = await registryState();
   const subject = state.mandateGranted ? 'The granted mandate' : 'A mandate granted now';
   const endsAt = state.mandateGranted
     ? BigInt(state.mandateValidUntil)
@@ -123,6 +203,10 @@ const RUNNERS = {
   holding: confirmHolding,
   allowed: confirmAllowed,
   chain: readLatestBlock,
+  eligibility: confirmEligibility,
+  recorder: confirmRecorder,
+  mandate: confirmMandate,
+  moved: confirmMoved,
   window: confirmWindow,
   wallets: confirmWallets,
   asset: confirmAsset,

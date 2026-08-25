@@ -1,4 +1,4 @@
-import { getAddress, pad, toFunctionSelector, zeroHash } from 'viem';
+import { getAddress, keccak256, pad, toFunctionSelector, toHex, zeroHash } from 'viem';
 
 import { KeeperError } from './errors.js';
 
@@ -33,6 +33,8 @@ export const SUNL_SUPPLY = sunl(SUNL_SUPPLY_WHOLE);
 /** Brickken require the holder's identity to differ from the issuer's, so it is invented. */
 export const HOLDER_EMAIL = 'holder@example.com';
 
+export const COUNTERPARTY_EMAIL = 'counterparty@example.com';
+
 export const PRINCIPAL_HOLDING_WHOLE = 2_000n;
 
 export const PRINCIPAL_HOLDING = sunl(PRINCIPAL_HOLDING_WHOLE);
@@ -43,7 +45,6 @@ export const MAX_TRANSACTION_VALUE = sunl(250n);
 /** Lifetime total across the whole window, never a monthly or rolling allowance. */
 export const MAX_CUMULATIVE_VALUE = sunl(1_000n);
 
-/** uint48 seconds, as the EIP defines it. */
 export const MANDATE_WINDOW_SECONDS = 60 * 24 * 60 * 60;
 
 export const MANDATE_MUST_HOLD_UNTIL_ISO = '2026-09-30T23:59:59Z';
@@ -80,9 +81,16 @@ export const MANDATE_ACTIONS: readonly `0x${string}`[] = Object.freeze([
 export type AddressSlot = `0x${string}` | null;
 
 export type AddressName =
-  'principal' | 'agent' | 'asset' | 'executor' | 'agentMandate' | 'complianceProvider';
+  | 'counterparty'
+  | 'principal'
+  | 'agent'
+  | 'asset'
+  | 'executor'
+  | 'agentMandate'
+  | 'complianceProvider';
 
 export const addressSlots: Readonly<Record<AddressName, AddressSlot>> = Object.freeze({
+  counterparty: '0xd34B78Ff018835b7124FCf347a319A788d2DC71E',
   principal: '0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc',
   agent: '0x29d78c8c5E7ad231a21A64170cA07e419f0C5aBa',
   asset: '0x2ae3bb75ab04957ae3b8944094bc9e96d33db255',
@@ -91,8 +99,12 @@ export const addressSlots: Readonly<Record<AddressName, AddressSlot>> = Object.f
   complianceProvider: '0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278',
 });
 
-/** 32-byte eligibility reference issued with the principal's registration. */
-export const identityRef: `0x${string}` | null = null;
+/** recordExecution is refused unless the caller holds this role, which only Brickken can grant. */
+export const RECORDER_ROLE = keccak256(toHex('RECORDER_ROLE'));
+
+/** Issued by Brickken with the principal's compliance record, and used exactly as issued. */
+export const identityRef: `0x${string}` =
+  '0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0';
 
 /** Throws rather than yielding a zero address that reverts later. */
 export function requireAddress(

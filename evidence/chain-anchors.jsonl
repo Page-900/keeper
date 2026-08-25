@@ -5,3 +5,6 @@
 {"at":"2026-08-18T20:08:29.469Z","chainId":11155111,"action":"whitelist-holder","transactionHash":"0x7e14574056150ff1ec54a21131e5867648c05730168989fca0c2589a1961014b","blockNumber":"11517299","status":"success","contract":null}
 {"at":"2026-08-18T20:09:40.938Z","chainId":11155111,"action":"mint-holding","transactionHash":"0x1b08fb09b2fcf0656bdfd16938208061876b423cc96d8cd7cf55247d677d5540","blockNumber":"11517305","status":"success","contract":null}
 {"at":"2026-08-18T20:27:28.581Z","chainId":11155111,"action":"approve-executor","transactionHash":"0xada927ae9e468df7f6192341aee7dcefc8c8b19de3529a9dbc675581bdc4f868","blockNumber":"11517391","status":"success","contract":null}
+{"at":"2026-08-24T16:42:26.964Z","chainId":11155111,"action":"grant-mandate","transactionHash":"0x76a992afc0964eae5bb4bd0ab181e5c27662062a9f0f0c1c9fce122c98660126","blockNumber":"11558285","status":"success","contract":null}
+{"at":"2026-08-24T17:21:05.760Z","chainId":11155111,"action":"whitelist-counterparty","transactionHash":"0xe6b82e423b77f195fe5efb2715a85cc8d37ff123c8238a7f96e3566f4c120d83","blockNumber":"11558473","status":"success","contract":null}
+{"at":"2026-08-24T17:27:05.644Z","chainId":11155111,"action":"agent-action","transactionHash":"0xc3bdffe39a969c2b4ce41ce345ef569bc6a462c6399a299d8077fc53ce7c88e8","blockNumber":"11558501","status":"success","contract":null}

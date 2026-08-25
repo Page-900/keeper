@@ -18,6 +18,9 @@ try {
   print(`  agentFrozen     ${state.agentFrozen}`);
   print(`  principalNonce  ${state.principalNonce}`);
   print('');
+  print(`  eligible        ${state.principalEligible} (reason ${state.eligibilityReason})`);
+  print(`  mayRecord       ${state.executorMayRecord}`);
+  print('');
   print('The executor on the chain names this project principal, and the state above is captured.');
 } catch (cause) {
   print(`  not read: ${cause instanceof Error ? cause.message : cause}`);

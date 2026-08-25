@@ -14,8 +14,11 @@ export type AnchorAction =
   | 'register-action'
   | 'create-token'
   | 'whitelist-holder'
+  | 'whitelist-counterparty'
   | 'mint-holding'
-  | 'approve-executor';
+  | 'approve-executor'
+  | 'grant-mandate'
+  | 'agent-action';
 
 export interface Anchor {
   at: string;

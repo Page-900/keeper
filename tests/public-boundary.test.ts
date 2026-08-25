@@ -51,13 +51,21 @@ const SECRET_SHAPE: RegExp[] = [
 const ANCHOR_LOG = 'evidence/chain-anchors.jsonl';
 const REQUEST_LOG = 'evidence/brickken-requests.jsonl';
 
+const exact = (value: string): RegExp => new RegExp(value, 'g');
+
+/** Every one of these is read from a public chain or a public transaction. */
+const IDENTITY_REF = '0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0';
+const RECORDER_ROLE = '0xf996da754c790e95d5c7ca3330cfcad529487fe9d1d8edb7afc65076fdf9adb4';
+
 /** A hash and a prepared id are shaped exactly like a key, and both exist to be published. */
 const PUBLISHED: Record<string, RegExp[]> = {
   [ANCHOR_LOG]: [/(?<="transactionHash":")0x[0-9a-fA-F]{64}(?=")/g],
   [REQUEST_LOG]: [
     /(?<="txId":")0x[0-9a-fA-F]{64}(?=")/g,
-    /(?<=[?&](?:hash|txId)=)0x[0-9a-fA-F]{64}/g,
+    /(?<=[?&](?:hash|txId|identityRef|metadata|actions)=)0x[0-9a-fA-F]{64}/g,
   ],
+  'src/shared/config.ts': [exact(IDENTITY_REF)],
+  'tests/registry.test.ts': [exact(RECORDER_ROLE)],
 };
 
 const scannable = (file: string): string => {

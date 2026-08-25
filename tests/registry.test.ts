@@ -10,7 +10,13 @@ import {
   type RegistryChain,
   type RegistryRead,
 } from '../src/chain/registry.js';
-import { CHAIN_ID, requireAddress } from '../src/shared/config.js';
+import {
+  CHAIN_ID,
+  MANDATE_ACTIONS,
+  RECORDER_ROLE,
+  identityRef,
+  requireAddress,
+} from '../src/shared/config.js';
 import { readRecords } from '../src/shared/jsonl.js';
 import { captureError } from './support/capture-error.js';
 
@@ -57,6 +63,9 @@ const fakeChain = (
     getMandate: ungranted(),
     isFrozen: false,
     nonces: 0n,
+    checkPrincipal: [true, 0, 0],
+    hasRole: true,
+    isActionEnabled: true,
     ...overrides.values,
   };
   return {
@@ -91,7 +100,14 @@ const read = (overrides: Parameters<typeof fakeChain>[0] = {}) => {
   return {
     asked,
     run: (): Promise<RegistryRead> =>
-      readRegistryState({ chain, file, registry: ARTIFACT, executor: ARTIFACT }),
+      readRegistryState({
+        chain,
+        file,
+        registry: ARTIFACT,
+        executor: ARTIFACT,
+        roles: ARTIFACT,
+        compliance: ARTIFACT,
+      }),
   };
 };
 
@@ -109,8 +125,19 @@ describe('the registry is asked what it holds for this project, and the answer i
       blockNumber: '11514300',
       mandateGranted: false,
       mandateValidUntil: '0',
+      mandateAgent: address('0'),
+      mandateAsset: address('0'),
+      mandateRevoked: false,
+      maxTransactionValue: '0',
+      maxCumulativeValue: '0',
+      cumulativeUsed: '0',
+      actionEnabled: true,
       agentFrozen: false,
       principalNonce: '0',
+      principalEligible: true,
+      eligibilityReason: 0,
+      eligibilityExpiresAt: '0',
+      executorMayRecord: true,
     });
     expect(captured()).toEqual([state]);
   });
@@ -120,7 +147,10 @@ describe('the registry is asked what it holds for this project, and the answer i
 
     await asking.run();
 
-    expect(asking.asked.map((question) => question.atBlock)).toEqual([BLOCK, BLOCK, BLOCK]);
+    const asked = asking.asked.map((question) => question.atBlock);
+
+    expect(asked).toEqual(asked.map(() => BLOCK));
+    expect(asked).toHaveLength(6);
   });
 
   it('asks about the agent and the principal in the order the registry expects', async () => {
@@ -132,6 +162,17 @@ describe('the registry is asked what it holds for this project, and the answer i
       { functionName: 'getMandate', args: [AGENT, PRINCIPAL], atBlock: BLOCK },
       { functionName: 'isFrozen', args: [AGENT], atBlock: BLOCK },
       { functionName: 'nonces', args: [PRINCIPAL], atBlock: BLOCK },
+      { functionName: 'checkPrincipal', args: [PRINCIPAL, identityRef], atBlock: BLOCK },
+      {
+        functionName: 'isActionEnabled',
+        args: [AGENT, PRINCIPAL, MANDATE_ACTIONS[0]],
+        atBlock: BLOCK,
+      },
+      {
+        functionName: 'hasRole',
+        args: [RECORDER_ROLE, requireAddress('executor')],
+        atBlock: BLOCK,
+      },
     ]);
   });
 
@@ -185,5 +226,41 @@ describe('a struct is only decoded when it is the struct the standard defines', 
 
     expect(error.kind).toBe('readBackMismatch');
     expect(error.detail).toContain('nonces()');
+  });
+
+  it('refuses an eligibility answer that is not the three values the standard returns', async () => {
+    const error = await captureError(read({ values: { checkPrincipal: [true, 0] } }).run);
+
+    expect(error.kind).toBe('readBackMismatch');
+    expect(error.detail).toContain('no eligibility');
+  });
+
+  it('refuses a role answer that is not true or false', async () => {
+    const error = await captureError(read({ values: { hasRole: 'yes' } }).run);
+
+    expect(error.kind).toBe('readBackMismatch');
+    expect(error.detail).toContain('hasRole()');
+  });
+});
+
+describe('the two prerequisites only Brickken can set are read from the chain, never assumed', () => {
+  it('records an ineligible principal with the reason code, rather than refusing to look', async () => {
+    const state = await read({ values: { checkPrincipal: [false, 6, 0] } }).run();
+
+    expect(state.principalEligible).toBe(false);
+    expect(state.eligibilityReason).toBe(6);
+    expect(captured()).toEqual([state]);
+  });
+
+  it('records an executor that cannot record, which reads as a broken mandate if unseen', async () => {
+    const state = await read({ values: { hasRole: false } }).run();
+
+    expect(state.executorMayRecord).toBe(false);
+  });
+
+  it('derives the role name the registry gates recording on', () => {
+    expect(RECORDER_ROLE).toBe(
+      '0xf996da754c790e95d5c7ca3330cfcad529487fe9d1d8edb7afc65076fdf9adb4',
+    );
   });
 });
