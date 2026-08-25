@@ -1,5 +1,4 @@
 import {
-  PREPARE_PATH,
   sdkClient,
   type ApproveInput,
   type CreateTokenizationInput,
@@ -10,7 +9,7 @@ import {
   type WriteResult,
 } from './sdk.js';
 
-import { ANCHOR_FILE, confirmAnchor, type AnchorAction } from '../chain/anchors.js';
+import { ANCHOR_FILE, confirmAnchor, refuseRepeat, type AnchorAction } from '../chain/anchors.js';
 import { signerAddress, transactionReceipt } from '../chain/client.js';
 import type { Receipt, SignerRole } from '../chain/client.js';
 import {
@@ -27,15 +26,14 @@ import {
   requireAddress,
 } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
-import { appendRecord } from '../shared/jsonl.js';
-import { readSecret, scrubError } from '../shared/secrets.js';
+import { readSecret } from '../shared/secrets.js';
 import {
   TOKENIZER_EMAIL_VARIABLE,
   createBrickkenClient,
   type TransactionStatus,
 } from './client.js';
-import { EVIDENCE_FILE, type RequestRecord } from './log.js';
-import { refuseRepeat, settledHash, type Settlement } from './settlement.js';
+import { EVIDENCE_FILE, recorded } from './log.js';
+import { settledHash, type Settlement } from './settlement.js';
 
 /** Whoever creates the token keeps its mint and whitelist powers for life, so never the agent. */
 const TOKENIZER: SignerRole = 'principal';
@@ -132,24 +130,6 @@ function amountWord(
 type Method = 'newTokenization' | 'whitelist' | 'mintToken' | 'approve';
 
 type Send = (sandbox: Tokenization, options: WriteOptions) => Promise<WriteResult>;
-
-async function recorded<T>(file: string, method: Method, run: () => Promise<T>): Promise<T> {
-  const attempt = {
-    at: new Date().toISOString(),
-    surface: 'sdk',
-    method,
-    path: PREPARE_PATH,
-  } as const;
-  const record = (outcome: RequestRecord['outcome']): RequestRecord => ({ ...attempt, outcome });
-  try {
-    const value = await run();
-    appendRecord(file, record('success'));
-    return value;
-  } catch (cause) {
-    appendRecord(file, record('failure'));
-    throw scrubError(cause);
-  }
-}
 
 export interface WriteRun {
   sandbox?: Tokenization;

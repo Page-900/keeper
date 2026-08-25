@@ -138,7 +138,6 @@ export interface OutboundTransaction {
 
 export type ConfirmationStatus = 'success' | 'reverted';
 
-/** A compiled contract, as the Solidity compiler emits it. Never written by hand. */
 export interface Artifact {
   abi: Abi;
   bytecode: `0x${string}`;
@@ -148,6 +147,7 @@ export interface Receipt {
   status: ConfirmationStatus;
   blockNumber: bigint;
   contractAddress: `0x${string}` | null;
+  gasUsed: bigint;
 }
 
 export async function sendTransaction(
@@ -159,10 +159,10 @@ export async function sendTransaction(
 }
 
 export async function transactionReceipt(hash: `0x${string}`): Promise<Receipt> {
-  const { status, blockNumber, contractAddress } = await withReader((reader) =>
+  const { status, blockNumber, contractAddress, gasUsed } = await withReader((reader) =>
     reader.waitForTransactionReceipt({ hash }),
   );
-  return { status, blockNumber, contractAddress: contractAddress ?? null };
+  return { status, blockNumber, contractAddress: contractAddress ?? null, gasUsed };
 }
 
 export async function confirmTransaction(hash: `0x${string}`): Promise<ConfirmationStatus> {
@@ -188,6 +188,20 @@ export async function writeContract(
 ): Promise<`0x${string}`> {
   return withWallet(role, (wallet) =>
     wallet.writeContract({ address: contract, abi: artifact.abi, functionName, args }),
+  );
+}
+
+/** Given a gas limit, viem skips the estimate, which is the only way a revert can be sent. */
+export async function writeWithGasLimit(
+  role: SignerRole,
+  contract: `0x${string}`,
+  artifact: Artifact,
+  functionName: string,
+  args: readonly unknown[],
+  gas: bigint,
+): Promise<`0x${string}`> {
+  return withWallet(role, (wallet) =>
+    wallet.writeContract({ address: contract, abi: artifact.abi, functionName, args, gas }),
   );
 }
 
@@ -245,6 +259,7 @@ export async function simulateRefusal(
   artifact: Artifact,
   functionName: string,
   args: readonly unknown[],
+  atBlock?: bigint,
 ): Promise<RevertReason | null> {
   const account = signerAccount(role);
   return withReader(async (reader) => {
@@ -255,6 +270,7 @@ export async function simulateRefusal(
         functionName,
         args,
         account,
+        ...(atBlock === undefined ? {} : { blockNumber: atBlock }),
       });
       return null;
     } catch (cause) {

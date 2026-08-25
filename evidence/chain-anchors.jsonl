@@ -8,3 +8,4 @@
 {"at":"2026-08-24T16:42:26.964Z","chainId":11155111,"action":"grant-mandate","transactionHash":"0x76a992afc0964eae5bb4bd0ab181e5c27662062a9f0f0c1c9fce122c98660126","blockNumber":"11558285","status":"success","contract":null}
 {"at":"2026-08-24T17:21:05.760Z","chainId":11155111,"action":"whitelist-counterparty","transactionHash":"0xe6b82e423b77f195fe5efb2715a85cc8d37ff123c8238a7f96e3566f4c120d83","blockNumber":"11558473","status":"success","contract":null}
 {"at":"2026-08-24T17:27:05.644Z","chainId":11155111,"action":"agent-action","transactionHash":"0xc3bdffe39a969c2b4ce41ce345ef569bc6a462c6399a299d8077fc53ce7c88e8","blockNumber":"11558501","status":"success","contract":null}
+{"at":"2026-08-25T20:50:29.589Z","chainId":11155111,"action":"agent-refusal","transactionHash":"0xc6d697f63edc632e938d2266b10f11216f75d0a3e9e1b2cbe9cfcf562c377941","blockNumber":"11566500","status":"reverted","contract":null,"gasUsed":"49479"}

@@ -88,13 +88,14 @@ export async function deployExecutor({
   const registry = requireAddress('agentMandate');
   const principal = chain.deployer();
   const transactionHash = await chain.deploy(OWNER, artifact, [registry, principal, principal]);
-  const { status, blockNumber, contractAddress } = await chain.receipt(transactionHash);
+  const { status, blockNumber, contractAddress, gasUsed } = await chain.receipt(transactionHash);
   recordAnchor(file, {
     action: DEPLOY,
     transactionHash,
     blockNumber: String(blockNumber),
     status,
     contract: contractAddress,
+    gasUsed: String(gasUsed),
   });
 
   if (status !== 'success' || contractAddress === null)
@@ -166,13 +167,14 @@ export async function registerAction({
     hasAmount,
     amountIndex,
   ]);
-  const { status, blockNumber } = await chain.receipt(transactionHash);
+  const { status, blockNumber, gasUsed } = await chain.receipt(transactionHash);
   recordAnchor(file, {
     action: REGISTER,
     transactionHash,
     blockNumber: String(blockNumber),
     status,
     contract: executor,
+    gasUsed: String(gasUsed),
   });
 
   if (status !== 'success')

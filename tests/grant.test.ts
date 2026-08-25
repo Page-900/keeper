@@ -8,6 +8,7 @@ import { grantMandateDomain, grantMandateMessage } from '../src/chain/mandate.js
 import { identityRef } from '../src/shared/config.js';
 import { readRecords } from '../src/shared/jsonl.js';
 import type { Anchor } from '../src/chain/anchors.js';
+import type { RequestRecord } from '../src/brickken/log.js';
 import { captureError } from './support/capture-error.js';
 
 const HASH = `0x${'ab'.repeat(32)}` as const;
@@ -86,10 +87,12 @@ const surfaceWith = (
 
 let anchors: string;
 let directory: string;
+let file: string;
 
 beforeEach(() => {
   directory = mkdtempSync(join(tmpdir(), 'keeper-grant-'));
   anchors = join(directory, 'chain-anchors.jsonl');
+  file = join(directory, 'brickken-requests.jsonl');
 });
 
 afterEach(() => {
@@ -97,7 +100,12 @@ afterEach(() => {
 });
 
 const receipt = () =>
-  Promise.resolve({ status: 'success' as const, blockNumber: 11_558_200n, contractAddress: null });
+  Promise.resolve({
+    status: 'success' as const,
+    blockNumber: 11_558_200n,
+    contractAddress: null,
+    gasUsed: 190_000n,
+  });
 
 describe('the authority is agreed with Brickken before any signature exists', () => {
   it('returns the digest both sides describe', async () => {
@@ -134,7 +142,7 @@ describe('nothing is signed or sent unless the whole payload agrees', () => {
       },
     });
 
-    const error = await captureError(() => grantMandate({ surface, anchors, receipt }));
+    const error = await captureError(() => grantMandate({ surface, anchors, receipt, file }));
 
     expect(error.kind).toBe('payloadMismatch');
     expect(calls.signed).toBe(0);
@@ -144,7 +152,7 @@ describe('nothing is signed or sent unless the whole payload agrees', () => {
   it('signs once and sends once when everything agrees', async () => {
     const { surface, calls } = surfaceWith();
 
-    const settlement = await grantMandate({ surface, anchors, receipt });
+    const settlement = await grantMandate({ surface, anchors, receipt, file });
 
     expect(settlement.transactionHash).toBe(HASH);
     expect(calls.signed).toBe(1);
@@ -155,9 +163,9 @@ describe('nothing is signed or sent unless the whole payload agrees', () => {
 describe('a mandate is granted once, because a second grant spends the replay number', () => {
   it('refuses a second grant after one has succeeded', async () => {
     const { surface } = surfaceWith();
-    await grantMandate({ surface, anchors, receipt });
+    await grantMandate({ surface, anchors, receipt, file });
 
-    const error = await captureError(() => grantMandate({ surface, anchors, receipt }));
+    const error = await captureError(() => grantMandate({ surface, anchors, receipt, file }));
 
     expect(error.kind).toBe('alreadyCreated');
   });
@@ -167,7 +175,7 @@ describe('the hash that mines is the only one recorded', () => {
   it('takes the hash from their status endpoint and confirms it on the chain', async () => {
     const { surface } = surfaceWith();
 
-    await grantMandate({ surface, anchors, receipt });
+    await grantMandate({ surface, anchors, receipt, file });
 
     const [anchor] = readRecords<Anchor>(anchors);
     expect(anchor?.transactionHash).toBe(HASH);
@@ -181,9 +189,12 @@ describe('the hash that mines is the only one recorded', () => {
         status: 'reverted' as const,
         blockNumber: 11_558_201n,
         contractAddress: null,
+        gasUsed: 54_000n,
       });
 
-    const error = await captureError(() => grantMandate({ surface, anchors, receipt: reverted }));
+    const error = await captureError(() =>
+      grantMandate({ surface, anchors, receipt: reverted, file }),
+    );
 
     expect(error.kind).toBe('writeUnconfirmed');
     expect(readRecords<Anchor>(anchors)).toHaveLength(1);
@@ -194,8 +205,36 @@ describe('the hash that mines is the only one recorded', () => {
       send: () => Promise.resolve({ txId: 'prepared-1', transactions: [] } as never),
     });
 
-    const error = await captureError(() => grantMandate({ surface, anchors, receipt }));
+    const error = await captureError(() => grantMandate({ surface, anchors, receipt, file }));
 
     expect(error.kind).toBe('writeUnconfirmed');
+  });
+});
+
+describe('the call that grants the authority is recorded like every other call', () => {
+  it('writes one request record naming the method that was used', async () => {
+    const { surface } = surfaceWith();
+
+    await grantMandate({ surface, anchors, receipt, file });
+
+    expect(readRecords<RequestRecord>(file)).toEqual([
+      {
+        at: expect.any(String) as string,
+        surface: 'sdk',
+        method: 'ramsGrantMandate',
+        path: expect.any(String) as string,
+        outcome: 'success',
+      },
+    ]);
+  });
+
+  it('records the attempt even when Brickken refuse it', async () => {
+    const { surface } = surfaceWith({
+      send: () => Promise.reject(new Error('their sandbox said no')),
+    });
+
+    await expect(grantMandate({ surface, anchors, receipt, file })).rejects.toThrow();
+
+    expect(readRecords<RequestRecord>(file).map((record) => record.outcome)).toEqual(['failure']);
   });
 });

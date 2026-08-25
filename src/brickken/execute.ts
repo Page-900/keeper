@@ -1,26 +1,25 @@
 import { agentCalldata, firstAction, type AgentAction } from '../chain/action.js';
-import { ANCHOR_FILE, confirmAnchor, type AnchorAction } from '../chain/anchors.js';
+import { ANCHOR_FILE, confirmAnchor, refuseRepeat, type AnchorAction } from '../chain/anchors.js';
 import { transactionReceipt, type Receipt } from '../chain/client.js';
 import { CHAIN_ID, requireAddress } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
-import { appendRecord } from '../shared/jsonl.js';
-import { scrubError } from '../shared/secrets.js';
 import { createBrickkenClient, type TransactionStatus } from './client.js';
-import { EVIDENCE_FILE, type RequestRecord } from './log.js';
+import { EVIDENCE_FILE, recorded } from './log.js';
 import {
-  PREPARE_PATH,
   sdkClient,
   type ExecuteInput,
   type UnsignedTransactionLike,
   type WriteOptions,
   type WriteResult,
 } from './sdk.js';
-import { refuseRepeat, settledHash, type Settlement } from './settlement.js';
+import { settledHash, type Settlement } from './settlement.js';
 
 /** The agent spends the authority; the principal only ever grants it. */
 const SIGNER = 'agent' as const;
 
 const ACTION: AnchorAction = 'agent-action';
+
+const METHOD = 'ramsExecute';
 
 export interface ExecuteSurface {
   execute: (input: ExecuteInput, options: WriteOptions) => Promise<WriteResult>;
@@ -42,23 +41,6 @@ const executeInput = ({ to, amount }: AgentAction): ExecuteInput => ({
   amount: String(amount),
 });
 
-async function recorded<T>(file: string, run: () => Promise<T>): Promise<T> {
-  const attempt = { at: new Date().toISOString(), surface: 'sdk', method: 'ramsExecute' } as const;
-  const record = (outcome: RequestRecord['outcome']): RequestRecord => ({
-    ...attempt,
-    path: PREPARE_PATH,
-    outcome,
-  });
-  try {
-    const value = await run();
-    appendRecord(file, record('success'));
-    return value;
-  } catch (cause) {
-    appendRecord(file, record('failure'));
-    throw scrubError(cause);
-  }
-}
-
 export interface PreparedAction {
   txId: string;
   transactions: UnsignedTransactionLike[];
@@ -76,7 +58,7 @@ export async function prepareAgentAction(
   surface: ExecuteSurface = SURFACE,
   file: string = EVIDENCE_FILE,
 ): Promise<PreparedAction> {
-  const { txId, transactions } = await recorded(file, () =>
+  const { txId, transactions } = await recorded(file, METHOD, () =>
     surface.execute(executeInput(action), options(false)),
   );
   if (txId === '' || transactions.length === 0)
@@ -109,7 +91,9 @@ export async function sendAgentAction({
   if (!prepared.carriesOurCall)
     throw new KeeperError('payloadMismatch', 'the prepared call is not the transfer we asked for');
 
-  const result = await recorded(file, () => surface.execute(executeInput(action), options(true)));
+  const result = await recorded(file, METHOD, () =>
+    surface.execute(executeInput(action), options(true)),
+  );
   if (result.sent === undefined)
     throw new KeeperError('writeUnconfirmed', 'the action prepared but never sent');
 

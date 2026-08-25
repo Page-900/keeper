@@ -139,6 +139,14 @@ export const CHECKS = [
       'The limit is no longer refusing the amount just above it, or is refusing the amount at it. Either the mandate was changed on the chain, or something other than the limit is now blocking the agent.',
   },
   {
+    id: 'refused',
+    title: 'The refusal that was sent',
+    proves:
+      'The refused transfer this project publishes really is on the test network, it really reverted, and it used only a fraction of the gas it was given, so it was stopped by the rule and not by running out of fuel.',
+    whenFailed:
+      'The transaction this project points at is not on the chain, or it did not revert, or it used all the gas it was given. The published refusal cannot be trusted until that is explained.',
+  },
+  {
     id: 'window',
     title: 'The mandate window',
     proves:

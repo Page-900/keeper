@@ -6,11 +6,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { EXECUTOR_ARTIFACT, compiledArtifact } from '../src/chain/artifacts.js';
 import { revertReason } from '../src/chain/client.js';
+import type { Anchor } from '../src/chain/anchors.js';
 import {
   REFUSAL_FILE,
   recordRefusal,
+  sendRefusedAction,
   type Refusal,
   type RefusalChain,
+  type RefusalSender,
 } from '../src/chain/refusal.js';
 import type { RegistryRead } from '../src/chain/registry.js';
 import { CHAIN_ID, PERMITTED_ACTION, requireAddress } from '../src/shared/config.js';
@@ -77,10 +80,12 @@ const fakeChain = (
 
 let directory: string;
 let file: string;
+let anchors: string;
 
 beforeEach(() => {
   directory = mkdtempSync(join(tmpdir(), 'keeper-refusal-'));
   file = join(directory, 'refusals.jsonl');
+  anchors = join(directory, 'chain-anchors.jsonl');
 });
 
 afterEach(() => {
@@ -178,5 +183,133 @@ describe('the revert is decoded, never guessed', () => {
 
   it('refuses to invent a reason for a failure it cannot decode', () => {
     expect(() => revertReason(new Error('the endpoint hung up'))).toThrow();
+  });
+});
+
+const HASH = `0x${'ac'.repeat(32)}` as const;
+
+const GAS_LIMIT = 400_000n;
+
+const fakeSender = (
+  status: Anchor['status'] = 'reverted',
+  gasUsed = 54_321n,
+): { sent: bigint[]; sender: RefusalSender } => {
+  const sent: bigint[] = [];
+  const sender: RefusalSender = {
+    gasLimit: GAS_LIMIT,
+    send: (amount) => {
+      sent.push(amount);
+      return Promise.resolve(HASH);
+    },
+    receipt: () => Promise.resolve({ status, blockNumber: BLOCK, contractAddress: null, gasUsed }),
+  };
+  return { sent, sender };
+};
+
+describe('the refused transfer is only recorded when the chain actually refused it', () => {
+  it('sends the amount the registry refused, and no other', async () => {
+    const { chain } = fakeChain();
+    const { sent, sender } = fakeSender();
+
+    await sendRefusedAction({ chain, sender, file, anchors });
+
+    expect(sent).toEqual([CAP + 1n]);
+  });
+
+  it('anchors the reverted transaction and writes the refusal that points at it', async () => {
+    const { chain } = fakeChain();
+    const { sender } = fakeSender();
+
+    const { refusal, anchor } = await sendRefusedAction({ chain, sender, file, anchors });
+
+    expect(anchor.action).toBe('agent-refusal');
+    expect(anchor.status).toBe('reverted');
+    expect(anchor.transactionHash).toBe(HASH);
+    expect(refusal.transactionHash).toBe(HASH);
+    expect(readRecords<Refusal>(file)).toHaveLength(1);
+    expect(readRecords<Anchor>(anchors)).toHaveLength(1);
+  });
+
+  it('writes no refusal when the transfer mined instead of reverting', async () => {
+    const { chain } = fakeChain();
+    const { sender } = fakeSender('success');
+
+    const error = await captureError(() => sendRefusedAction({ chain, sender, file, anchors }));
+
+    expect(error.kind).toBe('writeUnconfirmed');
+    expect(readRecords<Refusal>(file)).toHaveLength(0);
+    expect(readRecords<Anchor>(anchors)).toHaveLength(1);
+  });
+
+  it('writes no refusal when the transaction ran out of gas instead of being refused', async () => {
+    const { chain } = fakeChain();
+    const { sender } = fakeSender('reverted', GAS_LIMIT);
+
+    const error = await captureError(() => sendRefusedAction({ chain, sender, file, anchors }));
+
+    expect(error.kind).toBe('refusalUnattributable');
+    expect(readRecords<Refusal>(file)).toHaveLength(0);
+  });
+
+  it('records the gas the refusal used, so out of gas can be ruled out by reading it', async () => {
+    const { chain } = fakeChain();
+    const { sender } = fakeSender();
+
+    const { anchor } = await sendRefusedAction({ chain, sender, file, anchors });
+
+    expect(anchor.gasUsed).toBe('54321');
+  });
+
+  it('writes no refusal when the mined revert is not the one that was simulated', async () => {
+    const { chain } = fakeChain({
+      simulate: (_amount, atBlock) =>
+        Promise.resolve(atBlock === undefined ? REVERT : { error: 'CallFailed', args: [] }),
+    });
+    const { sender } = fakeSender();
+
+    const error = await captureError(() => sendRefusedAction({ chain, sender, file, anchors }));
+
+    expect(error.kind).toBe('refusalUnattributable');
+    expect(readRecords<Refusal>(file)).toHaveLength(0);
+  });
+
+  it('replays the refused call at the block before the one it mined in', async () => {
+    const replayed: (bigint | undefined)[] = [];
+    const { chain } = fakeChain({
+      simulate: (_amount, atBlock) => {
+        replayed.push(atBlock);
+        return Promise.resolve(REVERT);
+      },
+    });
+    const { sender } = fakeSender();
+
+    await sendRefusedAction({ chain, sender, file, anchors });
+
+    expect(replayed).toEqual([undefined, BLOCK - 1n]);
+  });
+
+  it('sends nothing when a refusal has already been anchored', async () => {
+    const { chain } = fakeChain();
+    const first = fakeSender();
+    await sendRefusedAction({ chain, sender: first.sender, file, anchors });
+    const second = fakeSender();
+
+    const error = await captureError(() =>
+      sendRefusedAction({ chain, sender: second.sender, file, anchors }),
+    );
+
+    expect(error.kind).toBe('alreadyCreated');
+    expect(second.sent).toEqual([]);
+  });
+
+  it('sends nothing when the refusal cannot be pinned to the cap alone', async () => {
+    const { chain } = fakeChain({ canExecute: () => Promise.resolve(false) });
+    const { sent, sender } = fakeSender();
+
+    const error = await captureError(() => sendRefusedAction({ chain, sender, file, anchors }));
+
+    expect(error.kind).toBe('refusalUnattributable');
+    expect(sent).toEqual([]);
+    expect(readRecords<Anchor>(anchors)).toHaveLength(0);
   });
 });

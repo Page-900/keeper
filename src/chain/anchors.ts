@@ -1,7 +1,8 @@
 import { fileURLToPath } from 'node:url';
 
 import { CHAIN_ID } from '../shared/config.js';
-import { appendRecord } from '../shared/jsonl.js';
+import { KeeperError } from '../shared/errors.js';
+import { appendRecord, readRecords } from '../shared/jsonl.js';
 import { transactionReceipt, type Receipt } from './client.js';
 
 /** Resolved from this module, so the file cannot follow the working directory. */
@@ -18,7 +19,8 @@ export type AnchorAction =
   | 'mint-holding'
   | 'approve-executor'
   | 'grant-mandate'
-  | 'agent-action';
+  | 'agent-action'
+  | 'agent-refusal';
 
 export interface Anchor {
   at: string;
@@ -30,6 +32,7 @@ export interface Anchor {
   status: 'success' | 'reverted';
   /** The contract the claim is about, and null when the transaction created none. */
   contract: `0x${string}` | null;
+  gasUsed: string;
 }
 
 export type Claim = Omit<Anchor, 'at' | 'chainId'>;
@@ -52,12 +55,24 @@ export async function confirmAnchor(
   transactionHash: `0x${string}`,
   { file = ANCHOR_FILE, receipt = transactionReceipt }: ConfirmOptions = {},
 ): Promise<Anchor> {
-  const { status, blockNumber, contractAddress } = await receipt(transactionHash);
+  const { status, blockNumber, contractAddress, gasUsed } = await receipt(transactionHash);
   return recordAnchor(file, {
     action,
     transactionHash,
     blockNumber: String(blockNumber),
     status,
     contract: contractAddress,
+    gasUsed: String(gasUsed),
   });
+}
+
+export function refuseRepeat(
+  action: AnchorAction,
+  anchors: string,
+  status: Anchor['status'] = 'success',
+): void {
+  const already = readRecords<Anchor>(anchors).find(
+    (anchor) => anchor.action === action && anchor.status === status,
+  );
+  if (already !== undefined) throw new KeeperError('alreadyCreated', `${action} at ${already.at}`);
 }

@@ -1,4 +1,4 @@
-import { ANCHOR_FILE, confirmAnchor, type AnchorAction } from '../chain/anchors.js';
+import { ANCHOR_FILE, confirmAnchor, refuseRepeat, type AnchorAction } from '../chain/anchors.js';
 import { signTypedDataAs, transactionReceipt, type Receipt } from '../chain/client.js';
 import {
   grantMandateDomain,
@@ -10,8 +10,9 @@ import { readRegistryState } from '../chain/registry.js';
 import { CHAIN_ID, identityRef, requireAddress } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { createBrickkenClient, type BrickkenClient } from './client.js';
+import { EVIDENCE_FILE, recorded } from './log.js';
 import { sdkClient, type GrantMandateInput, type WriteResult } from './sdk.js';
-import { refuseRepeat, settledHash, type Settlement } from './settlement.js';
+import { settledHash, type Settlement } from './settlement.js';
 import { readTypedData, requireSamePayload } from './typed-data.js';
 
 const SIGNER = 'principal' as const;
@@ -121,19 +122,23 @@ const grantInput = (message: GrantMandateMessage, signature: `0x${string}`): Gra
 export interface GrantRun {
   surface?: GrantSurface;
   anchors?: string;
+  file?: string;
   receipt?: (hash: `0x${string}`) => Promise<Receipt>;
 }
 
 export async function grantMandate({
   surface = SURFACE,
   anchors = ANCHOR_FILE,
+  file = EVIDENCE_FILE,
   receipt = transactionReceipt,
 }: GrantRun = {}): Promise<Settlement> {
   refuseRepeat(GRANT, anchors);
   const { message } = await reviewGrant(surface);
   const signature = await surface.sign(message);
 
-  const result = await surface.send(grantInput(message, signature));
+  const result = await recorded(file, 'ramsGrantMandate', () =>
+    surface.send(grantInput(message, signature)),
+  );
   if (result.sent === undefined)
     throw new KeeperError('writeUnconfirmed', 'the grant prepared but never sent');
 

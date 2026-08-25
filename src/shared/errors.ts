@@ -20,6 +20,7 @@ export const ERROR_COPY = {
   refusalUnattributable:
     'A refusal could not be pinned to a single published limit, so nothing was recorded',
   actionRefused: 'This call was tried for free first and did not go through, so nothing was sent',
+  evidenceProtected: 'A test tried to write into the evidence a real run produced',
 } as const;
 
 export type ErrorKind = keyof typeof ERROR_COPY;

@@ -63,7 +63,12 @@ afterEach(() => {
 });
 
 const receipt = () =>
-  Promise.resolve({ status: 'success' as const, blockNumber: 11_558_400n, contractAddress: null });
+  Promise.resolve({
+    status: 'success' as const,
+    blockNumber: 11_558_400n,
+    contractAddress: null,
+    gasUsed: 288_091n,
+  });
 
 describe('what Brickken would send is read before it is sent', () => {
   it('recognises the transfer this project asked for inside the prepared call', async () => {
@@ -123,6 +128,7 @@ describe('the action is sent once and its hash is read from the chain', () => {
         status: 'reverted' as const,
         blockNumber: 11_558_401n,
         contractAddress: null,
+        gasUsed: 54_000n,
       });
 
     const error = await captureError(() =>

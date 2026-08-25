@@ -52,7 +52,13 @@ const SECRET_SHAPE: RegExp[] = [
 ];
 
 const ANCHOR_LOG = 'evidence/chain-anchors.jsonl';
+const REFUSAL_LOG = 'evidence/refusals.jsonl';
 const REQUEST_LOG = 'evidence/brickken-requests.jsonl';
+
+const PUBLISHED_HASH = /(?<="transactionHash":")0x[0-9a-fA-F]{64}(?=")/g;
+
+/** A hash inside an explorer link is published by definition. A bare one is still a secret. */
+const LINKED_HASH = /(?<=sepolia\.etherscan\.io\/tx\/)0x[0-9a-fA-F]{64}/g;
 
 const exact = (value: string): RegExp => new RegExp(value, 'g');
 
@@ -62,7 +68,9 @@ const RECORDER_ROLE = '0xf996da754c790e95d5c7ca3330cfcad529487fe9d1d8edb7afc6507
 
 /** A hash and a prepared id are shaped exactly like a key, and both exist to be published. */
 const PUBLISHED: Record<string, RegExp[]> = {
-  [ANCHOR_LOG]: [/(?<="transactionHash":")0x[0-9a-fA-F]{64}(?=")/g],
+  [ANCHOR_LOG]: [PUBLISHED_HASH],
+  [REFUSAL_LOG]: [PUBLISHED_HASH],
+  'README.md': [LINKED_HASH],
   [REQUEST_LOG]: [
     /(?<="txId":")0x[0-9a-fA-F]{64}(?=")/g,
     /(?<=[?&](?:hash|txId|identityRef|metadata|actions)=)0x[0-9a-fA-F]{64}/g,

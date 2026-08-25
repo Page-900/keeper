@@ -35,6 +35,7 @@ const receipt = (overrides: Partial<Receipt> = {}): Receipt => ({
   status: 'success',
   blockNumber: 11_510_500n,
   contractAddress: EXECUTOR,
+  gasUsed: 61_000n,
   ...overrides,
 });
 
@@ -124,6 +125,7 @@ describe('what the chain reports is captured as it happens, whatever it says', (
         chainId: CHAIN_ID,
         transactionHash: DEPLOY_HASH,
         blockNumber: '11510500',
+        gasUsed: '61000',
         status: 'success',
         contract: EXECUTOR,
       },
@@ -191,6 +193,7 @@ describe('the evidence log survives whatever is already in it', () => {
       chainId: CHAIN_ID,
       transactionHash: hash('ea1'),
       blockNumber: '11510400',
+      gasUsed: '54000',
       status: 'reverted',
       contract: null,
     };
@@ -276,6 +279,7 @@ describe('the permitted action is registered by the owner, never by the agent', 
         chainId: CHAIN_ID,
         transactionHash: SET_ACTION_HASH,
         blockNumber: '11510500',
+        gasUsed: '61000',
         status: 'success',
         contract: EXECUTOR_SLOT,
       },

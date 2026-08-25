@@ -191,6 +191,24 @@ const confirmRefusal = async () => {
   return `${sunlAmount(BigInt(allowedAmount))} passes, ${sunlAmount(BigInt(refusedAmount))} is refused with ${revert.error}.`;
 };
 
+const confirmRefusalSent = async () => {
+  const { readRecords } = await import('../dist/shared/jsonl.js');
+  const { ANCHOR_FILE } = await import('../dist/chain/anchors.js');
+  const { transactionReceipt } = await import('../dist/chain/client.js');
+  const sent = readRecords(ANCHOR_FILE)
+    .filter((anchor) => anchor.action === 'agent-refusal')
+    .pop();
+  if (sent === undefined) throw new Error('No refused transfer has been sent yet.');
+  const receipt = await transactionReceipt(sent.transactionHash);
+  if (receipt.status !== 'reverted')
+    throw new Error(`${sent.transactionHash} is ${receipt.status} on the chain, not reverted.`);
+  if (String(receipt.gasUsed) !== sent.gasUsed)
+    throw new Error(
+      `${sent.transactionHash} used ${receipt.gasUsed} gas, and the record says ${sent.gasUsed}.`,
+    );
+  return `${sent.transactionHash} reverted in block ${sent.blockNumber}, using ${sent.gasUsed} gas.`;
+};
+
 const confirmWindow = async () => {
   const { MANDATE_MUST_HOLD_UNTIL, MANDATE_MUST_HOLD_UNTIL_ISO, mandateWindow } =
     await import('../dist/shared/config.js');
@@ -215,6 +233,7 @@ const RUNNERS = {
   mandate: confirmMandate,
   moved: confirmMoved,
   refusal: confirmRefusal,
+  refused: confirmRefusalSent,
   window: confirmWindow,
   wallets: confirmWallets,
   asset: confirmAsset,

@@ -103,6 +103,7 @@ const receipt = (overrides: Partial<Receipt> = {}): Receipt => ({
   status: 'success',
   blockNumber: 11_520_000n,
   contractAddress: TOKEN,
+  gasUsed: 61_000n,
   ...overrides,
 });
 
@@ -247,6 +248,7 @@ describe('the token is created once, and the chain is asked what happened', () =
         chainId: CHAIN_ID,
         transactionHash: CREATE_HASH,
         blockNumber: '11520000',
+        gasUsed: '61000',
         status: 'success',
         contract: TOKEN,
       },

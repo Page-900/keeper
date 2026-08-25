@@ -1,6 +1,4 @@
-import type { Anchor, AnchorAction } from '../chain/anchors.js';
 import { KeeperError } from '../shared/errors.js';
-import { readRecords } from '../shared/jsonl.js';
 import type { TransactionStatus } from './client.js';
 
 export interface Settled {
@@ -18,11 +16,4 @@ export async function settledHash(sandbox: Settled, txId: string): Promise<`0x${
   if (status === 'rejected') throw new KeeperError('writeUnconfirmed', `Brickken rejected ${txId}`);
   if (transactionHash === null) throw new KeeperError('brickkenUnsettled', txId);
   return transactionHash;
-}
-
-export function refuseRepeat(action: AnchorAction, anchors: string): void {
-  const already = readRecords<Anchor>(anchors).find(
-    (anchor) => anchor.action === action && anchor.status === 'success',
-  );
-  if (already !== undefined) throw new KeeperError('alreadyCreated', `${action} at ${already.at}`);
 }

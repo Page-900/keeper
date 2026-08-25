@@ -13,7 +13,7 @@ export {
   type Prepared,
   type Tokenization,
 } from './brickken/tokenization.js';
-export { refuseRepeat, settledHash, type Settled, type Settlement } from './brickken/settlement.js';
+export { settledHash, type Settled, type Settlement } from './brickken/settlement.js';
 export {
   grantMandate,
   reviewGrant,
@@ -44,7 +44,7 @@ export {
   type OutboundTransaction,
   type SignerRole,
 } from './chain/client.js';
-export { ANCHOR_FILE, type Anchor, type AnchorAction } from './chain/anchors.js';
+export { ANCHOR_FILE, refuseRepeat, type Anchor, type AnchorAction } from './chain/anchors.js';
 export {
   agentCalldata,
   firstAction,
