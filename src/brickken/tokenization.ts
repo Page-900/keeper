@@ -32,7 +32,7 @@ import {
   createBrickkenClient,
   type TransactionStatus,
 } from './client.js';
-import { EVIDENCE_FILE, recorded } from './log.js';
+import { EVIDENCE_FILE, sdkWrite } from './log.js';
 import { settledHash, type Settlement } from './settlement.js';
 
 /** Whoever creates the token keeps its mint and whitelist powers for life, so never the agent. */
@@ -150,7 +150,7 @@ async function prepare(
   send: Send,
   figures: Figures,
 ): Promise<Prepared> {
-  const { txId, transactions } = await recorded(file, method, () =>
+  const { txId, transactions } = await sdkWrite(file, method, () =>
     send(sandbox, { signerAddress: sandbox.tokenizer() }),
   );
   if (txId === '' || transactions.length === 0)
@@ -187,7 +187,7 @@ async function sendAndConfirm(
   } = run;
   refuseRepeat(action, anchors);
 
-  const result = await recorded(file, method, () =>
+  const result = await sdkWrite(file, method, () =>
     send(sandbox, { execute: true, signerAddress: sandbox.tokenizer() }),
   );
   if (result.sent === undefined)

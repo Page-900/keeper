@@ -6,6 +6,8 @@ export const CHAIN_ID = 11155111;
 
 export const BRICKKEN_API_BASE_URL = 'https://api.sandbox.brickken.com';
 
+export const BRICKKEN_MCP_URL = 'https://mcp.brickken.com/mcp';
+
 const EXPLORER_BASE_URL = 'https://sepolia.etherscan.io';
 
 export const explorerTransaction = (hash: string): string => `${EXPLORER_BASE_URL}/tx/${hash}`;

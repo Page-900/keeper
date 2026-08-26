@@ -10,7 +10,7 @@ import { readRegistryState } from '../chain/registry.js';
 import { CHAIN_ID, identityRef, requireAddress } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { createBrickkenClient, type BrickkenClient } from './client.js';
-import { EVIDENCE_FILE, recorded } from './log.js';
+import { EVIDENCE_FILE, sdkWrite } from './log.js';
 import { sdkClient, type GrantMandateInput, type WriteResult } from './sdk.js';
 import { settledHash, type Settlement } from './settlement.js';
 import { readTypedData, requireSamePayload } from './typed-data.js';
@@ -136,7 +136,7 @@ export async function grantMandate({
   const { message } = await reviewGrant(surface);
   const signature = await surface.sign(message);
 
-  const result = await recorded(file, 'ramsGrantMandate', () =>
+  const result = await sdkWrite(file, 'ramsGrantMandate', () =>
     surface.send(grantInput(message, signature)),
   );
   if (result.sent === undefined)

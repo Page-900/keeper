@@ -15,7 +15,19 @@ let envFileLoaded = false;
 function loadEnvFileOnce(): void {
   if (envFileLoaded) return;
   envFileLoaded = true;
-  if (existsSync(ENV_FILE)) process.loadEnvFile(ENV_FILE);
+  if (!existsSync(ENV_FILE)) return;
+  process.loadEnvFile(ENV_FILE);
+  registerSecretsIn(ENV_FILE);
+}
+
+/** Loading the file puts every value in the process, so every value is made redactable here. */
+export function registerSecretsIn(file: string): void {
+  for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const at = line.indexOf('=');
+    if (at < 1 || line.startsWith('#')) continue;
+    const value = line.slice(at + 1).trim();
+    if (value !== '') remember(value);
+  }
 }
 
 function remember(value: string): void {

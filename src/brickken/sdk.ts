@@ -1,4 +1,4 @@
-import { Brickken, PREPARE_PATH, resolveWriteDescriptor } from 'brickken-sdk';
+import { Brickken, PREPARE_PATH, resolveWriteDescriptor, type PrepareMethod } from 'brickken-sdk';
 import { fromPrivateKey } from 'brickken-sdk/adapters/private-key';
 
 import { signerKey, type SignerRole } from '../chain/client.js';
@@ -7,6 +7,7 @@ import { readSecret } from '../shared/secrets.js';
 import { API_KEY_VARIABLE } from './client.js';
 
 export type {
+  PrepareMethod,
   ApproveInput,
   CreateTokenizationInput,
   ExecuteInput,
@@ -21,7 +22,7 @@ export type {
 export { PREPARE_PATH };
 
 /** The SDK knows which path each write really uses, so the evidence log never guesses one. */
-export const writePath = (method: string): string =>
+export const writePath = (method: PrepareMethod): string =>
   resolveWriteDescriptor(method)?.facade ?? PREPARE_PATH;
 
 /** This project never retries a paid write, so a failure is reported rather than repeated. */

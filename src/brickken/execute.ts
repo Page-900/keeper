@@ -4,7 +4,7 @@ import { transactionReceipt, type Receipt } from '../chain/client.js';
 import { CHAIN_ID, requireAddress } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { createBrickkenClient, type TransactionStatus } from './client.js';
-import { EVIDENCE_FILE, recorded } from './log.js';
+import { EVIDENCE_FILE, sdkWrite } from './log.js';
 import {
   sdkClient,
   type ExecuteInput,
@@ -58,7 +58,7 @@ export async function prepareAgentAction(
   surface: ExecuteSurface = SURFACE,
   file: string = EVIDENCE_FILE,
 ): Promise<PreparedAction> {
-  const { txId, transactions } = await recorded(file, METHOD, () =>
+  const { txId, transactions } = await sdkWrite(file, METHOD, () =>
     surface.execute(executeInput(action), options(false)),
   );
   if (txId === '' || transactions.length === 0)
@@ -91,7 +91,7 @@ export async function sendAgentAction({
   if (!prepared.carriesOurCall)
     throw new KeeperError('payloadMismatch', 'the prepared call is not the transfer we asked for');
 
-  const result = await recorded(file, METHOD, () =>
+  const result = await sdkWrite(file, METHOD, () =>
     surface.execute(executeInput(action), options(true)),
   );
   if (result.sent === undefined)

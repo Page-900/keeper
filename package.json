@@ -34,6 +34,7 @@
     "confirm:tx": "node scripts/confirm-transaction.js",
     "verify:source": "node scripts/verify-source.js",
     "read:registry": "node scripts/read-registry.js",
+    "mcp:read": "node scripts/mcp-read.js",
     "mandate:preview": "node scripts/mandate-preview.js",
     "mandate:review": "node scripts/review-grant.js",
     "action:simulate": "node scripts/simulate-action.js",

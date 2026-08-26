@@ -68,7 +68,7 @@ async function getJson(
   logFile: string,
   path: string,
   query: Record<string, string>,
-  logged: Partial<RequestRecord> = {},
+  logged: Partial<Pick<RequestRecord, 'path' | 'txId'>> = {},
 ): Promise<unknown> {
   const key = readSecret(API_KEY_VARIABLE);
   registerSecret(TOKENIZER_EMAIL_VARIABLE);
