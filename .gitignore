@@ -13,3 +13,6 @@ cache/
 
 *.log
 .DS_Store
+
+# Their agent skill, installed here and never redistributed: the licence is unstated.
+vendor/

@@ -1,0 +1,3 @@
+{"at":"2026-08-28T15:06:43.690Z","symbol":"KPRH","phase":"before it starts","closed":false,"txId":null,"transactionHash":null,"refusal":"Error: ApiError: Cannot finalize issuance: IssuanceNotStarted"}
+{"at":"2026-08-28T15:17:40.911Z","symbol":"KPRH","phase":"after it starts","closed":false,"txId":null,"transactionHash":null,"refusal":"Error: ApiError: Cannot finalize issuance: IssuanceNotEnded"}
+{"at":"2026-08-28T20:02:33.487Z","symbol":"KPRH","phase":"after it ends","closed":true,"txId":"0x053947f6ad122230a8474fde4b845f5c2985b2fc532815474464fad9b7540d36","transactionHash":"0xab112f3041bcdb354c8048572e396e00911799b76766b93f63f8c9071ef1c459","refusal":null}

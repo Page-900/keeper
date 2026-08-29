@@ -3,6 +3,7 @@ import {
   ContractFunctionRevertedError,
   createPublicClient,
   createWalletClient,
+  decodeFunctionResult,
   encodeFunctionData,
   erc20Abi,
   getAddress,
@@ -344,6 +345,7 @@ export async function readTokenIdentity(contract: `0x${string}`): Promise<TokenI
 export async function readTokenBalance(
   contract: `0x${string}`,
   holder: `0x${string}`,
+  atBlock?: bigint,
 ): Promise<bigint> {
   return withReader((reader) =>
     reader.readContract({
@@ -351,6 +353,63 @@ export async function readTokenBalance(
       abi: erc20Abi,
       functionName: 'balanceOf',
       args: [holder],
+      ...(atBlock === undefined ? {} : { blockNumber: atBlock }),
+    }),
+  );
+}
+
+export interface SimulatedCall {
+  to: `0x${string}`;
+  data: `0x${string}`;
+  value: bigint;
+}
+
+export interface HoldingChange {
+  before: bigint;
+  after: bigint;
+  ran: boolean;
+}
+
+const balanceRead = (token: `0x${string}`, holder: `0x${string}`): SimulatedCall => ({
+  to: token,
+  data: encodeFunctionData({ abi: erc20Abi, functionName: 'balanceOf', args: [holder] }),
+  value: 0n,
+});
+
+const balanceFrom = (data: `0x${string}`): bigint =>
+  decodeFunctionResult({ abi: erc20Abi, functionName: 'balanceOf', data });
+
+export async function simulateHolding(
+  token: `0x${string}`,
+  holder: `0x${string}`,
+  calls: readonly SimulatedCall[],
+): Promise<HoldingChange> {
+  const read = balanceRead(token, holder);
+  const results = await withReader(async (reader) => {
+    const simulated = await reader.simulateCalls({
+      account: holder,
+      calls: [read, ...calls, read],
+    });
+    return simulated.results;
+  });
+  const first = results.at(0);
+  const last = results.at(-1);
+  if (first?.status !== 'success' || last?.status !== 'success')
+    throw new KeeperError('readBackMismatch', 'the simulation did not read the balance');
+  return {
+    before: balanceFrom(first.data),
+    after: balanceFrom(last.data),
+    ran: results.slice(1, -1).every((result) => result.status === 'success'),
+  };
+}
+
+export async function readTokenSupply(contract: `0x${string}`, atBlock: bigint): Promise<bigint> {
+  return withReader((reader) =>
+    reader.readContract({
+      address: contract,
+      abi: erc20Abi,
+      functionName: 'totalSupply',
+      blockNumber: atBlock,
     }),
   );
 }

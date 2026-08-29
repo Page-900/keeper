@@ -223,7 +223,68 @@ const confirmWindow = async () => {
   return `${subject} runs to ${readable}, past ${MANDATE_MUST_HOLD_UNTIL_ISO}.`;
 };
 
+const confirmReadings = async () => {
+  const { readMandateOverCli } = await import('../dist/brickken/cli.js');
+  const { SUNL_DECIMALS, SUNL_SYMBOL } = await import('../dist/shared/config.js');
+  const state = await registryState();
+  if (!state.mandateGranted)
+    throw new Error('No mandate is granted, so there is nothing to compare.');
+  const cli = await readMandateOverCli();
+  const compared = {
+    'the agent': [cli.mandate.agent, state.mandateAgent],
+    'the token': [cli.mandate.asset, state.mandateAsset],
+    'the per-transfer limit': [cli.mandate.maxTransactionValue, state.maxTransactionValue],
+    'the total limit': [cli.mandate.maxCumulativeValue, state.maxCumulativeValue],
+    'the amount spent': [cli.mandate.cumulativeUsed, state.cumulativeUsed],
+  };
+  for (const [what, [told, read]] of Object.entries(compared)) {
+    if (String(told).toLowerCase() !== String(read).toLowerCase())
+      throw new Error(`Brickken report ${what} as ${told}, and the test network reads ${read}.`);
+  }
+  if (cli.mandate.revoked !== state.mandateRevoked)
+    throw new Error('Brickken and the test network disagree about whether the mandate is revoked.');
+  if (cli.frozen !== state.agentFrozen)
+    throw new Error('Brickken and the test network disagree about whether the agent is frozen.');
+  const spent = BigInt(cli.mandate.cumulativeUsed) / 10n ** BigInt(SUNL_DECIMALS);
+  return `Their tool and the chain agree, at ${spent} ${SUNL_SYMBOL} spent.`;
+};
+
+const confirmInstalledSkill = async () => {
+  const { confirmSkill } = await import('../dist/brickken/skill.js');
+  const installed = confirmSkill();
+  const named = installed.declares['name'] ?? installed.artifact;
+  const day = installed.at.slice(0, 10);
+  return `The ${named} skill is installed, ${installed.files.length} files, unchanged since ${day}.`;
+};
+
+const confirmSurfaces = async () => {
+  const { readFileSync } = await import('node:fs');
+  const { SURFACES_FILE, declaration, render } = await import('../dist/surfaces.js');
+  const found = declaration();
+  if (readFileSync(SURFACES_FILE, 'utf8') !== render(found))
+    throw new Error('SURFACES.md is not what the evidence says. Run npm run surfaces.');
+  const used = found.sections.filter((section) => section.methods.length > 0);
+  const methods = used.reduce((total, section) => total + section.methods.length, 0);
+  const surfaces = used.length + (found.skill === null ? 0 : 1);
+  return `${surfaces} surfaces and ${methods} methods, all read back from the evidence.`;
+};
+
+const confirmCapTable = async () => {
+  const { composeCapTable } = await import('../dist/captable.js');
+  const { SUNL_DECIMALS, SUNL_SYMBOL } = await import('../dist/shared/config.js');
+  const table = await composeCapTable();
+  if (table.disagreements.length > 0) throw new Error(table.disagreements.join('. '));
+  const unit = 10n ** BigInt(SUNL_DECIMALS);
+  const held = table.rows.map((row) => `${row.label} ${row.onChain / unit}`).join(', ');
+  const issued = table.supply / unit;
+  return `At block ${table.block}: ${held}, of ${issued} ${SUNL_SYMBOL} issued.`;
+};
+
 const RUNNERS = {
+  surfaces: confirmSurfaces,
+  captable: confirmCapTable,
+  skill: confirmInstalledSkill,
+  readings: confirmReadings,
   allowance: confirmAllowance,
   holding: confirmHolding,
   allowed: confirmAllowed,

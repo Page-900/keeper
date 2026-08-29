@@ -13,7 +13,6 @@ const CLIENT = { name: 'keeper', version: '0.1.0' };
 const asRecord = (value: unknown): Record<string, unknown> =>
   (value ?? {}) as Record<string, unknown>;
 
-/** Streamable HTTP may answer one request as JSON or as an event stream, so both are read. */
 function messages(body: string, contentType: string): unknown[] {
   if (!contentType.includes('text/event-stream')) return [JSON.parse(body) as unknown];
   return body
@@ -22,7 +21,6 @@ function messages(body: string, contentType: string): unknown[] {
     .map((line) => JSON.parse(line.slice('data:'.length).trim()) as unknown);
 }
 
-/** An answer is matched on its answer fields too, because a server may send our own id back. */
 function resultOf(found: unknown[], id: number, method: string): unknown {
   const reply = found.find((message) => {
     const carried = asRecord(message);
@@ -45,7 +43,6 @@ function spokenText(result: Record<string, unknown>): string | undefined {
   return structured === undefined ? undefined : JSON.stringify(structured);
 }
 
-/** An answer we cannot read is never returned as an empty one: that would log as a success. */
 function contentOf(result: unknown, tool: string): string {
   const found = asRecord(result);
   const text = spokenText(found);
@@ -62,7 +59,6 @@ interface Wire {
   session: { id?: string };
 }
 
-/** Encoded before the attempt, so our own bad argument is never reported as their outage. */
 async function request(wire: Wire, payload: object, method: string): Promise<Response> {
   const body = JSON.stringify(payload);
   const headers: Record<string, string> = {
@@ -138,13 +134,11 @@ export function createMcpClient(run: McpRun = {}): McpClient {
   const ask = (method: string, params: Record<string, unknown>): Promise<unknown> =>
     post(wire, (counter += 1), method, params);
 
-  /** Read inside the record, never after it: an unusable answer must land as a failure. */
   const callTool = (tool: string, args: Record<string, unknown>): Promise<string> =>
     record(tool, async () =>
       contentOf(await ask('tools/call', { name: tool, arguments: args }), tool),
     );
 
-  /** The key travels as a tool argument, so it is read here and never put in a record. */
   const open = async (): Promise<void> => {
     const hello = { protocolVersion: PROTOCOL_VERSION, capabilities: {}, clientInfo: CLIENT };
     await record('initialize', () => ask('initialize', hello));

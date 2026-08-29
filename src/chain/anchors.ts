@@ -20,7 +20,10 @@ export type AnchorAction =
   | 'approve-executor'
   | 'grant-mandate'
   | 'agent-action'
-  | 'agent-refusal';
+  | 'agent-refusal'
+  | 'create-rehearsal-token'
+  | 'open-rehearsal-offering'
+  | 'open-offering';
 
 export interface Anchor {
   at: string;

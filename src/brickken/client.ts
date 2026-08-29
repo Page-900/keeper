@@ -42,6 +42,28 @@ function readTokenInfo(body: unknown): TokenInfo {
   };
 }
 
+const ADDRESS = /^0x[0-9a-fA-F]{40}$/;
+const BASE_UNITS = /^\d+$/;
+
+function readHolder(body: unknown): HolderRecord {
+  const found = (body ?? {}) as Record<string, unknown>;
+  const missing = (field: string): KeeperError =>
+    new KeeperError('brickkenUnreadable', `GET /get-balance-whitelist carries no ${field}`);
+  const wallet = found['walletAddress'];
+  const raw = found['tokenBalanceRaw'];
+  const cleared = found['isWhitelisted'];
+  if (typeof wallet !== 'string' || !ADDRESS.test(wallet)) throw missing('wallet address');
+  if (typeof raw !== 'string' || !BASE_UNITS.test(raw)) throw missing('balance in base units');
+  if (typeof cleared !== 'boolean') throw missing('whitelist answer');
+  const source = found['balanceSource'];
+  return {
+    walletAddress: wallet,
+    balance: BigInt(raw),
+    isWhitelisted: cleared,
+    balanceSource: typeof source === 'string' ? source : 'unstated',
+  };
+}
+
 const REPORTED = ['pending', 'success', 'rejected'] as const;
 
 const isHash = (value: unknown): value is `0x${string}` =>
@@ -129,10 +151,21 @@ export interface WhitelistStatus {
   source: string;
 }
 
+export interface HolderRecord {
+  walletAddress: string;
+  balance: bigint;
+  isWhitelisted: boolean;
+  /** Documented as "blockchain", so their balance is our own source read through theirs. */
+  balanceSource: string;
+}
+
 export interface BrickkenClient {
   getTokenInfo(tokenSymbol: string): Promise<TokenInfo>;
+  getBalanceWhitelist(tokenSymbol: string, investorEmail: string): Promise<HolderRecord>;
   getTransactionStatus(txId: string): Promise<TransactionStatus>;
   getWhitelistStatus(tokenSymbol: string, investorAddress: string): Promise<WhitelistStatus>;
+  listOfferings(tokenSymbol: string): Promise<unknown[]>;
+  countOfferings(tokenSymbol: string): Promise<number>;
   getRamsStatus(query: Record<string, string>): Promise<unknown>;
   getGrantMandateTypedData(query: Record<string, string>): Promise<unknown>;
 }
@@ -143,6 +176,10 @@ export function createBrickkenClient(logFile: string = EVIDENCE_FILE): BrickkenC
     async getTokenInfo(tokenSymbol) {
       const body = await getJson(logFile, '/get-token-info', { tokenSymbol });
       return readTokenInfo(body);
+    },
+    async getBalanceWhitelist(tokenSymbol, investorEmail) {
+      const body = await getJson(logFile, '/get-balance-whitelist', { tokenSymbol, investorEmail });
+      return readHolder(body);
     },
     async getWhitelistStatus(tokenSymbol, investorAddress) {
       const body = await getJson(logFile, '/get-whitelist-status', {
@@ -161,6 +198,16 @@ export function createBrickkenClient(logFile: string = EVIDENCE_FILE): BrickkenC
       const path = '/get-transaction-status';
       const body = await getJson(logFile, path, { txId }, { path, txId });
       return readStatus(body);
+    },
+    async listOfferings(tokenSymbol) {
+      const body: unknown = await getJson(logFile, '/get-stos', { tokenSymbol });
+      if (!Array.isArray(body))
+        throw new KeeperError('brickkenUnreadable', 'GET /get-stos did not return a list');
+      const listed: unknown[] = body;
+      return listed;
+    },
+    async countOfferings(tokenSymbol) {
+      return (await this.listOfferings(tokenSymbol)).length;
     },
     getRamsStatus(query) {
       return getJson(logFile, '/rams/status', { ...query });

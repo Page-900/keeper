@@ -273,3 +273,16 @@ describe('a credential body never follows a redirect to another host', () => {
     expect(seen.every((init) => init.signal !== undefined)).toBe(true);
   });
 });
+
+describe('our own bad argument is our fault, not their outage', () => {
+  it('does not report an unencodable argument as the API being unreachable', async () => {
+    const { send } = transportOf((sent) => handshake(sent) ?? json(reply(sent.id, text('ok'))));
+
+    const refused = createMcpClient({ file, url: URL_UNDER_TEST, fetch: send }).call('x', {
+      amount: 1n,
+    });
+
+    await expect(refused).rejects.toThrow(/BigInt/);
+    expect(records().at(-1)).toMatchObject({ outcome: 'failure' });
+  });
+});

@@ -41,6 +41,40 @@ export const PRINCIPAL_HOLDING_WHOLE = 2_000n;
 
 export const PRINCIPAL_HOLDING = sunl(PRINCIPAL_HOLDING_WHOLE);
 
+export const OFFERING_AMOUNT_WHOLE = 1_000n;
+
+export const OFFERING_AMOUNT = sunl(OFFERING_AMOUNT_WHOLE);
+
+export const OFFERING_COIN = 'BKN';
+
+export const OFFERING_MIN_RAISE_USD = 10_000n;
+
+export const OFFERING_MAX_RAISE_USD = 50_000n;
+
+export const OFFERING_MIN_INVESTMENT = 100n;
+
+export const OFFERING_MAX_INVESTMENT = 25_000n;
+
+export const OFFERING_MAX_RUN_DAYS = 7;
+
+const OFFERING_STARTS_IN_SECONDS = 30 * 60;
+
+const OFFERING_RUNS_FOR_SECONDS = 7 * 24 * 60 * 60;
+
+export interface OfferingWindow {
+  startDate: string;
+  endDate: string;
+}
+
+export function offeringWindow(
+  nowMs: number,
+  startsIn = OFFERING_STARTS_IN_SECONDS,
+  runsFor = OFFERING_RUNS_FOR_SECONDS,
+): OfferingWindow {
+  const at = (seconds: number): string => new Date(nowMs + seconds * 1000).toISOString();
+  return { startDate: at(startsIn), endDate: at(startsIn + runsFor) };
+}
+
 /** Deliberately low, so a successful attack on the public demo stays cheap. */
 export const MAX_TRANSACTION_VALUE = sunl(250n);
 
@@ -107,6 +141,14 @@ export const RECORDER_ROLE = keccak256(toHex('RECORDER_ROLE'));
 /** Issued by Brickken with the principal's compliance record, and used exactly as issued. */
 export const identityRef: `0x${string}` =
   '0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0';
+
+export function addressNamed(address: string): AddressName | null {
+  const wanted = address.toLowerCase();
+  for (const [name, slot] of Object.entries(addressSlots) as [AddressName, AddressSlot][]) {
+    if (slot !== null && slot.toLowerCase() === wanted) return name;
+  }
+  return null;
+}
 
 /** Throws rather than yielding a zero address that reverts later. */
 export function requireAddress(

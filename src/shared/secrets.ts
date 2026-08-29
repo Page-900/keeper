@@ -20,14 +20,35 @@ function loadEnvFileOnce(): void {
   registerSecretsIn(ENV_FILE);
 }
 
-/** Loading the file puts every value in the process, so every value is made redactable here. */
-export function registerSecretsIn(file: string): void {
+interface EnvEntry {
+  name: string;
+  value: string;
+}
+
+function envEntries(file: string): EnvEntry[] {
+  const found: EnvEntry[] = [];
   for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
     const at = line.indexOf('=');
     if (at < 1 || line.startsWith('#')) continue;
-    const value = line.slice(at + 1).trim();
-    if (value !== '') remember(value);
+    found.push({ name: line.slice(0, at).trim(), value: line.slice(at + 1).trim() });
   }
+  return found;
+}
+
+/** Loading the file puts every value in the process, so every value is made redactable here. */
+export function registerSecretsIn(file: string): void {
+  for (const { value } of envEntries(file)) if (value !== '') remember(value);
+}
+
+/** A vendor tool is handed the one credential it needs and never the others we hold. */
+export function childEnvKeeping(keep: readonly string[], file = ENV_FILE): NodeJS.ProcessEnv {
+  loadEnvFileOnce();
+  if (!existsSync(file)) return { ...process.env };
+  const ours = new Set(envEntries(file).map((entry) => entry.name));
+  const carried = Object.entries(process.env).filter(
+    ([name]) => !ours.has(name) || keep.includes(name),
+  );
+  return Object.fromEntries(carried);
 }
 
 function remember(value: string): void {

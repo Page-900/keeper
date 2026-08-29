@@ -54,6 +54,10 @@ const SECRET_SHAPE: RegExp[] = [
 const ANCHOR_LOG = 'evidence/chain-anchors.jsonl';
 const REFUSAL_LOG = 'evidence/refusals.jsonl';
 const REQUEST_LOG = 'evidence/brickken-requests.jsonl';
+const OFFERING_LOG = 'evidence/offering-prepares.jsonl';
+const CLOSE_LOG = 'evidence/offering-closes.jsonl';
+
+const PREPARED_ID = /(?<="txId":")0x[0-9a-fA-F]{64}(?=")/g;
 
 const PUBLISHED_HASH = /(?<="transactionHash":")0x[0-9a-fA-F]{64}(?=")/g;
 
@@ -71,10 +75,13 @@ const PUBLISHED: Record<string, RegExp[]> = {
   [ANCHOR_LOG]: [PUBLISHED_HASH],
   [REFUSAL_LOG]: [PUBLISHED_HASH],
   'README.md': [LINKED_HASH],
+  'SURFACES.md': [LINKED_HASH],
   [REQUEST_LOG]: [
-    /(?<="txId":")0x[0-9a-fA-F]{64}(?=")/g,
+    PREPARED_ID,
     /(?<=[?&](?:hash|txId|identityRef|metadata|actions)=)0x[0-9a-fA-F]{64}/g,
   ],
+  [OFFERING_LOG]: [PREPARED_ID],
+  [CLOSE_LOG]: [PREPARED_ID, PUBLISHED_HASH],
   'src/shared/config.ts': [exact(IDENTITY_REF)],
   'tests/registry.test.ts': [exact(RECORDER_ROLE)],
 };

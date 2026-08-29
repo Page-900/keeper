@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { createBrickkenClient } from '../src/brickken/client.js';
+import { HOLDER_EMAIL } from '../src/shared/config.js';
 import type { RequestRecord } from '../src/brickken/log.js';
 import { readRecords } from '../src/shared/jsonl.js';
 import { captureError } from './support/capture-error.js';
@@ -208,5 +209,47 @@ describe('the whitelist answer is read as an answer, never as a truthy body', ()
     );
 
     expect(error.kind).toBe('brickkenRejected');
+  });
+});
+
+const BALANCE_WHITELIST = {
+  walletAddress: HOLDER,
+  tokenAddress: `0x${'12'.repeat(20)}`,
+  tokenDecimals: 18,
+  tokenBalanceRaw: '1750000000000000000000',
+  tokenBalance: '1750.0',
+  isWhitelisted: true,
+  balanceSource: 'blockchain',
+};
+
+describe('a balance is read in base units, because the whole token figure is rounded', () => {
+  it('takes the raw amount and never the decimal string beside it', async () => {
+    respondWith(() => jsonResponse({ ...BALANCE_WHITELIST, tokenBalance: '1750.000001' }));
+
+    const held = await createBrickkenClient(logFile).getBalanceWhitelist('SUNL', HOLDER_EMAIL);
+
+    expect(held.balance).toBe(1_750_000_000_000_000_000_000n);
+    expect(held.isWhitelisted).toBe(true);
+    expect(held.balanceSource).toBe('blockchain');
+  });
+
+  it('refuses a body carrying no raw balance rather than reading it as nothing held', async () => {
+    respondWith(() => jsonResponse({ ...BALANCE_WHITELIST, tokenBalanceRaw: undefined }));
+
+    const error = await captureError(() =>
+      createBrickkenClient(logFile).getBalanceWhitelist('SUNL', HOLDER_EMAIL),
+    );
+
+    expect(error.kind).toBe('brickkenUnreadable');
+  });
+
+  it('refuses a body carrying no wallet, so no balance is pinned to the wrong holder', async () => {
+    respondWith(() => jsonResponse({ ...BALANCE_WHITELIST, walletAddress: undefined }));
+
+    const error = await captureError(() =>
+      createBrickkenClient(logFile).getBalanceWhitelist('SUNL', HOLDER_EMAIL),
+    );
+
+    expect(error.kind).toBe('brickkenUnreadable');
   });
 });

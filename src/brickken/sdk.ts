@@ -9,6 +9,8 @@ import { API_KEY_VARIABLE } from './client.js';
 export type {
   PrepareMethod,
   ApproveInput,
+  CloseOfferInput,
+  CreateStoInput,
   CreateTokenizationInput,
   ExecuteInput,
   GrantMandateInput,

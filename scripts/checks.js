@@ -155,6 +155,38 @@ export const CHECKS = [
       'A mandate granted now would expire before that date, or the mandate already granted expires before it. Lengthen the window before granting, never after.',
   },
   {
+    id: 'readings',
+    title: 'Their tool and the chain',
+    proves:
+      "Brickken's own command line tool, run as a separate program, describes the same permission that a direct read of the test network describes: the same limits, the same token, the same agent, and the same amount already spent.",
+    whenFailed:
+      'Brickken and the test network disagree about the permission. Which one is wrong matters more than the number that differs, and nothing depending on it is safe to demonstrate until that is known.',
+  },
+  {
+    id: 'surfaces',
+    title: 'What we used of Brickken',
+    proves:
+      'The published list of everything this project used of Brickken is regenerated from the record kept at the moment each call was made, and it still matches. Nobody can quietly claim a surface that was never used or forget one that was.',
+    whenFailed:
+      'The published list and the record of what really happened disagree. Run npm run surfaces to rewrite the list from the record, then read what changed before publishing it.',
+  },
+  {
+    id: 'captable',
+    title: 'Who holds the token',
+    proves:
+      'Every holder is accounted for: Brickken name the investor behind each wallet and say whether it is cleared, the chain says what that wallet really holds, the two agree, and the rows add up to everything the token has issued.',
+    whenFailed:
+      'The holdings do not reconcile. The disagreement printed below is a finding rather than a formatting problem, and nothing that depends on who holds what should be shown until it is explained.',
+  },
+  {
+    id: 'skill',
+    title: 'Their agent skill',
+    proves:
+      'The skill Brickken publish for AI agents is installed on this machine, and every file in it is byte for byte the file that was recorded when it was installed.',
+    whenFailed:
+      'The skill is missing, or a file in it has changed since it was recorded. Run npm run skill:install to install it again, which records what arrived this time.',
+  },
+  {
     id: 'chain',
     title: 'Live chain read',
     proves:

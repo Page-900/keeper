@@ -1,5 +1,6 @@
 export { createBrickkenClient, type BrickkenClient, type TokenInfo } from './brickken/client.js';
 export { EVIDENCE_FILE, type BrickkenSurface, type RequestRecord } from './brickken/log.js';
+export { amountWord, selectorOf, type AmountWord, type Figures } from './brickken/calldata.js';
 export {
   approveExecutor,
   createToken,
@@ -9,10 +10,43 @@ export {
   prepareTokenCreation,
   whitelistCounterparty,
   whitelistHolder,
-  type AmountWord,
   type Prepared,
   type Tokenization,
 } from './brickken/tokenization.js';
+export {
+  AFTER_END,
+  AFTER_START,
+  BEFORE_START,
+  OFFERING_CLOSES,
+  OFFERING_OPENS,
+  attemptClose,
+  heldOffering,
+  offeringName,
+  openAndRecord,
+  openOffering,
+  phaseAt,
+  prepareOfferingOn,
+  recordClose,
+  recordOpen,
+  type CloseAttempt,
+  type CloseRun,
+  type HeldOffering,
+  type Offering,
+  type OfferingReader,
+  type OpenRecord,
+  type Opened,
+  type OpenRun,
+} from './brickken/offering.js';
+export {
+  OFFERING_FILE,
+  prepareOffering,
+  recordOffering,
+  type HoldingVerdict,
+  type OfferingPrepare,
+  type OfferingRecord,
+  type OfferingRun,
+  type PreparedCall,
+} from './brickken/drawdown.js';
 export { settledHash, type Settled, type Settlement } from './brickken/settlement.js';
 export {
   grantMandate,
@@ -33,6 +67,27 @@ export {
   type ExecuteSurface,
   type PreparedAction,
 } from './brickken/execute.js';
+export {
+  SURFACES_FILE,
+  declaration,
+  declared,
+  methodsUsed,
+  render,
+  repeatedMethods,
+  writeDeclaration,
+  type Answered,
+  type Declaration,
+  type DeclarationSources,
+  type SurfaceMethod,
+  type SurfaceSection,
+} from './surfaces.js';
+export {
+  REHEARSAL,
+  SUNL,
+  supplyInBaseUnits,
+  type AssetClass,
+  type TokenSpec,
+} from './shared/tokens.js';
 export { appendRecord, readRecords } from './shared/jsonl.js';
 export {
   blockNumber,
@@ -83,9 +138,15 @@ export {
   MANDATE_MUST_HOLD_UNTIL_ISO,
   MANDATE_METADATA,
   MANDATE_WINDOW_SECONDS,
+  OFFERING_AMOUNT,
+  OFFERING_AMOUNT_WHOLE,
+  OFFERING_COIN,
   SIGNATURE_DEADLINE_SECONDS,
+  addressNamed,
   mandateWindow,
+  offeringWindow,
   type MandateWindow,
+  type OfferingWindow,
   MAX_CUMULATIVE_VALUE,
   MAX_TRANSACTION_VALUE,
   PERMITTED_ACTION,

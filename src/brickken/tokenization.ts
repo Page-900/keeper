@@ -9,34 +9,25 @@ import {
   type WriteResult,
 } from './sdk.js';
 
-import { ANCHOR_FILE, confirmAnchor, refuseRepeat, type AnchorAction } from '../chain/anchors.js';
-import { signerAddress, transactionReceipt } from '../chain/client.js';
-import type { Receipt, SignerRole } from '../chain/client.js';
+import type { AnchorAction } from '../chain/anchors.js';
+import type { Receipt } from '../chain/client.js';
 import {
   CHAIN_ID,
   COUNTERPARTY_EMAIL,
   HOLDER_EMAIL,
   PRINCIPAL_HOLDING,
   PRINCIPAL_HOLDING_WHOLE,
-  SUNL_NAME,
-  SUNL_SUPPLY,
-  SUNL_SUPPLY_WHOLE,
   SUNL_SYMBOL,
-  SUNL_TOKEN_TYPE,
   requireAddress,
 } from '../shared/config.js';
+import { SUNL, supplyInBaseUnits, type TokenSpec } from '../shared/tokens.js';
 import { KeeperError } from '../shared/errors.js';
-import { readSecret } from '../shared/secrets.js';
-import {
-  TOKENIZER_EMAIL_VARIABLE,
-  createBrickkenClient,
-  type TransactionStatus,
-} from './client.js';
+import { createBrickkenClient, type TransactionStatus } from './client.js';
+import { TOKENIZER, tokenizerAddress, tokenizerEmail } from './issuer.js';
+import { amountWord, type AmountWord, type Figures } from './calldata.js';
+import { sendAndConfirm as confirmedWrite } from './confirmed.js';
 import { EVIDENCE_FILE, sdkWrite } from './log.js';
-import { settledHash, type Settlement } from './settlement.js';
-
-/** Whoever creates the token keeps its mint and whitelist powers for life, so never the agent. */
-const TOKENIZER: SignerRole = 'principal';
+import type { Settlement } from './settlement.js';
 
 const sandboxClient = () => sdkClient(TOKENIZER);
 
@@ -56,17 +47,17 @@ const SANDBOX: Tokenization = {
   mint: (input, options) => sandboxClient().tokenization.mint(input, options),
   approve: (input, options) => sandboxClient().tokenization.approve(input, options),
   settled: (txId) => createBrickkenClient().getTransactionStatus(txId),
-  tokenizer: () => signerAddress(TOKENIZER),
-  email: () => readSecret(TOKENIZER_EMAIL_VARIABLE),
+  tokenizer: tokenizerAddress,
+  email: tokenizerEmail,
 };
 
-const creationInput = (sandbox: Tokenization): CreateTokenizationInput => ({
+const creationInput = (sandbox: Tokenization, spec: TokenSpec): CreateTokenizationInput => ({
   chainId: CHAIN_ID,
   tokenizerEmail: sandbox.email(),
-  name: SUNL_NAME,
-  tokenSymbol: SUNL_SYMBOL,
-  tokenType: SUNL_TOKEN_TYPE,
-  supplyCap: String(SUNL_SUPPLY_WHOLE),
+  name: spec.name,
+  tokenSymbol: spec.symbol,
+  tokenType: spec.tokenType,
+  supplyCap: String(spec.supplyWhole),
   tokenizerAddress: sandbox.tokenizer(),
 });
 
@@ -104,29 +95,6 @@ const approveInput = (): ApproveInput => ({
   amount: String(PRINCIPAL_HOLDING_WHOLE),
 });
 
-/** Whether Brickken read a whole-token figure as whole tokens or took the digits literally. */
-export type AmountWord = 'scaled' | 'unscaled' | 'absent';
-
-const word = (value: bigint): string => value.toString(16).padStart(64, '0');
-
-interface Figures {
-  whole: bigint;
-  scaled: bigint;
-}
-
-function amountWord(
-  transactions: readonly UnsignedTransactionLike[],
-  figures: Figures,
-): AmountWord {
-  const calldata = transactions
-    .map((transaction) => transaction.data)
-    .join('')
-    .toLowerCase();
-  if (calldata.includes(word(figures.scaled))) return 'scaled';
-  if (calldata.includes(word(figures.whole))) return 'unscaled';
-  return 'absent';
-}
-
 type Method = 'newTokenization' | 'whitelist' | 'mintToken' | 'approve';
 
 type Send = (sandbox: Tokenization, options: WriteOptions) => Promise<WriteResult>;
@@ -159,12 +127,15 @@ async function prepare(
 }
 
 /** Preparing is free and sending is one-shot, so what they would send is read first. */
-export const prepareTokenCreation = (run: WriteRun = {}): Promise<Prepared> =>
+export const prepareTokenCreation = (
+  run: WriteRun = {},
+  spec: TokenSpec = SUNL,
+): Promise<Prepared> =>
   prepare(
     'newTokenization',
     run,
-    (sandbox, options) => sandbox.create(creationInput(sandbox), options),
-    { whole: SUNL_SUPPLY_WHOLE, scaled: SUNL_SUPPLY },
+    (sandbox, options) => sandbox.create(creationInput(sandbox, spec), options),
+    { whole: spec.supplyWhole, scaled: supplyInBaseUnits(spec) },
   );
 
 export const prepareHoldingMint = (run: WriteRun = {}): Promise<Prepared> =>
@@ -173,36 +144,26 @@ export const prepareHoldingMint = (run: WriteRun = {}): Promise<Prepared> =>
     scaled: PRINCIPAL_HOLDING,
   });
 
-async function sendAndConfirm(
+const sendAndConfirm = (
   action: AnchorAction,
   method: Method,
   run: WriteRun,
   send: Send,
-): Promise<Settlement> {
-  const {
-    sandbox = SANDBOX,
-    file = EVIDENCE_FILE,
-    anchors = ANCHOR_FILE,
-    receipt = transactionReceipt,
-  } = run;
-  refuseRepeat(action, anchors);
-
-  const result = await sdkWrite(file, method, () =>
+): Promise<Settlement> => {
+  const { sandbox = SANDBOX, ...rest } = run;
+  return confirmedWrite(action, method, sandbox, rest, () =>
     send(sandbox, { execute: true, signerAddress: sandbox.tokenizer() }),
   );
-  if (result.sent === undefined)
-    throw new KeeperError('writeUnconfirmed', 'the write prepared but never sent');
-
-  const transactionHash = await settledHash(sandbox, result.txId);
-  const { status } = await confirmAnchor(action, transactionHash, { file: anchors, receipt });
-  if (status !== 'success') throw new KeeperError('writeUnconfirmed', `${action} is ${status}`);
-  return { txId: result.txId, transactionHash };
-}
+};
 
 /** A factory deploys the token, so the receipt names no contract and this claims no address. */
-export const createToken = (run: WriteRun = {}): Promise<Settlement> =>
-  sendAndConfirm('create-token', 'newTokenization', run, (sandbox, options) =>
-    sandbox.create(creationInput(sandbox), options),
+export const createToken = (
+  run: WriteRun = {},
+  spec: TokenSpec = SUNL,
+  action: AnchorAction = 'create-token',
+): Promise<Settlement> =>
+  sendAndConfirm(action, 'newTokenization', run, (sandbox, options) =>
+    sandbox.create(creationInput(sandbox, spec), options),
   );
 
 export const whitelistHolder = (run: WriteRun = {}): Promise<Settlement> =>

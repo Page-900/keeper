@@ -15,15 +15,15 @@ print('Preparing sends no transaction, spends no gas, and creates nothing.');
 print('');
 
 try {
-  const { txId, transactions, supply } = await prepareTokenCreation();
+  const { txId, transactions, amount } = await prepareTokenCreation();
   print(`  prepared     ${txId}`);
   print(`  transactions ${transactions.length}`);
   for (const [index, transaction] of transactions.entries()) {
     print(`  ${index + 1}. to ${transaction.to}, ${transaction.data.length / 2 - 1} bytes`);
   }
   print('');
-  print(`  supply       ${supply}`);
-  print(`  ${VERDICT[supply]}`);
+  print(`  supply       ${amount}`);
+  print(`  ${VERDICT[amount]}`);
 } catch (cause) {
   print(`  not prepared: ${cause instanceof Error ? cause.message : cause}`);
   process.exitCode = 1;

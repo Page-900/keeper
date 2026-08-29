@@ -21,6 +21,9 @@ export const ERROR_COPY = {
     'A refusal could not be pinned to a single published limit, so nothing was recorded',
   actionRefused: 'This call was tried for free first and did not go through, so nothing was sent',
   evidenceProtected: 'A test tried to write into the evidence a real run produced',
+  offeringBroadcast: 'A prepare that must open nothing reported a send or left an offering',
+  skillUnverified:
+    'The Brickken agent skill on this machine is not the artifact the evidence recorded',
 } as const;
 
 export type ErrorKind = keyof typeof ERROR_COPY;
