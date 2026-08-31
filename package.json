@@ -17,7 +17,7 @@
     "pretest": "npm run compile",
     "test": "vitest run",
     "test:contracts": "hardhat test solidity contracts/test/AgentExecutor.t.sol",
-    "test:fork": "node --env-file-if-exists=.env node_modules/hardhat/dist/src/cli.js test solidity contracts/test/ForkRehearsal.t.sol",
+    "test:fork": "node --env-file-if-exists=.env node_modules/hardhat/dist/src/cli.js test solidity contracts/test/ForkRehearsal.t.sol contracts/test/ForkBattery.t.sol contracts/test/ForkRecipient.t.sol",
     "scan": "aislop ci",
     "verify": "node scripts/verify.js",
     "wallets": "node scripts/wallets.js",
@@ -48,8 +48,19 @@
     "action:simulate": "node scripts/simulate-action.js",
     "action:send": "node scripts/agent-action.js",
     "action:refuse": "node scripts/refuse-action.js",
+    "keeper:decide": "node scripts/keeper-decide.js",
+    "keeper:act": "node scripts/keeper-act.js",
+    "jailbreak": "node scripts/jailbreak.js",
+    "battery:check": "node scripts/battery-check.js",
+    "battery:prepare": "node scripts/battery-prepare.js",
+    "battery:cycle-one": "node scripts/battery-cycle-one.js",
+    "battery:cycle-two": "node scripts/battery-cycle-two.js",
+    "battery:replay": "node scripts/battery-replay.js",
+    "battery:duplicate": "node scripts/battery-duplicate.js",
     "mandate:grant": "node scripts/grant-mandate.js",
-    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run test:contracts && npm run build && npm run scan"
+    "mandate:grant-probe": "node scripts/grant-probe.js",
+    "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run test:contracts && npm run build && npm run scan",
+    "ablation": "node scripts/ablation.js"
   },
   "lint-staged": {
     "*.{ts,js}": [
@@ -61,6 +72,7 @@
     ]
   },
   "dependencies": {
+    "@google/genai": "2.19.0",
     "brickken-sdk": "0.2.0",
     "viem": "2.55.16"
   },

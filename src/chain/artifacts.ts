@@ -14,6 +14,10 @@ export const REGISTRY_ARTIFACT = compiled('interfaces/IAgentMandate.sol/IAgentMa
 
 export const ROLES_ARTIFACT = compiled('interfaces/IMandateRoles.sol/IMandateRoles.json');
 
+export const MANDATE_ERRORS_ARTIFACT = compiled(
+  'interfaces/IMandateErrors.sol/IMandateErrors.json',
+);
+
 export const COMPLIANCE_ARTIFACT = compiled(
   'interfaces/IComplianceProvider.sol/IComplianceProvider.json',
 );

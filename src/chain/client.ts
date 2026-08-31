@@ -3,12 +3,14 @@ import {
   ContractFunctionRevertedError,
   createPublicClient,
   createWalletClient,
+  decodeFunctionData,
   decodeFunctionResult,
   encodeFunctionData,
   erc20Abi,
   getAddress,
   http,
   isAddress,
+  keccak256,
   type Abi,
 } from 'viem';
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
@@ -26,13 +28,17 @@ import {
 } from '../shared/secrets.js';
 
 /** The principal grants authority, the agent spends it, the counterparty only receives. */
-export type SignerRole = 'principal' | 'agent' | 'counterparty';
+export type SignerRole = 'principal' | 'agent' | 'counterparty' | 'probe' | 'uncleared';
 
 const KEY_VARIABLE: Record<SignerRole, string> = {
   principal: 'PRINCIPAL_PRIVATE_KEY',
   agent: 'AGENT_PRIVATE_KEY',
   counterparty: 'COUNTERPARTY_PRIVATE_KEY',
+  probe: 'PROBE_PRIVATE_KEY',
+  uncleared: 'UNCLEARED_PRIVATE_KEY',
 };
+
+export const SIGNER_ROLES = Object.keys(KEY_VARIABLE) as readonly SignerRole[];
 
 const isPrivateKey = (value: string): value is `0x${string}` => /^0x[0-9a-fA-F]{64}$/.test(value);
 
@@ -128,6 +134,10 @@ export async function blockNumber(): Promise<bigint> {
   return withReader((reader) => reader.getBlockNumber());
 }
 
+export async function blockTimestamp(atBlock: bigint): Promise<bigint> {
+  return withReader(async (reader) => (await reader.getBlock({ blockNumber: atBlock })).timestamp);
+}
+
 export interface OutboundTransaction {
   to: `0x${string}`;
   data: `0x${string}`;
@@ -165,6 +175,16 @@ export async function transactionReceipt(hash: `0x${string}`): Promise<Receipt> 
   );
   return { status, blockNumber, contractAddress: contractAddress ?? null, gasUsed };
 }
+
+export async function transactionArguments(
+  hash: `0x${string}`,
+  artifact: Artifact,
+): Promise<readonly unknown[]> {
+  const data = await withReader(async (reader) => (await reader.getTransaction({ hash })).input);
+  return decodeFunctionData({ abi: artifact.abi, data }).args ?? [];
+}
+
+export const bytesDigest = (bytes: `0x${string}`): `0x${string}` => keccak256(bytes);
 
 export async function confirmTransaction(hash: `0x${string}`): Promise<ConfirmationStatus> {
   const { status } = await transactionReceipt(hash);
@@ -421,6 +441,9 @@ export const transferCalldata = (
   amount: bigint,
 ): `0x${string}` =>
   encodeFunctionData({ abi: erc20Abi, functionName: 'transferFrom', args: [from, to, amount] });
+
+export const approveCalldata = (spender: `0x${string}`, amount: bigint): `0x${string}` =>
+  encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [spender, amount] });
 
 export async function readTokenAllowance(
   contract: `0x${string}`,

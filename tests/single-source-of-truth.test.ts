@@ -21,6 +21,7 @@ const CHAIN_CLIENT = 'chain/client.ts';
 const MANDATE = 'chain/mandate.ts';
 const BRICKKEN_CLIENT = 'brickken/client.ts';
 const SDK = 'brickken/sdk.ts';
+const MODEL = 'keeper/model.ts';
 
 const read = (file: string): string => readFileSync(new URL(file, SRC), 'utf8');
 
@@ -150,6 +151,29 @@ describe('external vendors are wrapped, never called by business logic', () => {
 
     expect(source.match(/createPublicClient\(/g)).toHaveLength(1);
     expect(source.match(/createWalletClient\(/g)).toHaveLength(1);
+  });
+
+  it('imports the model vendor SDK only in the module that wraps it', () => {
+    const offenders = sourceFiles()
+      .filter((file) => file !== MODEL)
+      .filter((file) => read(file).includes("from '@google/genai"));
+
+    expect(offenders).toEqual([]);
+  });
+
+  it('builds the model client in exactly one place, so no call site can skip the record', () => {
+    const source = read(MODEL);
+
+    expect(source.match(/new GoogleGenAI\(/g)).toHaveLength(1);
+    expect(source.match(/interactions\.create\(/g)).toHaveLength(1);
+  });
+
+  it('names the model in one place, so a reasoning trace can never be from another one', () => {
+    const offenders = sourceFiles()
+      .filter((file) => file !== MODEL)
+      .filter((file) => /gemini-[a-z0-9.-]+|claude-[a-z0-9-]+/.test(read(file)));
+
+    expect(offenders).toEqual([]);
   });
 
   it('imports the Brickken SDK only in the module that wraps it', () => {

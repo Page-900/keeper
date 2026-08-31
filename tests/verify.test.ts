@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import { CHECKS, PASSED, render, report } from '../scripts/checks.js';
+import { CHECKS, FAILED, PASSED, render, report } from '../scripts/checks.js';
 
 const PACKAGE = new URL('../package.json', import.meta.url);
 
@@ -64,5 +64,18 @@ describe('one command covers the whole chain, so a green table means a green bui
 
     expect(solidityTests().length).toBeGreaterThan(0);
     for (const file of solidityTests()) expect(named).toContain(file);
+  });
+});
+
+describe('a failed row says why, because the operator cannot read the code to find out', () => {
+  it('prints the captured reason under the row it belongs to', () => {
+    const first = CHECKS[0];
+    const results = new Map([[first?.id, { status: FAILED, output: 'the sandbox answered 502' }]]);
+
+    expect(render(report(results as never))).toContain('      the sandbox answered 502');
+  });
+
+  it('says nothing extra when the row passed, so a green run stays readable', () => {
+    expect(render(report(everyCheckPassed()))).not.toContain('the sandbox answered 502');
   });
 });

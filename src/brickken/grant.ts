@@ -7,7 +7,13 @@ import {
   type GrantMandateMessage,
 } from '../chain/mandate.js';
 import { readRegistryState } from '../chain/registry.js';
-import { CHAIN_ID, identityRef, requireAddress } from '../shared/config.js';
+import {
+  CHAIN_ID,
+  KEEPER_MANDATE,
+  identityRef,
+  requireAddress,
+  type MandateSpec,
+} from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { createBrickkenClient, type BrickkenClient } from './client.js';
 import { EVIDENCE_FILE, sdkWrite } from './log.js';
@@ -44,10 +50,10 @@ const SURFACE: GrantSurface = {
   sign: (message) => signTypedDataAs(SIGNER, grantMandateTypedData(message)),
 };
 
-const mandateQuery = (): Record<string, string> => ({
+const mandateQuery = (spec: MandateSpec): Record<string, string> => ({
   chainId: String(CHAIN_ID),
   agentMandateAddress: requireAddress('agentMandate'),
-  agent: requireAddress('agent'),
+  agent: requireAddress(spec.agent),
   principal: requireAddress('principal'),
 });
 
@@ -58,8 +64,8 @@ const asWhole = (value: unknown, what: string): bigint => {
 };
 
 /** A replay number both sides do not agree on is never averaged, guessed, or preferred. */
-async function agreedNonce(surface: GrantSurface): Promise<bigint> {
-  const body = (await surface.status(mandateQuery())) as Record<string, unknown> | null;
+async function agreedNonce(surface: GrantSurface, spec: MandateSpec): Promise<bigint> {
+  const body = (await surface.status(mandateQuery(spec))) as Record<string, unknown> | null;
   const theirs = asWhole(body?.['nonce'], 'GET /rams/status');
   const ours = await surface.chainNonce();
   if (theirs !== ours)
@@ -77,15 +83,19 @@ export interface Reviewed {
 }
 
 /** Reads cost nothing, so the whole authority is agreed before a signature exists anywhere. */
-export async function reviewGrant(surface: GrantSurface = SURFACE): Promise<Reviewed> {
-  const nonce = await agreedNonce(surface);
+export async function reviewGrant(
+  surface: GrantSurface = SURFACE,
+  spec: MandateSpec = KEEPER_MANDATE,
+): Promise<Reviewed> {
+  const nonce = await agreedNonce(surface, spec);
   const message = grantMandateMessage({
     nowSeconds: Math.floor(Date.now() / 1000),
     nonce,
     identityRef,
+    spec,
   });
   const body = await surface.typedData({
-    ...mandateQuery(),
+    ...mandateQuery(spec),
     complianceProvider: message.complianceProvider,
     identityRef: message.identityRef,
     asset: message.asset,
@@ -121,6 +131,8 @@ const grantInput = (message: GrantMandateMessage, signature: `0x${string}`): Gra
 
 export interface GrantRun {
   surface?: GrantSurface;
+  spec?: MandateSpec;
+  action?: AnchorAction;
   anchors?: string;
   file?: string;
   receipt?: (hash: `0x${string}`) => Promise<Receipt>;
@@ -128,12 +140,14 @@ export interface GrantRun {
 
 export async function grantMandate({
   surface = SURFACE,
+  spec = KEEPER_MANDATE,
+  action = GRANT,
   anchors = ANCHOR_FILE,
   file = EVIDENCE_FILE,
   receipt = transactionReceipt,
 }: GrantRun = {}): Promise<Settlement> {
-  refuseRepeat(GRANT, anchors);
-  const { message } = await reviewGrant(surface);
+  refuseRepeat(action, anchors);
+  const { message } = await reviewGrant(surface, spec);
   const signature = await surface.sign(message);
 
   const result = await sdkWrite(file, 'ramsGrantMandate', () =>
@@ -143,7 +157,7 @@ export async function grantMandate({
     throw new KeeperError('writeUnconfirmed', 'the grant prepared but never sent');
 
   const transactionHash = await settledHash(surface, result.txId);
-  const { status } = await confirmAnchor(GRANT, transactionHash, { file: anchors, receipt });
+  const { status } = await confirmAnchor(action, transactionHash, { file: anchors, receipt });
   if (status !== 'success') throw new KeeperError('writeUnconfirmed', `the grant is ${status}`);
   return { txId: result.txId, transactionHash };
 }

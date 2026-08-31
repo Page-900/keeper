@@ -5,7 +5,13 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { grantMandate, reviewGrant, type GrantSurface } from '../src/brickken/grant.js';
 import { grantMandateDomain, grantMandateMessage } from '../src/chain/mandate.js';
-import { identityRef } from '../src/shared/config.js';
+import {
+  KEEPER_MANDATE,
+  PROBE_MANDATE,
+  identityRef,
+  requireAddress,
+  type MandateSpec,
+} from '../src/shared/config.js';
 import { readRecords } from '../src/shared/jsonl.js';
 import type { Anchor } from '../src/chain/anchors.js';
 import type { RequestRecord } from '../src/brickken/log.js';
@@ -14,11 +20,12 @@ import { captureError } from './support/capture-error.js';
 const HASH = `0x${'ab'.repeat(32)}` as const;
 const SIGNATURE = `0x${'cd'.repeat(65)}` as const;
 
-const envelope = (query: Record<string, string>): unknown => {
+const envelope = (query: Record<string, string>, spec: MandateSpec = KEEPER_MANDATE): unknown => {
   const message = grantMandateMessage({
-    nowSeconds: Number(query['validFrom']),
+    nowSeconds: Number(query['validFrom']) - spec.opensIn,
     nonce: 0n,
     identityRef,
+    spec,
   });
   return {
     typedData: {
@@ -236,5 +243,75 @@ describe('the call that grants the authority is recorded like every other call',
     await expect(grantMandate({ surface, anchors, receipt, file })).rejects.toThrow();
 
     expect(readRecords<RequestRecord>(file).map((record) => record.outcome)).toEqual(['failure']);
+  });
+});
+
+describe('a second agent gets its own mandate, so no test spends the granted one', () => {
+  const probeSurface = (): GrantSurface =>
+    surfaceWith({ typedData: (query) => Promise.resolve(envelope(query, PROBE_MANDATE)) }).surface;
+
+  it('asks Brickken about the probe agent and not about the one that is live', async () => {
+    const asked: Record<string, string>[] = [];
+    const { surface } = surfaceWith({
+      typedData: (query) => {
+        asked.push(query);
+        return Promise.resolve(envelope(query, PROBE_MANDATE));
+      },
+    });
+
+    await reviewGrant(surface, PROBE_MANDATE);
+
+    expect(asked[0]?.['agent']).toBe(requireAddress('probe'));
+    expect(asked[0]?.['agent']).not.toBe(requireAddress('agent'));
+  });
+
+  it('names the probe agent in the payload that gets signed, not only in the query', async () => {
+    const { message } = await reviewGrant(probeSurface(), PROBE_MANDATE);
+
+    expect(message.agent).toBe(requireAddress('probe'));
+    expect(message.agent).not.toBe(requireAddress('agent'));
+  });
+
+  it('carries the probe caps, which are far below the ones the demonstration uses', async () => {
+    const { message } = await reviewGrant(probeSurface(), PROBE_MANDATE);
+
+    expect(message.maxTransactionValue).toBe(PROBE_MANDATE.maxTransactionValue);
+    expect(message.maxCumulativeValue).toBe(PROBE_MANDATE.maxCumulativeValue);
+    expect(message.maxCumulativeValue).toBeLessThan(KEEPER_MANDATE.maxCumulativeValue);
+  });
+
+  it('opens in the future, which is the only way an act before the window can be tried', async () => {
+    const { message } = await reviewGrant(probeSurface(), PROBE_MANDATE);
+
+    expect(message.validFrom).toBeGreaterThan(Math.floor(Date.now() / 1000));
+    expect(message.validUntil).toBeGreaterThan(message.validFrom);
+  });
+
+  it('records under its own name, leaving the investor grant free to happen once', async () => {
+    const surface = probeSurface();
+
+    await grantMandate({
+      surface,
+      spec: PROBE_MANDATE,
+      action: 'grant-probe-1',
+      anchors,
+      file,
+      receipt,
+    });
+
+    const written = readRecords<Anchor>(anchors);
+    expect(written.map((anchor) => anchor.action)).toEqual(['grant-probe-1']);
+  });
+
+  it('still refuses to repeat one cycle, while leaving the next cycle open', async () => {
+    const surface = probeSurface();
+    const run = (action: 'grant-probe-1' | 'grant-probe-2') =>
+      grantMandate({ surface, spec: PROBE_MANDATE, action, anchors, file, receipt });
+
+    await run('grant-probe-1');
+    const error = await captureError(() => run('grant-probe-1'));
+
+    expect(error.kind).toBe('alreadyCreated');
+    await expect(run('grant-probe-2')).resolves.toBeDefined();
   });
 });

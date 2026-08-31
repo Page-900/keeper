@@ -119,7 +119,6 @@ export {
   readRegistryState,
   type RegistryRead,
 } from './chain/registry.js';
-export { submitSequence, type Sequence, type Submitter } from './chain/pipeline.js';
 export {
   GRANT_MANDATE_TYPES,
   grantMandateDigest,
@@ -143,7 +142,7 @@ export {
   OFFERING_COIN,
   SIGNATURE_DEADLINE_SECONDS,
   addressNamed,
-  mandateWindow,
+  specWindow,
   offeringWindow,
   type MandateWindow,
   type OfferingWindow,

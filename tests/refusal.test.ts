@@ -16,42 +16,17 @@ import {
   type RefusalSender,
 } from '../src/chain/refusal.js';
 import type { RegistryRead } from '../src/chain/registry.js';
-import { CHAIN_ID, PERMITTED_ACTION, requireAddress } from '../src/shared/config.js';
+import { PERMITTED_ACTION, requireAddress } from '../src/shared/config.js';
 import { readRecords } from '../src/shared/jsonl.js';
 import { captureError } from './support/capture-error.js';
+import {
+  PER_TRANSACTION as CAP,
+  STATE_BLOCK as BLOCK,
+  registryState as state,
+} from './support/registry-state.js';
 
-const PRINCIPAL = requireAddress('principal');
 const AGENT = requireAddress('agent');
 const ASSET = requireAddress('asset');
-const CAP = 250_000_000_000_000_000_000n;
-const BLOCK = 11_558_500n;
-
-const state = (overrides: Partial<RegistryRead> = {}): RegistryRead => ({
-  at: '2026-08-25T00:00:00.000Z',
-  chainId: CHAIN_ID,
-  registry: requireAddress('agentMandate'),
-  executor: requireAddress('executor'),
-  principal: PRINCIPAL,
-  agent: AGENT,
-  blockNumber: String(BLOCK),
-  mandateGranted: true,
-  mandateValidUntil: '1792773729',
-  mandateAgent: AGENT,
-  mandateAsset: ASSET,
-  mandateRevoked: false,
-  maxTransactionValue: String(CAP),
-  maxCumulativeValue: String(CAP * 4n),
-  cumulativeUsed: String(CAP),
-  actionEnabled: true,
-  agentFrozen: false,
-  principalNonce: '1',
-  principalEligible: true,
-  eligibilityReason: 0,
-  eligibilityExpiresAt: '0',
-  executorMayRecord: true,
-  ...overrides,
-});
-
 const REVERT = {
   error: 'CannotExecute',
   args: [AGENT, ASSET, PERMITTED_ACTION.selector, String(CAP + 1n)],

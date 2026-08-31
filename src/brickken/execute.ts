@@ -73,6 +73,7 @@ export async function prepareAgentAction(
 
 export interface ActionRun {
   action?: AgentAction;
+  name?: AnchorAction;
   surface?: ExecuteSurface;
   anchors?: string;
   file?: string;
@@ -81,12 +82,13 @@ export interface ActionRun {
 
 export async function sendAgentAction({
   action = firstAction(),
+  name = ACTION,
   surface = SURFACE,
   anchors = ANCHOR_FILE,
   file = EVIDENCE_FILE,
   receipt = transactionReceipt,
 }: ActionRun = {}): Promise<Settlement> {
-  refuseRepeat(ACTION, anchors);
+  refuseRepeat(name, anchors);
   const prepared = await prepareAgentAction(action, surface, file);
   if (!prepared.carriesOurCall)
     throw new KeeperError('payloadMismatch', 'the prepared call is not the transfer we asked for');
@@ -98,7 +100,7 @@ export async function sendAgentAction({
     throw new KeeperError('writeUnconfirmed', 'the action prepared but never sent');
 
   const transactionHash = await settledHash(surface, result.txId);
-  const { status } = await confirmAnchor(ACTION, transactionHash, { file: anchors, receipt });
+  const { status } = await confirmAnchor(name, transactionHash, { file: anchors, receipt });
   if (status !== 'success') throw new KeeperError('writeUnconfirmed', `the action is ${status}`);
   return { txId: result.txId, transactionHash };
 }

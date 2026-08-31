@@ -35,9 +35,9 @@ export const CHECKS = [
   },
   {
     id: 'rehearsal',
-    title: 'Rehearsal',
+    title: 'The tests against their real contracts',
     proves:
-      'The whole flow runs end to end against the registry as it is really deployed, on a private copy of the test network that nothing outside this machine can see.',
+      'The whole flow runs end to end against the registry and the token as they are really deployed, on a private copy of the test network that nothing outside this machine can see. It also runs the cases that cannot be sent to the real network at all, either because they need a power only Brickken hold or because they would be genuinely adversarial.',
     script: 'test:fork',
   },
   {
@@ -84,11 +84,11 @@ export const CHECKS = [
   },
   {
     id: 'allowed',
-    title: 'Allowed to hold it',
+    title: 'Allowed to send it',
     proves:
-      'Brickken record the investor wallet as cleared to hold this token, which is the check their own contract makes before any transfer.',
+      'Brickken record the investor wallet as cleared, which is the check their token makes on whoever is sending. It makes no check at all on whoever is receiving.',
     whenFailed:
-      'The investor wallet is not cleared to hold the token, so no transfer of it can settle.',
+      'The investor wallet is not cleared to send the token, so no transfer of it can settle.',
   },
   {
     id: 'allowance',
@@ -131,6 +131,14 @@ export const CHECKS = [
       'The balances on the test network and the running total in the registry do not tell the same story. One of them is not being read correctly.',
   },
   {
+    id: 'keeper',
+    title: 'What Keeper decided',
+    proves:
+      'The transfer the agent reasoned its way to is really on the test network and really succeeded, the amount it chose is inside the limit the mandate publishes, and the registry has counted it. The reasoning is checkable next to the transaction it produced.',
+    whenFailed:
+      'Either the agent has not acted yet, or the transaction it produced is not on the chain as a success, or the amount it chose does not match what the registry counted. Read the recorded decision next to the transaction before trusting either.',
+  },
+  {
     id: 'refusal',
     title: 'The limit still refuses',
     proves:
@@ -145,6 +153,30 @@ export const CHECKS = [
       'The refused transfer this project publishes really is on the test network, it really reverted, and it used only a fraction of the gas it was given, so it was stopped by the rule and not by running out of fuel.',
     whenFailed:
       'The transaction this project points at is not on the chain, or it did not revert, or it used all the gas it was given. The published refusal cannot be trusted until that is explained.',
+  },
+  {
+    id: 'battery',
+    title: 'Every rule still refuses',
+    proves:
+      'Every refusal this project publishes is a real transaction that really reverted, each one caused by a different rule of the permission, and every rule we claim to have shown is there.',
+    whenFailed:
+      'A published refusal is missing, or one of them now succeeds on the chain, so the set of refusals shown cannot be trusted as it stands.',
+  },
+  {
+    id: 'secondAction',
+    title: 'The extra action nobody may use',
+    proves:
+      'Our executor is deliberately willing to forward a second kind of call, so that the permission is the only thing refusing it and not our own code. This reads the chain and confirms no permission has ever enabled that call.',
+    whenFailed:
+      'A permission now allows the agent to make that second kind of call against the investor tokens. Revoke it before anything else.',
+  },
+  {
+    id: 'signatures',
+    title: 'A used signature stays used',
+    proves:
+      'A signed instruction that has already been used, one whose deadline has passed, and an attempt to grant a second permission on top of a live one, are all refused by the registry. Every one of them is a real transaction on the test network.',
+    whenFailed:
+      'One of those three was not refused, or the transaction that shows it is not on the chain as a failure.',
   },
   {
     id: 'window',
@@ -212,10 +244,20 @@ export function report(results) {
   return { rows, passed, verified: passed === rows.length };
 }
 
+const indented = (text) =>
+  text
+    .trim()
+    .split(/\r?\n/)
+    .map((part) => `      ${part}`);
+
+const reason = (row) => (row.output === '' ? [] : indented(row.output));
+
+/** A failed row that does not say why sends the operator to the code to find out. */
 const line = (row, markWidth, titleWidth) => {
   const detail = row.status === PASSED && row.detail !== '' ? `  ${row.detail}` : '';
   const mark = MARK[row.status].padEnd(markWidth);
-  return `  ${mark}  ${row.check.title.padEnd(titleWidth)}  ${row.check.proves}${detail}`;
+  const head = `  ${mark}  ${row.check.title.padEnd(titleWidth)}  ${row.check.proves}${detail}`;
+  return row.status === PASSED ? [head] : [head, ...reason(row)];
 };
 
 export function render(summary) {
@@ -225,7 +267,7 @@ export function render(summary) {
     '',
     'Keeper verification',
     '',
-    ...summary.rows.map((row) => line(row, markWidth, titleWidth)),
+    ...summary.rows.flatMap((row) => line(row, markWidth, titleWidth)),
     '',
     `  ${summary.passed} of ${summary.rows.length} checks passed.`,
     `  ${summary.verified ? 'VERIFIED' : 'NOT VERIFIED'}`,

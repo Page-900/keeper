@@ -2,10 +2,11 @@ import { fileURLToPath } from 'node:url';
 
 import {
   CHAIN_ID,
-  MANDATE_ACTIONS,
   RECORDER_ROLE,
+  TRANSFER_ACTION,
   identityRef,
   requireAddress,
+  type AddressName,
 } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { appendRecord } from '../shared/jsonl.js';
@@ -16,7 +17,7 @@ import {
   ROLES_ARTIFACT,
   compiledArtifact,
 } from './artifacts.js';
-import { blockNumber, readAddress, readValue, type Artifact } from './client.js';
+import { blockNumber, blockTimestamp, readAddress, readValue, type Artifact } from './client.js';
 
 /** Resolved from this module, so the file cannot follow the working directory. */
 export const REGISTRY_READ_FILE = fileURLToPath(
@@ -47,9 +48,12 @@ export interface RegistryRead {
   principal: `0x${string}`;
   agent: `0x${string}`;
   blockNumber: string;
+  blockTimestamp: string;
   mandateGranted: boolean;
+  mandateValidFrom: string;
   mandateValidUntil: string;
   mandateAgent: `0x${string}`;
+  mandatePrincipal: `0x${string}`;
   mandateAsset: `0x${string}`;
   mandateRevoked: boolean;
   maxTransactionValue: string;
@@ -66,6 +70,7 @@ export interface RegistryRead {
 
 export interface RegistryChain {
   block: () => Promise<bigint>;
+  timestamp: (atBlock: bigint) => Promise<bigint>;
   read: (
     contract: `0x${string}`,
     artifact: Artifact,
@@ -80,11 +85,18 @@ export interface RegistryChain {
   ) => Promise<`0x${string}`>;
 }
 
-const CHAIN: RegistryChain = { block: blockNumber, read: readValue, readAddress };
+const CHAIN: RegistryChain = {
+  block: blockNumber,
+  timestamp: blockTimestamp,
+  read: readValue,
+  readAddress,
+};
 
 export interface RegistryOptions {
   chain?: RegistryChain;
   file?: string;
+  agent?: AddressName;
+  action?: `0x${string}`;
   registry?: Artifact;
   executor?: Artifact;
   roles?: Artifact;
@@ -136,6 +148,32 @@ function requireEligibility(value: unknown): Eligibility {
   };
 }
 
+export interface ExecuteQuery {
+  agent: `0x${string}`;
+  principal: `0x${string}`;
+  asset: `0x${string}`;
+  action: `0x${string}`;
+  amount: bigint;
+  atBlock: bigint;
+}
+
+/** The one place canExecute is asked, so the refusal path and the battery cannot drift apart. */
+export async function readCanExecute(
+  query: ExecuteQuery,
+  registry: Artifact = compiledArtifact(REGISTRY_ARTIFACT),
+): Promise<boolean> {
+  const answer = await readValue(
+    requireAddress('agentMandate'),
+    registry,
+    'canExecute',
+    [query.agent, query.principal, query.asset, query.action, query.amount],
+    query.atBlock,
+  );
+  if (typeof answer !== 'boolean')
+    throw new KeeperError('readBackMismatch', 'canExecute() did not answer true or false');
+  return answer;
+}
+
 /** Every value is read at one block, so the record is a state and not a set of moments. */
 export async function readRegistryState({
   chain = CHAIN,
@@ -144,12 +182,14 @@ export async function readRegistryState({
   executor = compiledArtifact(EXECUTOR_ARTIFACT),
   roles = compiledArtifact(ROLES_ARTIFACT),
   compliance = compiledArtifact(COMPLIANCE_ARTIFACT),
+  agent: agentName = 'agent',
+  action = TRANSFER_ACTION,
 }: RegistryOptions = {}): Promise<RegistryRead> {
   const registryAddress = requireAddress('agentMandate');
   const executorAddress = requireAddress('executor');
   const complianceAddress = requireAddress('complianceProvider');
   const principal = requireAddress('principal');
-  const agent = requireAddress('agent');
+  const agent = requireAddress(agentName);
 
   const named = await chain.readAddress(executorAddress, executor, 'principal');
   if (named.toLowerCase() !== principal.toLowerCase())
@@ -172,7 +212,7 @@ export async function readRegistryState({
     ),
   );
   const actionEnabled = asBoolean(
-    await read('isActionEnabled', [agent, principal, MANDATE_ACTIONS[0]]),
+    await read('isActionEnabled', [agent, principal, action]),
     'isActionEnabled()',
   );
   const mayRecord = asBoolean(
@@ -188,9 +228,12 @@ export async function readRegistryState({
     principal,
     agent,
     blockNumber: String(atBlock),
+    blockTimestamp: String(await chain.timestamp(atBlock)),
     mandateGranted: asWhole(mandate['validUntil'], 'getMandate().validUntil') > 0n,
+    mandateValidFrom: String(asWhole(mandate['validFrom'], 'getMandate().validFrom')),
     mandateValidUntil: String(asWhole(mandate['validUntil'], 'getMandate().validUntil')),
     mandateAgent: asAddress(mandate['agent'], 'getMandate().agent'),
+    mandatePrincipal: asAddress(mandate['principal'], 'getMandate().principal'),
     mandateAsset: asAddress(mandate['asset'], 'getMandate().asset'),
     mandateRevoked: asBoolean(mandate['revoked'], 'getMandate().revoked'),
     maxTransactionValue: String(asWhole(mandate['maxTransactionValue'], 'the per-transfer cap')),

@@ -30,7 +30,11 @@ A row is one Brickken method and the path their own SDK resolves it to. Answered
 | newSto | /prepare-transactions | not every time |
 | newTokenization | /prepare-transactions | not every time |
 | ramsExecute | /prepare-transactions | not every time |
+| ramsExecute | /x402/rams/execute | yes |
+| ramsGrantMandate | /x402/rams/grant-mandate | yes |
 | whitelist | /prepare-transactions | yes |
+
+Reached at more than one path, and reported rather than merged: ramsExecute.
 
 ## MCP, the hosted server
 
@@ -61,10 +65,6 @@ This one is not an API. Brickken publish a skill for AI agents, and their own co
 | brickken | npx -y brickken-cli@0.4.12 skill install --path ./vendor --force | 6 |
 
 Every file is fingerprinted at install and re-checked on every verification run. Brickken publish no fingerprint of their own, so that check proves the files have not changed since they arrived here, and it does not prove they are authentic.
-
-## One call the log does not hold
-
-The mandate grant went through the SDK before this request log existed, so no row above describes it. It is anchored on the chain instead, in block 11558285: [the grant transaction](https://sepolia.etherscan.io/tx/0x76a992afc0964eae5bb4bd0ab181e5c27662062a9f0f0c1c9fce122c98660126).
 
 ## Considered and not used
 

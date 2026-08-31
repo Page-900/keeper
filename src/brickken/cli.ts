@@ -54,7 +54,7 @@ export async function npx(args: string[], keep: readonly string[] = []): Promise
   const whole = ['-y', CLI_PACKAGE, ...args];
   const unsafe = whole.find((argument) => !SAFE_ARGUMENT.test(argument));
   if (unsafe !== undefined)
-    throw new KeeperError('sequenceMalformed', `${unsafe} cannot be passed to a shell`);
+    throw new KeeperError('argumentUnsafe', `${unsafe} cannot be passed to a shell`);
   const { stdout } = await runNpx(process.platform === 'win32' ? 'npx.cmd' : 'npx', whole, {
     cwd: DIRECTORY_WITHOUT_OUR_ENV,
     env: childEnvKeeping(keep),

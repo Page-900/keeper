@@ -27,6 +27,7 @@ const ARTIFACT: Artifact = { abi: [], bytecode: '0x' };
 const PRINCIPAL = requireAddress('principal');
 const AGENT = requireAddress('agent');
 const BLOCK = 11_514_300n;
+const BLOCK_TIME = 1_789_000_000n;
 
 type Mandate = Record<string, unknown>;
 
@@ -72,6 +73,7 @@ const fakeChain = (
     asked,
     chain: {
       block: () => Promise.resolve(BLOCK),
+      timestamp: () => Promise.resolve(BLOCK_TIME),
       read: (_contract, _artifact, functionName, args, atBlock) => {
         asked.push({ functionName, args, atBlock });
         return Promise.resolve(values[functionName]);
@@ -123,9 +125,12 @@ describe('the registry is asked what it holds for this project, and the answer i
       principal: PRINCIPAL,
       agent: AGENT,
       blockNumber: '11514300',
+      blockTimestamp: '1789000000',
       mandateGranted: false,
+      mandateValidFrom: '0',
       mandateValidUntil: '0',
       mandateAgent: address('0'),
+      mandatePrincipal: address('0'),
       mandateAsset: address('0'),
       mandateRevoked: false,
       maxTransactionValue: '0',

@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -42,5 +42,16 @@ describe('a private key never leaves .env', () => {
     for (const line of assignments) {
       expect(line.slice(line.indexOf('=') + 1).trim()).toBe('');
     }
+  });
+});
+
+describe('a node exit handler is called, never handed a function to call with the exit code', () => {
+  it('passes no bare function reference to process.on', () => {
+    const scripts = readdirSync(new URL('../scripts/', import.meta.url));
+    const offenders = scripts
+      .filter((file) => file.endsWith('.js'))
+      .filter((file) => /process\.on\('exit',\s*[A-Za-z]/.test(read(`scripts/${file}`)));
+
+    expect(offenders).toEqual([]);
   });
 });

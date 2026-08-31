@@ -1,6 +1,4 @@
-import { createSignerKey } from '../dist/chain/client.js';
-
-const ROLES = ['principal', 'agent', 'counterparty'];
+import { SIGNER_ROLES, createSignerKey } from '../dist/chain/client.js';
 
 const print = (text) => process.stdout.write(`${text}\n`);
 
@@ -9,7 +7,7 @@ print('Generating one wallet per role. The keys go straight into app/.env.');
 print('Only the addresses are printed. Share the address, never the key.');
 print('');
 
-for (const role of ROLES) {
+for (const role of SIGNER_ROLES) {
   try {
     print(`  ${role.padEnd(10)} ${createSignerKey(role)}`);
   } catch (cause) {

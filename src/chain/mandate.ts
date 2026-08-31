@@ -4,16 +4,17 @@ export type { TypedDataDomain };
 
 import {
   CHAIN_ID,
+  KEEPER_MANDATE,
   MANDATE_ACTIONS,
   MANDATE_METADATA,
-  MAX_CUMULATIVE_VALUE,
-  MAX_TRANSACTION_VALUE,
   PERMITTED_ACTION,
   SIGNATURE_DEADLINE_SECONDS,
   SUNL_DECIMALS,
   SUNL_SYMBOL,
-  mandateWindow,
   requireAddress,
+  specWindow,
+  type AddressName,
+  type MandateSpec,
 } from '../shared/config.js';
 export const GRANT_MANDATE_TYPES = {
   GrantMandate: [
@@ -60,18 +61,20 @@ export function grantMandateMessage(input: {
   nowSeconds: number;
   nonce: bigint;
   identityRef: `0x${string}`;
+  spec?: MandateSpec;
 }): GrantMandateMessage {
-  const { validFrom, validUntil } = mandateWindow(input.nowSeconds);
+  const spec = input.spec ?? KEEPER_MANDATE;
+  const { validFrom, validUntil } = specWindow(spec, input.nowSeconds);
   return {
-    agent: requireAddress('agent'),
+    agent: requireAddress(spec.agent),
     validFrom,
     validUntil,
     principal: requireAddress('principal'),
     complianceProvider: requireAddress('complianceProvider'),
     identityRef: input.identityRef,
     asset: requireAddress('asset'),
-    maxTransactionValue: MAX_TRANSACTION_VALUE,
-    maxCumulativeValue: MAX_CUMULATIVE_VALUE,
+    maxTransactionValue: spec.maxTransactionValue,
+    maxCumulativeValue: spec.maxCumulativeValue,
     metadata: MANDATE_METADATA,
     actions: [...MANDATE_ACTIONS],
     nonce: input.nonce,
@@ -90,6 +93,46 @@ export const grantMandateDigest = (message: GrantMandateMessage): `0x${string}` 
   hashTypedData(grantMandateTypedData(message));
 
 /** viem hashes a domain chainId sent as a JSON string differently from the same number. */
+export const REVOKE_MANDATE_TYPES = {
+  RevokeMandate: [
+    { name: 'agent', type: 'address' },
+    { name: 'principal', type: 'address' },
+    { name: 'nonce', type: 'uint256' },
+    { name: 'deadline', type: 'uint256' },
+  ],
+} as const;
+
+export type RevokeMandateMessage = {
+  agent: `0x${string}`;
+  principal: `0x${string}`;
+  nonce: bigint;
+  deadline: bigint;
+};
+
+export function revokeMandateMessage(input: {
+  nowSeconds: number;
+  nonce: bigint;
+  agent: AddressName;
+  deadlineSeconds?: bigint;
+}): RevokeMandateMessage {
+  return {
+    agent: requireAddress(input.agent),
+    principal: requireAddress('principal'),
+    nonce: input.nonce,
+    deadline: BigInt(input.nowSeconds) + (input.deadlineSeconds ?? SIGNATURE_DEADLINE_SECONDS),
+  };
+}
+
+export const revokeMandateTypedData = (message: RevokeMandateMessage) => ({
+  domain: grantMandateDomain(),
+  types: REVOKE_MANDATE_TYPES,
+  primaryType: 'RevokeMandate' as const,
+  message,
+});
+
+export const revokeMandateDigest = (message: RevokeMandateMessage): `0x${string}` =>
+  hashTypedData(revokeMandateTypedData(message));
+
 export const typedDataDigest = (envelope: {
   domain: TypedDataDomain;
   types: Record<string, readonly { name: string; type: string }[]>;
@@ -106,7 +149,7 @@ export type MandateRow = { label: string; value: string };
 export const sunlAmount = (amount: bigint): string =>
   `${formatUnits(amount, SUNL_DECIMALS)} ${SUNL_SYMBOL}`;
 
-const utc = (seconds: number | bigint): string =>
+export const utc = (seconds: number | bigint): string =>
   `${new Date(Number(seconds) * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z')} UTC`;
 
 export const mandateSummary = (message: GrantMandateMessage): MandateRow[] => [

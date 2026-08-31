@@ -13,13 +13,18 @@ export const ANCHOR_FILE = fileURLToPath(
 export type AnchorAction =
   | 'deploy-executor'
   | 'register-action'
+  | 'register-second-action'
   | 'create-token'
   | 'whitelist-holder'
   | 'whitelist-counterparty'
   | 'mint-holding'
   | 'approve-executor'
   | 'grant-mandate'
+  | `grant-probe-${number}`
   | 'agent-action'
+  | 'keeper-action'
+  | `battery-${string}`
+  | `signature-${string}`
   | 'agent-refusal'
   | 'create-rehearsal-token'
   | 'open-rehearsal-offering'

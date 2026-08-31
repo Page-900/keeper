@@ -197,3 +197,279 @@
 {"at":"2026-08-29T06:58:22.428Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
 {"at":"2026-08-29T06:58:47.061Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
 {"at":"2026-08-29T06:58:52.629Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:12:28.157Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T08:12:50.956Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T08:13:07.442Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T08:13:24.636Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:13:31.228Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:16:54.257Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T08:17:14.122Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T08:18:01.813Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T08:18:12.803Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:18:18.649Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:19:47.536Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T08:19:59.264Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T08:20:04.533Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T08:20:11.844Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:20:14.224Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:25:16.659Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T08:25:20.254Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T08:25:24.665Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T08:25:30.518Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:25:32.491Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:27:36.402Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T08:27:39.545Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T08:27:43.961Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T08:27:49.925Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:27:51.368Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:29:19.304Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T08:29:22.606Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T08:29:27.335Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T08:29:34.179Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T08:29:36.111Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T09:00:17.245Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T09:00:26.022Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T09:00:33.042Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T09:00:44.366Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T09:00:50.801Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T09:15:21.280Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T09:15:28.769Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T09:15:33.304Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T09:15:41.582Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T09:15:46.406Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T09:19:44.576Z","surface":"rest","method":"GET","path":"/rams/status?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0x29d78c8c5E7ad231a21A64170cA07e419f0C5aBa&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T09:19:50.808Z","surface":"rest","method":"GET","path":"/rams/typed-data/grant-mandate?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0x29d78c8c5E7ad231a21A64170cA07e419f0C5aBa&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc&complianceProvider=0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278&identityRef=0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0&asset=0x2aE3BB75aB04957aE3b8944094BC9e96d33dB255&validFrom=1787995190&validUntil=1793179190&maxTransactionValue=250000000000000000000&maxCumulativeValue=1000000000000000000000&metadata=0x0000000000000000000000000000000000000000000000000000000000000000&actions=0x23b872dd00000000000000000000000000000000000000000000000000000000&deadline=1787998790","outcome":"success","status":200}
+{"at":"2026-08-29T09:20:36.064Z","surface":"rest","method":"GET","path":"/rams/status?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T09:20:40.570Z","surface":"rest","method":"GET","path":"/rams/typed-data/grant-mandate?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc&complianceProvider=0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278&identityRef=0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0&asset=0x2aE3BB75aB04957aE3b8944094BC9e96d33dB255&validFrom=1787996140&validUntil=1787998840&maxTransactionValue=1000000000000000000&maxCumulativeValue=2000000000000000000&metadata=0x0000000000000000000000000000000000000000000000000000000000000000&actions=0x23b872dd00000000000000000000000000000000000000000000000000000000&deadline=1787998840","outcome":"success","status":200}
+{"at":"2026-08-29T09:56:05.154Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T09:56:12.537Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T09:56:20.481Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T09:56:34.094Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T09:56:39.204Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T13:08:31.332Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T13:08:40.901Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T13:08:48.509Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T13:08:57.872Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T13:09:03.207Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T13:24:10.239Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T13:24:17.585Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T13:24:24.536Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T13:24:35.364Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T13:24:40.141Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T13:26:22.159Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T13:26:25.830Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T13:26:32.855Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T13:26:39.843Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T13:26:41.944Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T13:32:17.482Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T13:32:24.663Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T13:32:29.161Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T13:32:56.878Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T13:33:01.498Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T13:56:06.924Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T13:56:13.426Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T13:56:20.474Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T13:56:29.550Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T13:56:34.087Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:05:06.064Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T15:05:12.735Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T15:05:19.932Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T15:05:28.576Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:05:33.596Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:07:48.662Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T15:07:52.703Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T15:07:59.363Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T15:08:13.656Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:16:52.782Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T15:17:01.049Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T15:17:10.840Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T15:17:24.074Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:17:28.743Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:21:06.428Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T15:21:14.902Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T15:21:21.038Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T15:21:31.361Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:21:33.816Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:33:23.193Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"failure"}
+{"at":"2026-08-29T15:33:36.032Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T15:33:43.634Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T15:33:52.160Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:33:57.022Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:37:25.364Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T15:37:36.034Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T15:37:48.053Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T15:37:53.932Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:37:56.049Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:44:58.349Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T15:45:08.692Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T15:45:13.956Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T15:45:23.643Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:45:31.052Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:47:51.553Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T15:47:58.840Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T15:48:06.511Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T15:48:12.654Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T15:48:14.896Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T16:15:16.327Z","surface":"sdk","method":"ramsExecute","path":"/x402/rams/execute","outcome":"success"}
+{"at":"2026-08-29T16:15:23.751Z","surface":"sdk","method":"ramsExecute","path":"/x402/rams/execute","outcome":"success"}
+{"at":"2026-08-29T16:15:30.184Z","surface":"rest","method":"GET","path":"/get-transaction-status","txId":"0x20540eead4028e1f4c6b29f70a971ed6e032ed2c39f835b76bc4f792420da8f1","outcome":"success","status":200}
+{"at":"2026-08-29T16:16:49.694Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T16:16:55.879Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T16:21:08.942Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T16:21:20.369Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T16:21:30.007Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T16:21:40.124Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T16:21:42.108Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T16:26:32.352Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T16:26:41.516Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T16:26:53.497Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T16:27:03.754Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T16:27:08.362Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T18:11:55.104Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T18:12:55.746Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T18:13:14.023Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T18:14:14.401Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T18:14:21.483Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T18:48:44.017Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T18:48:52.989Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T18:48:58.431Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T18:49:15.459Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T18:49:20.384Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T18:52:42.699Z","surface":"rest","method":"GET","path":"/rams/status?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T18:52:47.973Z","surface":"rest","method":"GET","path":"/rams/typed-data/grant-mandate?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc&complianceProvider=0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278&identityRef=0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0&asset=0x2aE3BB75aB04957aE3b8944094BC9e96d33dB255&validFrom=1788030467&validUntil=1788033167&maxTransactionValue=1000000000000000000&maxCumulativeValue=2000000000000000000&metadata=0x0000000000000000000000000000000000000000000000000000000000000000&actions=0x23b872dd00000000000000000000000000000000000000000000000000000000&deadline=1788033167","outcome":"success","status":200}
+{"at":"2026-08-29T18:57:41.173Z","surface":"rest","method":"GET","path":"/rams/status?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T18:57:47.694Z","surface":"rest","method":"GET","path":"/rams/typed-data/grant-mandate?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc&complianceProvider=0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278&identityRef=0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0&asset=0x2aE3BB75aB04957aE3b8944094BC9e96d33dB255&validFrom=1788030767&validUntil=1788033467&maxTransactionValue=1000000000000000000&maxCumulativeValue=2000000000000000000&metadata=0x0000000000000000000000000000000000000000000000000000000000000000&actions=0x23b872dd00000000000000000000000000000000000000000000000000000000&deadline=1788033467","outcome":"success","status":200}
+{"at":"2026-08-29T18:57:49.214Z","surface":"sdk","method":"ramsGrantMandate","path":"/x402/rams/grant-mandate","outcome":"success"}
+{"at":"2026-08-29T18:58:00.680Z","surface":"rest","method":"GET","path":"/get-transaction-status","txId":"0x68d6edda520698435ef44b3af52961d7552972d25788bd33857956f27b081542","outcome":"success","status":200}
+{"at":"2026-08-29T20:04:15.103Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T20:04:22.707Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T20:04:33.569Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T20:04:42.741Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T20:04:47.278Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T20:08:38.541Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T20:08:43.933Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T20:08:51.982Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T20:09:00.607Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T20:09:02.776Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T20:11:25.529Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-29T20:11:32.054Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-29T20:11:43.835Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-29T20:11:51.033Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-29T20:11:53.174Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T10:00:03.294Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T10:00:10.751Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T10:00:16.832Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T10:00:48.441Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T10:00:53.345Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T10:13:54.962Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T10:14:01.858Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T10:14:11.872Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T10:14:42.099Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T10:14:47.050Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T11:32:17.498Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T11:32:24.200Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T11:32:34.351Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T11:32:43.814Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T11:32:49.179Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T12:06:36.135Z","surface":"rest","method":"GET","path":"/rams/status?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T12:06:43.411Z","surface":"rest","method":"GET","path":"/rams/typed-data/grant-mandate?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc&complianceProvider=0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278&identityRef=0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0&asset=0x2aE3BB75aB04957aE3b8944094BC9e96d33dB255&validFrom=1788092503&validUntil=1788095203&maxTransactionValue=1000000000000000000&maxCumulativeValue=2000000000000000000&metadata=0x0000000000000000000000000000000000000000000000000000000000000000&actions=0x23b872dd00000000000000000000000000000000000000000000000000000000&deadline=1788095203","outcome":"success","status":200}
+{"at":"2026-08-30T12:06:47.887Z","surface":"sdk","method":"ramsGrantMandate","path":"/x402/rams/grant-mandate","outcome":"success"}
+{"at":"2026-08-30T12:06:56.922Z","surface":"rest","method":"GET","path":"/get-transaction-status","txId":"0xfe81dc2f0bb838c9b7f9d0a2b9220761199ba1a5d83d78de4a0caf53a7493534","outcome":"success","status":200}
+{"at":"2026-08-30T12:36:33.379Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T12:36:40.075Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T12:36:49.396Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T12:36:58.588Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T12:37:03.192Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T12:39:47.695Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T12:39:53.903Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T12:40:01.301Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T12:40:10.093Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T12:40:14.894Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T12:41:55.302Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T12:41:58.724Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T12:42:03.347Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T12:42:10.625Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T12:42:12.521Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T12:43:46.828Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T12:43:50.319Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T12:43:54.725Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T12:44:01.416Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T12:44:03.212Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T12:59:11.183Z","surface":"rest","method":"GET","path":"/rams/status?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T12:59:18.603Z","surface":"rest","method":"GET","path":"/rams/typed-data/grant-mandate?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc&complianceProvider=0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278&identityRef=0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0&asset=0x2aE3BB75aB04957aE3b8944094BC9e96d33dB255&validFrom=1788095658&validUntil=1788098358&maxTransactionValue=1000000000000000000&maxCumulativeValue=2000000000000000000&metadata=0x0000000000000000000000000000000000000000000000000000000000000000&actions=0x23b872dd00000000000000000000000000000000000000000000000000000000&deadline=1788098358","outcome":"success","status":200}
+{"at":"2026-08-30T12:59:22.594Z","surface":"sdk","method":"ramsGrantMandate","path":"/x402/rams/grant-mandate","outcome":"success"}
+{"at":"2026-08-30T12:59:33.916Z","surface":"rest","method":"GET","path":"/get-transaction-status","txId":"0x6f3cf99f3c4629096b5f71a949321fe5cba76993b2353bc907eea55ca678ad54","outcome":"success","status":200}
+{"at":"2026-08-30T13:03:14.274Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T13:03:21.063Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T13:03:28.968Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T13:03:37.389Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:03:42.602Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:08:29.990Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T13:08:33.381Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T13:08:39.246Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T13:08:47.301Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:08:49.076Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:11:26.545Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T13:11:29.805Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T13:11:34.905Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T13:11:43.213Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:11:45.062Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:14:08.819Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T13:14:12.292Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T13:14:17.997Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T13:14:26.252Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:14:27.711Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:23:18.850Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T13:23:25.357Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T13:23:34.410Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T13:23:45.636Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:23:50.711Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:32:39.250Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T13:32:45.634Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T13:32:56.125Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T13:33:07.178Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:33:12.016Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:36:44.074Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T13:36:47.408Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T13:36:53.383Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T13:37:04.750Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:37:09.335Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:56:32.862Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T13:56:40.642Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T13:56:50.171Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T13:56:59.925Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T13:57:05.914Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T14:11:00.399Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T14:11:04.338Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T14:11:10.522Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T14:11:22.877Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T14:11:28.053Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T14:27:13.731Z","surface":"rest","method":"GET","path":"/rams/status?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T14:27:20.809Z","surface":"rest","method":"GET","path":"/rams/typed-data/grant-mandate?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0xB74a98a9e33d13874adec7919BFe6599DD70161a&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc&complianceProvider=0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278&identityRef=0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0&asset=0x2aE3BB75aB04957aE3b8944094BC9e96d33dB255&validFrom=1788100940&validUntil=1788103640&maxTransactionValue=1000000000000000000&maxCumulativeValue=2000000000000000000&metadata=0x0000000000000000000000000000000000000000000000000000000000000000&actions=0x23b872dd00000000000000000000000000000000000000000000000000000000&deadline=1788103640","outcome":"success","status":200}
+{"at":"2026-08-30T14:27:24.948Z","surface":"sdk","method":"ramsGrantMandate","path":"/x402/rams/grant-mandate","outcome":"success"}
+{"at":"2026-08-30T14:27:36.694Z","surface":"rest","method":"GET","path":"/get-transaction-status","txId":"0xb9d77d67eb6971be3035e8a251b4a79d2f2bf1c8ee598eabe4c876bf655dee07","outcome":"success","status":200}
+{"at":"2026-08-30T14:34:16.418Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T14:34:20.878Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T14:34:28.358Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T14:34:40.080Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T14:34:45.166Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T14:40:49.228Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T14:40:52.163Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T14:41:01.375Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T14:41:12.566Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T14:41:17.491Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T14:52:21.038Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-30T14:52:24.384Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-30T14:52:33.831Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-30T14:52:45.253Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-30T14:52:50.393Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-31T13:09:41.560Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-31T13:09:48.578Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-31T13:09:59.800Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-31T13:10:22.662Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-31T13:10:27.610Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
+{"at":"2026-08-31T13:17:52.500Z","surface":"rest","method":"GET","path":"/get-token-info?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-08-31T13:17:59.231Z","surface":"rest","method":"GET","path":"/get-whitelist-status?tokenSymbol=SUNL&investorAddress=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-08-31T13:18:06.956Z","surface":"cli","method":"rams inspect","path":"brickken-cli@0.4.12","outcome":"success"}
+{"at":"2026-08-31T13:18:16.229Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
+{"at":"2026-08-31T13:18:20.837Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}

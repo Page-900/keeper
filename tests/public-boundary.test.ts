@@ -56,6 +56,9 @@ const REFUSAL_LOG = 'evidence/refusals.jsonl';
 const REQUEST_LOG = 'evidence/brickken-requests.jsonl';
 const OFFERING_LOG = 'evidence/offering-prepares.jsonl';
 const CLOSE_LOG = 'evidence/offering-closes.jsonl';
+const BATTERY_LOG = 'evidence/battery.jsonl';
+const JAILBREAK_LOG = 'evidence/jailbreak.jsonl';
+const SIGNATURE_LOG = 'evidence/signatures.jsonl';
 
 const PREPARED_ID = /(?<="txId":")0x[0-9a-fA-F]{64}(?=")/g;
 
@@ -63,6 +66,9 @@ const PUBLISHED_HASH = /(?<="transactionHash":")0x[0-9a-fA-F]{64}(?=")/g;
 
 /** A hash inside an explorer link is published by definition. A bare one is still a secret. */
 const LINKED_HASH = /(?<=sepolia\.etherscan\.io\/tx\/)0x[0-9a-fA-F]{64}/g;
+
+/** The signature it names is in the calldata of the published transaction beside it. */
+const SIGNATURE_DIGEST = /(?<="signatureDigest":")0x[0-9a-fA-F]{64}(?=")/g;
 
 const exact = (value: string): RegExp => new RegExp(value, 'g');
 
@@ -82,6 +88,9 @@ const PUBLISHED: Record<string, RegExp[]> = {
   ],
   [OFFERING_LOG]: [PREPARED_ID],
   [CLOSE_LOG]: [PREPARED_ID, PUBLISHED_HASH],
+  [BATTERY_LOG]: [PUBLISHED_HASH],
+  [JAILBREAK_LOG]: [PUBLISHED_HASH],
+  [SIGNATURE_LOG]: [PUBLISHED_HASH, SIGNATURE_DIGEST],
   'src/shared/config.ts': [exact(IDENTITY_REF)],
   'tests/registry.test.ts': [exact(RECORDER_ROLE)],
 };

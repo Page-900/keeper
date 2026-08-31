@@ -8,17 +8,23 @@ import {
   MANDATE_MUST_HOLD_UNTIL,
   MANDATE_MUST_HOLD_UNTIL_ISO,
   MANDATE_WINDOW_SECONDS,
+  KEEPER_MANDATE,
+  PROBE_MANDATE,
   SIGNATURE_DEADLINE_SECONDS,
-  mandateWindow,
+  specWindow,
   MAX_CUMULATIVE_VALUE,
   MAX_TRANSACTION_VALUE,
   PRINCIPAL_HOLDING,
   PERMITTED_ACTION,
+  SUNL_DECIMALS,
   SUNL_SUPPLY,
   UNCAPPED,
   addressSlots,
   requireAddress,
   type AddressName,
+  SECOND_ACTION,
+  SECOND_ACTION_ID,
+  TRANSFER_ACTION,
 } from '../src/shared/config.js';
 
 describe('chain', () => {
@@ -80,25 +86,25 @@ const NOW = 1_780_000_000;
 
 describe('the validity window, measured where grantMandate actually reverts', () => {
   it('puts validUntil past the current time, which is half of InvalidExpiry', () => {
-    expect(mandateWindow(NOW).validUntil).toBeGreaterThan(NOW);
+    expect(specWindow(KEEPER_MANDATE, NOW).validUntil).toBeGreaterThan(NOW);
   });
 
   it('puts validUntil past validFrom, which is the other half', () => {
-    const { validFrom, validUntil } = mandateWindow(NOW);
+    const { validFrom, validUntil } = specWindow(KEEPER_MANDATE, NOW);
     expect(validUntil).toBeGreaterThan(validFrom);
   });
 
   it('keeps the whole window inside uint48 seconds', () => {
-    expect(mandateWindow(NOW).validUntil).toBeLessThan(2 ** 48 - 1);
+    expect(specWindow(KEEPER_MANDATE, NOW).validUntil).toBeLessThan(2 ** 48 - 1);
   });
 
   it('starts the mandate at the moment it is signed', () => {
-    expect(mandateWindow(NOW).validFrom).toBe(NOW);
+    expect(specWindow(KEEPER_MANDATE, NOW).validFrom).toBe(NOW);
   });
 
   it('reaches past the date the demo has to survive to, from any day it is granted', () => {
     const lastDayItCouldBeGranted = Number(MANDATE_MUST_HOLD_UNTIL);
-    expect(BigInt(mandateWindow(lastDayItCouldBeGranted).validUntil)).toBeGreaterThan(
+    expect(BigInt(specWindow(KEEPER_MANDATE, lastDayItCouldBeGranted).validUntil)).toBeGreaterThan(
       MANDATE_MUST_HOLD_UNTIL,
     );
   });
@@ -128,6 +134,50 @@ describe('the optional metadata pointer', () => {
 describe('the signature deadline is not the mandate lifetime', () => {
   it('expires the signature long before the mandate it grants', () => {
     expect(SIGNATURE_DEADLINE_SECONDS).toBeLessThan(BigInt(MANDATE_WINDOW_SECONDS));
+  });
+});
+
+const whole = (value: bigint): bigint => value / 10n ** BigInt(SUNL_DECIMALS);
+
+describe("the investor's mandate is what the demonstration spends, so it is pinned", () => {
+  it('still carries the granted caps, which no anchor may be allowed to outgrow', () => {
+    expect(whole(KEEPER_MANDATE.maxTransactionValue)).toBe(250n);
+    expect(whole(KEEPER_MANDATE.maxCumulativeValue)).toBe(1_000n);
+  });
+
+  it('opens immediately, because a granted mandate has no waiting period', () => {
+    expect(KEEPER_MANDATE.opensIn).toBe(0);
+    expect(KEEPER_MANDATE.runsFor).toBe(MANDATE_WINDOW_SECONDS);
+  });
+
+  it('is signed for by a different wallet than the probe mandate', () => {
+    expect(KEEPER_MANDATE.agent).not.toBe(PROBE_MANDATE.agent);
+  });
+});
+
+describe('the probe mandate exists to be spent, so it must be cheap and reachable', () => {
+  it('costs a rounding error of the holding to exhaust', () => {
+    expect(PROBE_MANDATE.maxCumulativeValue * 100n).toBeLessThan(PRINCIPAL_HOLDING);
+  });
+
+  it('leaves room for more than one legal transfer before the lifetime cap binds', () => {
+    expect(PROBE_MANDATE.maxTransactionValue).toBeLessThan(PROBE_MANDATE.maxCumulativeValue);
+  });
+
+  it('opens later than now, which is the only way to act before the window', () => {
+    expect(PROBE_MANDATE.opensIn).toBeGreaterThan(0);
+  });
+
+  it('closes inside one working session, so the expiry can be reached on purpose', () => {
+    expect(PROBE_MANDATE.runsFor).toBeLessThan(2 * 60 * 60);
+  });
+
+  it('derives a window that grantMandate accepts, opening later and closing after', () => {
+    const now = 1_800_000_000;
+    const window = specWindow(PROBE_MANDATE, now);
+
+    expect(window.validFrom).toBeGreaterThan(now);
+    expect(window.validUntil).toBeGreaterThan(window.validFrom);
   });
 });
 
@@ -193,5 +243,20 @@ describe('every call this project makes goes to the sandbox, never to the live p
 
     expect(protocol).toBe('https:');
     expect(hostname.startsWith('api.sandbox.')).toBe(true);
+  });
+});
+
+describe('the second action exists so the mandate can be the only thing refusing it', () => {
+  it('is never one of the actions a mandate enables', () => {
+    expect(MANDATE_ACTIONS).not.toContain(SECOND_ACTION_ID);
+  });
+
+  it('reads its amount from the argument approve actually puts it in', () => {
+    expect(SECOND_ACTION.amountIndex).toBe(1);
+    expect(SECOND_ACTION.signature).toBe('approve(address,uint256)');
+  });
+
+  it('is a different action from the transfer, or it would prove nothing', () => {
+    expect(SECOND_ACTION_ID).not.toBe(TRANSFER_ACTION);
   });
 });

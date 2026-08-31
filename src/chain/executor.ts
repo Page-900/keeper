@@ -137,20 +137,26 @@ export interface Registration {
   spec: ActionSpec;
 }
 
+export interface RegisteredAction {
+  signature: string;
+  selector: `0x${string}`;
+  supported: boolean;
+  hasAmount: boolean;
+  amountIndex: number;
+}
+
 export interface RegisterOptions {
   chain?: ActionChain;
   file?: string;
   artifact?: Artifact;
+  action?: RegisteredAction;
+  anchor?: AnchorAction;
 }
 
-const { selector, supported, hasAmount, amountIndex } = PERMITTED_ACTION;
-
-const INTENDED: ActionSpec = { supported, hasAmount, amountIndex };
-
 /** A wrong amountIndex gates the cap on the wrong word, so all three are read back. */
-function confirmAction(found: ActionSpec): void {
-  for (const field of Object.keys(INTENDED) as (keyof ActionSpec)[]) {
-    if (found[field] !== INTENDED[field])
+function confirmAction(found: ActionSpec, intended: ActionSpec): void {
+  for (const field of Object.keys(intended) as (keyof ActionSpec)[]) {
+    if (found[field] !== intended[field])
       throw new KeeperError('readBackMismatch', `actions().${field} reads ${String(found[field])}`);
   }
 }
@@ -159,7 +165,11 @@ export async function registerAction({
   chain = ACTION_CHAIN,
   file = ANCHOR_FILE,
   artifact = compiledArtifact(EXECUTOR_ARTIFACT),
+  action = PERMITTED_ACTION,
+  anchor = REGISTER,
 }: RegisterOptions = {}): Promise<Registration> {
+  const { selector, supported, hasAmount, amountIndex } = action;
+  const intended: ActionSpec = { supported, hasAmount, amountIndex };
   const executor = requireAddress('executor');
   const transactionHash = await chain.write(OWNER, executor, artifact, 'setAction', [
     selector,
@@ -169,7 +179,7 @@ export async function registerAction({
   ]);
   const { status, blockNumber, gasUsed } = await chain.receipt(transactionHash);
   recordAnchor(file, {
-    action: REGISTER,
+    action: anchor,
     transactionHash,
     blockNumber: String(blockNumber),
     status,
@@ -181,6 +191,6 @@ export async function registerAction({
     throw new KeeperError('writeUnconfirmed', `the action registration is ${status}`);
 
   const spec = await chain.readAction(executor, artifact, selector);
-  confirmAction(spec);
+  confirmAction(spec, intended);
   return { transactionHash, blockNumber: String(blockNumber), spec };
 }

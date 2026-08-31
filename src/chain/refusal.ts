@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { CHAIN_ID, MANDATE_ACTIONS, requireAddress } from '../shared/config.js';
+import { CHAIN_ID, TRANSFER_ACTION, requireAddress } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { appendRecord } from '../shared/jsonl.js';
 import { agentCalldata } from './action.js';
@@ -11,16 +11,15 @@ import {
   type Anchor,
   type AnchorAction,
 } from './anchors.js';
-import { EXECUTOR_ARTIFACT, REGISTRY_ARTIFACT, compiledArtifact } from './artifacts.js';
+import { EXECUTOR_ARTIFACT, compiledArtifact } from './artifacts.js';
 import {
-  readValue,
   simulateRefusal,
   transactionReceipt,
   writeWithGasLimit,
   type Receipt,
   type RevertReason,
 } from './client.js';
-import { readRegistryState, type RegistryRead } from './registry.js';
+import { readCanExecute, readRegistryState, type RegistryRead } from './registry.js';
 
 /** Resolved from this module, so the file cannot follow the working directory. */
 export const REFUSAL_FILE = fileURLToPath(
@@ -52,24 +51,15 @@ export interface RefusalChain {
 
 const CHAIN: RefusalChain = {
   state: () => readRegistryState(),
-  canExecute: async (amount, atBlock) => {
-    const answer = await readValue(
-      requireAddress('agentMandate'),
-      compiledArtifact(REGISTRY_ARTIFACT),
-      'canExecute',
-      [
-        requireAddress('agent'),
-        requireAddress('principal'),
-        requireAddress('asset'),
-        MANDATE_ACTIONS[0],
-        amount,
-      ],
+  canExecute: (amount, atBlock) =>
+    readCanExecute({
+      agent: requireAddress('agent'),
+      principal: requireAddress('principal'),
+      asset: requireAddress('asset'),
+      action: TRANSFER_ACTION,
+      amount,
       atBlock,
-    );
-    if (typeof answer !== 'boolean')
-      throw new KeeperError('readBackMismatch', 'canExecute() did not answer true or false');
-    return answer;
-  },
+    }),
   simulate: (amount, atBlock) =>
     simulateRefusal(
       'agent',
