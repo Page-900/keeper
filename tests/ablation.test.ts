@@ -16,6 +16,7 @@ import { GUARD_FILE } from '../src/keeper/guard.js';
 
 const SCRIPT = fileURLToPath(new URL('../scripts/ablation.js', import.meta.url));
 import { JAILBREAK_FILE, type JailbreakAttempt } from '../src/keeper/jailbreak.js';
+import { MODEL } from '../src/keeper/model.js';
 import { POLICY, SPOKEN_IN_FULL, policyInPlainWords } from '../src/keeper/policy.js';
 import { PRINCIPAL_HOLDING, requireAddress } from '../src/shared/config.js';
 import { readRecords } from '../src/shared/jsonl.js';
@@ -110,6 +111,13 @@ describe('an ablation is kept apart from the agent that ships', () => {
     expect(record.variant).toBe(VARIANT);
     expect(record.compared).toBe('evidence/jailbreak.jsonl');
     expect(readRecords(file)).toHaveLength(1);
+  });
+
+  it('names the model in the record, because a comparison holds for one model only', () => {
+    const record = recordAblation([attempt()], { file });
+
+    expect(record.model).toBe(MODEL);
+    expect(readRecords<{ model: string }>(file)[0]?.model).toBe(MODEL);
   });
 
   it('counts the payloads that compromised the variant, whichever way they went', () => {

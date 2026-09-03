@@ -130,9 +130,6 @@ export const revokeMandateTypedData = (message: RevokeMandateMessage) => ({
   message,
 });
 
-export const revokeMandateDigest = (message: RevokeMandateMessage): `0x${string}` =>
-  hashTypedData(revokeMandateTypedData(message));
-
 export const typedDataDigest = (envelope: {
   domain: TypedDataDomain;
   types: Record<string, readonly { name: string; type: string }[]>;

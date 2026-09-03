@@ -138,15 +138,6 @@ export async function blockTimestamp(atBlock: bigint): Promise<bigint> {
   return withReader(async (reader) => (await reader.getBlock({ blockNumber: atBlock })).timestamp);
 }
 
-export interface OutboundTransaction {
-  to: `0x${string}`;
-  data: `0x${string}`;
-  value: bigint;
-  nonce: number;
-  gas: bigint;
-  chainId: number;
-}
-
 export type ConfirmationStatus = 'success' | 'reverted';
 
 export interface Artifact {
@@ -161,12 +152,17 @@ export interface Receipt {
   gasUsed: bigint;
 }
 
-export async function sendTransaction(
+export async function sendDirect(
   role: SignerRole,
-  transaction: OutboundTransaction,
+  to: `0x${string}`,
+  value: bigint,
+  data: `0x${string}` = '0x',
 ): Promise<`0x${string}`> {
-  const { to, data, value, nonce, gas } = transaction;
-  return withWallet(role, (wallet) => wallet.sendTransaction({ to, data, value, nonce, gas }));
+  return withWallet(role, (wallet) => wallet.sendTransaction({ to, value, data }));
+}
+
+export async function readEtherBalance(holder: `0x${string}`): Promise<bigint> {
+  return withReader((reader) => reader.getBalance({ address: holder }));
 }
 
 export async function transactionReceipt(hash: `0x${string}`): Promise<Receipt> {
@@ -185,11 +181,6 @@ export async function transactionArguments(
 }
 
 export const bytesDigest = (bytes: `0x${string}`): `0x${string}` => keccak256(bytes);
-
-export async function confirmTransaction(hash: `0x${string}`): Promise<ConfirmationStatus> {
-  const { status } = await transactionReceipt(hash);
-  return status;
-}
 
 export async function deployContract(
   role: SignerRole,
@@ -274,6 +265,31 @@ export function revertReason(cause: unknown): RevertReason {
   return { error: reverted.data.errorName, args: (reverted.data.args ?? []).map(String) };
 }
 
+export async function simulateRefusalAs(
+  caller: `0x${string}`,
+  contract: `0x${string}`,
+  artifact: Artifact,
+  functionName: string,
+  args: readonly unknown[],
+  atBlock?: bigint,
+): Promise<RevertReason | null> {
+  return withReader(async (reader) => {
+    try {
+      await reader.simulateContract({
+        address: contract,
+        abi: artifact.abi,
+        functionName,
+        args,
+        account: caller,
+        ...(atBlock === undefined ? {} : { blockNumber: atBlock }),
+      });
+      return null;
+    } catch (cause) {
+      return revertReason(cause);
+    }
+  });
+}
+
 export async function simulateRefusal(
   role: SignerRole,
   contract: `0x${string}`,
@@ -282,22 +298,7 @@ export async function simulateRefusal(
   args: readonly unknown[],
   atBlock?: bigint,
 ): Promise<RevertReason | null> {
-  const account = signerAccount(role);
-  return withReader(async (reader) => {
-    try {
-      await reader.simulateContract({
-        address: contract,
-        abi: artifact.abi,
-        functionName,
-        args,
-        account,
-        ...(atBlock === undefined ? {} : { blockNumber: atBlock }),
-      });
-      return null;
-    } catch (cause) {
-      return revertReason(cause);
-    }
-  });
+  return simulateRefusalAs(signerAddress(role), contract, artifact, functionName, args, atBlock);
 }
 
 export async function simulateCall(
@@ -435,7 +436,7 @@ export async function readTokenSupply(contract: `0x${string}`, atBlock: bigint):
 }
 
 /** The only transferFrom calldata this project builds, so no caller hand-rolls a selector. */
-export const transferCalldata = (
+export const transferFromCalldata = (
   from: `0x${string}`,
   to: `0x${string}`,
   amount: bigint,
@@ -444,6 +445,9 @@ export const transferCalldata = (
 
 export const approveCalldata = (spender: `0x${string}`, amount: bigint): `0x${string}` =>
   encodeFunctionData({ abi: erc20Abi, functionName: 'approve', args: [spender, amount] });
+
+export const transferToCalldata = (to: `0x${string}`, amount: bigint): `0x${string}` =>
+  encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args: [to, amount] });
 
 export async function readTokenAllowance(
   contract: `0x${string}`,

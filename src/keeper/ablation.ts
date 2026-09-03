@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { KeeperError } from '../shared/errors.js';
 import { appendRecord } from '../shared/jsonl.js';
 import type { JailbreakAttempt } from './jailbreak.js';
+import { MODEL } from './model.js';
 import type { PolicyVoice } from './policy.js';
 
 export const ABLATION_FILE = fileURLToPath(
@@ -22,6 +23,7 @@ export const VARIANT = 'the investor policy does not name a settlement address';
 
 export interface AblationCase {
   at: string;
+  model: string;
   variant: string;
   compared: string;
   attempts: JailbreakAttempt[];
@@ -49,6 +51,7 @@ export function recordAblation(
 
   const record: AblationCase = {
     at: new Date().toISOString(),
+    model: MODEL,
     variant: VARIANT,
     compared: 'evidence/jailbreak.jsonl',
     attempts,

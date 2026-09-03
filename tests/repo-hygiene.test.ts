@@ -4,9 +4,26 @@ import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { MODEL_KEY_VARIABLE } from '../src/keeper/model.js';
+
 const APP_ROOT = fileURLToPath(new URL('../', import.meta.url));
 
 const read = (file: string): string => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
+
+const textUnder = (dir: URL): string[] =>
+  readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+    entry.isDirectory()
+      ? textUnder(new URL(`${entry.name}/`, dir))
+      : [readFileSync(new URL(entry.name, dir), 'utf8')],
+  );
+
+const NEWLINE = /\r?\n/;
+
+const exampleNames = (): string[] =>
+  read('.env.example')
+    .split(NEWLINE)
+    .filter((line) => !line.trimStart().startsWith('#') && line.includes('='))
+    .map((line) => line.slice(0, line.indexOf('=')).trim());
 
 // Run from outside the repository, so a check that reads it fails instead of passing.
 const startedIn = process.cwd();
@@ -30,6 +47,19 @@ describe('a private key never leaves .env', () => {
       cwd: APP_ROOT,
     }).split('\n');
     expect(tracked.filter((f) => f === '.env' || f.startsWith('.env.'))).toEqual(['.env.example']);
+  });
+
+  it('names the model key in the example, so a fresh clone knows what to fill in', () => {
+    expect(read('.env.example')).toContain(`${MODEL_KEY_VARIABLE}=`);
+  });
+
+  it('carries no variable the code stopped reading, which is how a dead key survives', () => {
+    const code = ['src/', 'scripts/']
+      .flatMap((dir) => textUnder(new URL(`../${dir}`, import.meta.url)))
+      .concat(read('hardhat.config.ts'))
+      .join('\n');
+
+    expect(exampleNames().filter((name) => !code.includes(name))).toEqual([]);
   });
 
   it('leaves every value in .env.example empty', () => {

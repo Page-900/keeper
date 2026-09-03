@@ -50,7 +50,7 @@ const SURFACE: GrantSurface = {
   sign: (message) => signTypedDataAs(SIGNER, grantMandateTypedData(message)),
 };
 
-const mandateQuery = (spec: MandateSpec): Record<string, string> => ({
+export const mandateQuery = (spec: MandateSpec): Record<string, string> => ({
   chainId: String(CHAIN_ID),
   agentMandateAddress: requireAddress('agentMandate'),
   agent: requireAddress(spec.agent),

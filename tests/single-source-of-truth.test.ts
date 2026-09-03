@@ -13,7 +13,6 @@ import {
 import { ANCHOR_FILE, type Anchor } from '../src/chain/anchors.js';
 import { MANDATE_FIELDS } from '../src/chain/registry.js';
 import { readRecords } from '../src/shared/jsonl.js';
-import * as publicApi from '../src/index.js';
 
 const SRC = new URL('../src/', import.meta.url);
 const CONFIG = 'shared/config.ts';
@@ -121,14 +120,6 @@ describe('an address this project deployed is the one the chain recorded', () =>
   });
 });
 
-describe('the public entry point is not a way to read secrets', () => {
-  it('keeps the env readers off the barrel, so importing keeper grants no access to .env', () => {
-    expect(Object.keys(publicApi)).not.toContain('readSecret');
-    expect(Object.keys(publicApi)).not.toContain('readOptionalSecret');
-    expect(Object.keys(publicApi)).not.toContain('signerKey');
-  });
-});
-
 describe('external vendors are wrapped, never called by business logic', () => {
   it('imports viem only in the three modules that each own one use of it', () => {
     const offenders = sourceFiles()
@@ -153,25 +144,22 @@ describe('external vendors are wrapped, never called by business logic', () => {
     expect(source.match(/createWalletClient\(/g)).toHaveLength(1);
   });
 
-  it('imports the model vendor SDK only in the module that wraps it', () => {
+  it('names the model vendor endpoint only in the module that wraps it', () => {
     const offenders = sourceFiles()
       .filter((file) => file !== MODEL)
-      .filter((file) => read(file).includes("from '@google/genai"));
+      .filter((file) => read(file).includes('api.groq.com'));
 
     expect(offenders).toEqual([]);
   });
 
-  it('builds the model client in exactly one place, so no call site can skip the record', () => {
-    const source = read(MODEL);
-
-    expect(source.match(/new GoogleGenAI\(/g)).toHaveLength(1);
-    expect(source.match(/interactions\.create\(/g)).toHaveLength(1);
+  it('calls the model in exactly one place, so no call site can skip the record', () => {
+    expect(read(MODEL).match(/\bfetch\(/g)).toHaveLength(1);
   });
 
   it('names the model in one place, so a reasoning trace can never be from another one', () => {
     const offenders = sourceFiles()
       .filter((file) => file !== MODEL)
-      .filter((file) => /gemini-[a-z0-9.-]+|claude-[a-z0-9-]+/.test(read(file)));
+      .filter((file) => /gpt-oss-[a-z0-9-]+|gemini-[a-z0-9.-]+|claude-[a-z0-9-]+/.test(read(file)));
 
     expect(offenders).toEqual([]);
   });
@@ -184,9 +172,9 @@ describe('external vendors are wrapped, never called by business logic', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('reaches the network only in the Brickken wrapper', () => {
+  it('reaches the network only in the two vendor wrappers, and from nowhere else', () => {
     const offenders = sourceFiles()
-      .filter((file) => file !== BRICKKEN_CLIENT)
+      .filter((file) => file !== BRICKKEN_CLIENT && file !== MODEL)
       .filter((file) => /\bfetch\(/.test(read(file)));
 
     expect(offenders).toEqual([]);

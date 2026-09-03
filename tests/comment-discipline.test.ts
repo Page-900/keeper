@@ -14,7 +14,7 @@ const PER_FILE = 10;
 const sources = (): string[] =>
   execFileSync(
     'git',
-    ['ls-files', '--cached', '--others', '--exclude-standard', 'src', 'tests', 'scripts'],
+    ['ls-files', '--cached', '--others', '--exclude-standard', 'src', 'tests', 'scripts', 'public'],
     {
       encoding: 'utf8',
       cwd: APP_ROOT,

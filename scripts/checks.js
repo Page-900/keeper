@@ -78,9 +78,9 @@ export const CHECKS = [
     id: 'holding',
     title: 'The investor holding',
     proves:
-      'The investor wallet holds what it started with, less exactly what the agent has spent, and the test network says so.',
+      'The investor wallet holds what it started with, less exactly what the agent has spent, plus exactly what the buyer has sent back, and the test network says so. How much came back is measured from the balances either side of each returning transaction, so it is read from the chain and never typed in.',
     whenFailed:
-      'The balance on the test network is not the starting holding less what the registry says the agent spent.',
+      'The balance on the test network is not the starting holding, less what the registry says the agent spent, plus what the buyer returned.',
   },
   {
     id: 'allowed',
@@ -126,9 +126,9 @@ export const CHECKS = [
     id: 'moved',
     title: 'What the agent moved',
     proves:
-      "The tokens the agent moved really left the investor and arrived at the counterparty, and the registry's own running total agrees with the amount.",
+      "The tokens the agent moved really left the investor and arrived at the counterparty, the registry's own running total agrees with the amount once what the counterparty sent back is allowed for, and the two wallets between them still hold every token ever issued to them, so none of it has gone anywhere else.",
     whenFailed:
-      'The balances on the test network and the running total in the registry do not tell the same story. One of them is not being read correctly.',
+      'The balances on the test network and the running total in the registry do not tell the same story, or some of the token is in a wallet that is neither of the two.',
   },
   {
     id: 'keeper',
@@ -145,6 +145,14 @@ export const CHECKS = [
       'The registry still says no to one unit more than the agent is allowed to move at once, and still says yes at the limit itself, so the refusal shown in the demonstration is the one happening right now.',
     whenFailed:
       'The limit is no longer refusing the amount just above it, or is refusing the amount at it. Either the mandate was changed on the chain, or something other than the limit is now blocking the agent.',
+  },
+  {
+    id: 'recipient',
+    title: 'The recipient makes no difference',
+    proves:
+      'The chain is asked, without sending anything, whether the agent could deliver to an address nobody ever cleared to hold the token. It answers yes, exactly as it does for the address the investor named, because the permission never looks at who receives and the token only asks who is sending. The same reading refuses one unit above the limit, so it is a reading that can say no. This is the claim the public page makes, measured against the contracts as they are really deployed rather than against a copy of them.',
+    whenFailed:
+      'Either the chain now refuses a delivery it used to allow, or it allows an amount above the limit. The first would mean the page is telling a judge something the chain no longer agrees with. The second would mean this reading cannot refuse anything and proves nothing.',
   },
   {
     id: 'refused',
@@ -217,6 +225,38 @@ export const CHECKS = [
       'The skill Brickken publish for AI agents is installed on this machine, and every file in it is byte for byte the file that was recorded when it was installed.',
     whenFailed:
       'The skill is missing, or a file in it has changed since it was recorded. Run npm run skill:install to install it again, which records what arrived this time.',
+  },
+  {
+    id: 'pageCold',
+    title: 'The page from cold',
+    proves:
+      'A brand new copy of the public page starts, reads the test network, and serves the page, its style, its script, the state, the evidence and the log. It then times a second visitor, who must be handed an answer the page is already holding rather than waiting on a fresh read. The first number is what the page costs at the moment it is deployed. The second is what a judge gets.',
+    whenFailed:
+      'The public page did not start, one of the things it serves did not answer, or a visitor arriving after it was up still had to wait for a live read. A judge opening the link would meet the same. Nothing was sent anywhere.',
+  },
+  {
+    id: 'pageFlood',
+    title: 'A flood is refused',
+    proves:
+      "Both ceilings on the attack box are enforced by the page's own server: one visitor is cut off once they have run as many attempts as a visitor may, a different visitor is still served, and a page that has spent its day refuses everyone. The model is never called by this check, because what is being checked is the refusal and not the answer.",
+    whenFailed:
+      'The page served more attempts than it allows, or it refused somebody who was inside the limit. A page that does not refuse a flood can be made to spend the whole model budget by one visitor.',
+  },
+  {
+    id: 'pageSwitch',
+    title: 'The attack box switch',
+    proves:
+      'With the switch set, the page still serves and still reads the test network, and only the attack box refuses. Turning the box off never takes the evidence down with it.',
+    whenFailed:
+      'Either the switch did not stop an attempt, or setting it took part of the page down with it. The switch is the only way to stop the public page running the model.',
+  },
+  {
+    id: 'pageHashes',
+    title: 'Every transaction the page shows',
+    proves:
+      'Every transaction the public page puts on screen is really on the test network, in the block the page names, it went through or was refused exactly as the page says, and the link beside it points at it. Nothing on the page is a claim the chain has not confirmed.',
+    whenFailed:
+      'The page shows a transaction the test network does not confirm the way the page describes it. Take the page down before anything else, because it is showing a judge something that is not true.',
   },
   {
     id: 'chain',

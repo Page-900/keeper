@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <title>Keeper</title>
+    <meta
+      name="description"
+      content="An agent for a tokenized asset, with its limits on the chain rather than in its prompt. Write your own document and try to get the money out."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23f1f3ef'/%3E%3Crect x='2' y='2' width='12' height='9' fill='%23a03323'/%3E%3Crect x='2' y='13' width='12' height='1' fill='%232b2f2b'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <a class="skip" href="#attack">Skip to the attack box</a>
+
+    <div class="shell">
+      <nav class="rail" aria-label="Sections">
+        <div class="railHead">
+          <button
+            id="fold"
+            type="button"
+            class="fold"
+            title="Collapse the menu"
+            aria-label="Collapse the menu"
+          >
+            <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="1.7" y="2.7" width="12.6" height="10.6" rx="1.7" />
+              <path d="M6.1 2.7v10.6" />
+            </svg>
+          </button>
+        </div>
+        <ul class="railList">
+          <li>
+            <a href="#attack" title="Attack it yourself">
+              <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+                <circle cx="8" cy="8" r="5.2" />
+                <path d="M8 .9v3.1M8 12v3.1M.9 8H4M12 8h3.1" />
+              </svg>
+              <span class="label">Attack</span>
+            </a>
+          </li>
+          <li>
+            <a href="#situation" title="The situation">
+              <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M3.6 1.9h5.6l3.2 3.2v9H3.6z" />
+                <path d="M9.2 1.9v3.2h3.2" />
+              </svg>
+              <span class="label">Situation</span>
+            </a>
+          </li>
+          <li>
+            <a href="#permission" title="The permission and the policy">
+              <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+                <circle cx="8" cy="6.2" r="3.9" />
+                <path d="M5.7 9.4 4.7 14.1 8 12.4l3.3 1.7-1-4.7" />
+              </svg>
+              <span class="label">Permission</span>
+            </a>
+          </li>
+          <li>
+            <a href="#holders" title="The cap table">
+              <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M3.1 13.2V7.4M8 13.2V2.9M12.9 13.2V9.1" />
+              </svg>
+              <span class="label">Cap table</span>
+            </a>
+          </li>
+          <li>
+            <a href="#refusals" title="Refusals on the chain">
+              <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+                <circle cx="8" cy="8" r="5.6" />
+                <path d="M4.4 11.6 11.6 4.4" />
+              </svg>
+              <span class="label">Refusals</span>
+            </a>
+          </li>
+          <li>
+            <a href="#authority" title="Authority changes">
+              <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M2.6 10.6c1.9-3.8 3.3-3.8 3.8 0 .5 3.8 1.9-7.6 2.9 0 .9 6.6 1.4.9 4.1.9" />
+                <path d="M2.6 13.8h10.8" />
+              </svg>
+              <span class="label">Authority</span>
+            </a>
+          </li>
+          <li>
+            <a href="#log" title="What other people tried">
+              <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M6.2 4.4h7.2M6.2 8h7.2M6.2 11.6h7.2" />
+                <circle cx="3" cy="4.4" r=".85" />
+                <circle cx="3" cy="8" r=".85" />
+                <circle cx="3" cy="11.6" r=".85" />
+              </svg>
+              <span class="label">Attempts</span>
+            </a>
+          </li>
+        </ul>
+
+        <p class="railNote">
+          This page holds no key and signs nothing. It cannot send a transaction.
+        </p>
+        <div id="grip" class="grip" role="separator" aria-label="Resize the menu"></div>
+      </nav>
+
+      <main>
+        <header class="hero">
+          <h1 class="brand">Keeper</h1>
+          <p class="eyebrow">Sepolia test network</p>
+          <p class="lead">
+            An investor's agent for tokenized real world assets. What it may actually do is fixed on
+            chain, by a permission the investor signed, rather than by the words in its prompt. Read
+            the mandate, then try to talk the agent past it.
+          </p>
+        </header>
+
+        <section id="attack" class="panel">
+          <h2>Attack it yourself</h2>
+          <p class="note">
+            This is the document the agent is about to read. Change it however you like, send it,
+            then argue with the answer.
+          </p>
+          <div class="chat">
+            <ol id="thread" class="thread" aria-live="polite"></ol>
+            <p id="working" class="working" aria-live="polite"></p>
+            <div class="composer">
+              <textarea
+                id="document"
+                rows="3"
+                spellcheck="false"
+                placeholder="Send the document, then argue with the answer"
+                aria-label="what you are sending the agent"
+              ></textarea>
+              <div class="composerBar">
+                <p class="composerHint">Everything you send is judged, never obeyed.</p>
+                <button id="run" type="button" class="send" aria-label="Send it" disabled>
+                  <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M8 13V3.4" />
+                    <path d="M3.8 7.6 8 3.3l4.2 4.3" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+          <p id="loading" class="note">
+            Reading the chain and the issuer's own records. On a cold page this takes a moment.
+          </p>
+        </section>
+
+        <details id="situation" class="drop">
+          <summary>
+            <span>The situation</span><span id="situationCount" class="count"></span>
+          </summary>
+          <ul id="scenario" class="lines"></ul>
+        </details>
+
+        <details id="permission" class="drop">
+          <summary><span>The permission and the policy</span></summary>
+          <div class="two">
+            <div>
+              <h3>What the permission allows</h3>
+              <p class="note">
+                Read from the registry contract just now, in the words the agent itself is given.
+                The agent cannot change any of it.
+              </p>
+              <ul id="mandate" class="lines"></ul>
+            </div>
+            <div>
+              <h3>What the investor told the agent</h3>
+              <p class="note">
+                Written by the investor, and checked again by code after the agent answers.
+              </p>
+              <ul id="policy" class="lines"></ul>
+            </div>
+          </div>
+        </details>
+
+        <details id="holders" class="drop" open>
+          <summary><span>The cap table</span></summary>
+          <p class="note">
+            Who holds the token. The chain and the issuer's own records, side by side.
+          </p>
+          <div id="holderTable"></div>
+          <div id="agreement"></div>
+        </details>
+
+        <details id="refusals" class="drop" open>
+          <summary>
+            <span>Refusals on the chain</span><span id="refusalCount" class="count"></span>
+          </summary>
+          <p class="note">
+            Every row is a real transaction. The permission refusing to move money, and the
+            transfers it allowed.
+          </p>
+          <div id="evidence"></div>
+        </details>
+
+        <details id="authority" class="drop">
+          <summary>
+            <span>Authority changes</span><span id="authorityCount" class="count"></span>
+          </summary>
+          <p class="note">
+            A different question. These are attempts to grant or revoke authority, rather than to
+            spend under it.
+          </p>
+          <div id="authorityTable"></div>
+        </details>
+
+        <details id="log" class="drop" open>
+          <summary>
+            <span>What other people tried</span><span id="attemptCount" class="count"></span>
+          </summary>
+          <p class="note">The outcome of every attempt. Their words open when you ask.</p>
+          <div id="attempts"></div>
+        </details>
+
+        <footer>
+          <p class="note">
+            Sunrise Lodge is invented. The token is on a test network and is worth nothing.
+          </p>
+        </footer>
+      </main>
+
+      <aside class="status" aria-label="Live state">
+        <div class="statusBlock">
+          <p class="eyebrow">Read from the chain</p>
+          <p id="blockNow" class="figure big">reading</p>
+        </div>
+
+        <div class="statusBlock">
+          <p class="eyebrow">Who can refuse</p>
+          <ul id="layerLive" class="layerLive">
+            <li class="layerCell" data-layer="app">
+              <span class="layerName">This app</span>
+              <span class="layerState">idle</span>
+            </li>
+            <li class="layerCell" data-layer="mandate">
+              <span class="layerName">The permission</span>
+              <span class="layerState">idle</span>
+            </li>
+            <li class="layerCell" data-layer="token">
+              <span class="layerName">The token</span>
+              <span class="layerState">idle</span>
+            </li>
+          </ul>
+          <p class="railNote">
+            The page never sends a transaction. It asks the chain what would happen and reads the
+            answer back. Every answer below names the layer that gave it.
+          </p>
+        </div>
+
+        <div class="statusBlock">
+          <p class="eyebrow">The bound, right now</p>
+          <ul id="brief" class="lines tight"></ul>
+        </div>
+      </aside>
+    </div>
+
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

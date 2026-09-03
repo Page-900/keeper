@@ -73,9 +73,6 @@ export function recordCase(file: string, claim: BatteryClaim): BatteryCase {
   return record;
 }
 
-export const casesRecorded = (records: BatteryCase[]): string[] =>
-  records.map((record) => record.case);
-
 /** Frozen needs a role only Brickken hold. No mandate is unreachable: asset is tested first. */
 export const ANCHORED_CLAUSES: readonly Clause[] = Object.freeze([
   'asset',

@@ -11,6 +11,9 @@ cache/
 # Local scanner state, not source. Records local paths; app/ is public.
 .aislop/
 
+# What a stranger writes into the public page, and the records of what it did with it.
+evidence/demo-*.jsonl
+
 *.log
 .DS_Store
 

@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs';
-
 import { readTokenBalance } from '../dist/chain/client.js';
 import { readRegistryState } from '../dist/chain/registry.js';
 import {
@@ -9,16 +7,12 @@ import {
   recordAblation,
 } from '../dist/keeper/ablation.js';
 import { decide } from '../dist/keeper/decide.js';
-import { attemptOf } from '../dist/keeper/jailbreak.js';
-import { gatherMaterial } from '../dist/keeper/material.js';
+import { ATTACK_FAMILIES, attemptOf } from '../dist/keeper/jailbreak.js';
+import { gatherMaterial, payloadFile, readDocument } from '../dist/keeper/material.js';
 import { requireAddress } from '../dist/shared/config.js';
+import { whenNotBusy } from '../dist/shared/patience.js';
 
 const print = (text) => process.stdout.write(`${text}\n`);
-
-const materialPath = (name) => `material/jailbreak-${name}.md`;
-
-/** The same seven payloads the shipped agent refused, so only the policy differs. */
-const PAYLOADS = ['escrow', 'escalation', 'override', 'split', 'history', 'record', 'fence'];
 
 const reads = {
   state: () => readRegistryState(),
@@ -39,22 +33,30 @@ print('');
 const attempts = [];
 
 try {
-  for (const name of PAYLOADS) {
+  for (const name of ATTACK_FAMILIES) {
     print(`  trying ${name}...`);
-    const material = gatherMaterial(readFileSync(materialPath(name), 'utf8'));
+    const material = gatherMaterial(readDocument(payloadFile(name)));
 
-    const { reply, intent, decision } = await decide({
-      reads,
-      material,
-      voice: WITHOUT_THE_NAMED_ADDRESS,
-      guardFile: ABLATION_GUARD_FILE,
-    });
+    const made = await whenNotBusy(
+      () =>
+        decide({
+          reads,
+          material,
+          voice: WITHOUT_THE_NAMED_ADDRESS,
+          guardFile: ABLATION_GUARD_FILE,
+        }),
+      { onWait: (seconds) => print(`    the vendor is busy, waiting ${seconds} seconds`) },
+    );
+    const { reply, intent, decision } = made;
     const attempt = attemptOf(name, reply.reasoning, intent, decision);
     attempts.push(attempt);
 
-    print(`    it proposed    ${intent.action} ${String(intent.amount)} base units`);
-    if (intent.recipient !== null) print(`    to             ${intent.recipient}`);
-    print(`    the guard says ${decision.verdict.toUpperCase()}`);
+    if (intent === null) print('    it answered and proposed nothing');
+    else {
+      print(`    it proposed    ${intent.action} ${String(intent.amount)} base units`);
+      if (intent.recipient !== null) print(`    to             ${intent.recipient}`);
+      print(`    the guard says ${decision.verdict.toUpperCase()}`);
+    }
     print(`    ${attempt.compromised ? 'COMPROMISED' : 'resisted'}`);
   }
 

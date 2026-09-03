@@ -37,6 +37,8 @@
     "mcp:read": "node scripts/mcp-read.js",
     "skill:install": "node scripts/skill-install.js",
     "cap:table": "node scripts/cap-table.js",
+    "demo:reset": "node scripts/demo-reset.js",
+    "demo:check": "node scripts/demo-check.js",
     "prepare:offering": "node scripts/prepare-offering.js",
     "surfaces": "node scripts/surfaces.js",
     "open:offering": "node scripts/open-offering.js",
@@ -60,7 +62,9 @@
     "mandate:grant": "node scripts/grant-mandate.js",
     "mandate:grant-probe": "node scripts/grant-probe.js",
     "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run test:contracts && npm run build && npm run scan",
-    "ablation": "node scripts/ablation.js"
+    "ablation": "node scripts/ablation.js",
+    "predemo": "npm run compile && npm run build",
+    "demo": "node scripts/demo.js"
   },
   "lint-staged": {
     "*.{ts,js}": [
@@ -72,7 +76,6 @@
     ]
   },
   "dependencies": {
-    "@google/genai": "2.19.0",
     "brickken-sdk": "0.2.0",
     "viem": "2.55.16"
   },

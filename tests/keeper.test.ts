@@ -6,13 +6,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { AgentAction } from '../src/chain/action.js';
 import type { RegistryRead } from '../src/chain/registry.js';
 import { actOnDecision, intentOf, lastProceed } from '../src/keeper/act.js';
-import { decide, decisionPrompt, mandateInPlainWords } from '../src/keeper/decide.js';
+import { decide, decisionPrompt, mandateInPlainWords, proposedBy } from '../src/keeper/decide.js';
 import type { Decision, GuardReads } from '../src/keeper/guard.js';
 import type { Material } from '../src/keeper/material.js';
 import { POLICY } from '../src/keeper/policy.js';
 import { SUNL_DECIMALS, requireAddress } from '../src/shared/config.js';
 import { appendRecord } from '../src/shared/jsonl.js';
 import { captureError } from './support/capture-error.js';
+import { modelAnswer, type Called } from './support/model-answer.js';
 import { STATE_BLOCK, registryState } from './support/registry-state.js';
 
 const sunl = (whole: bigint): bigint => whole * 10n ** BigInt(SUNL_DECIMALS);
@@ -38,25 +39,24 @@ const reads = (state: RegistryRead = registryState()): GuardReads => ({
   balance: (holder) => Promise.resolve(holder === PRINCIPAL ? sunl(1_750n) : sunl(250n)),
 });
 
-const answer = (over: Record<string, unknown> = {}): unknown => ({
-  status: 'requires_action',
-  steps: [
-    { type: 'thought', summary: [{ type: 'text', text: 'weighing it' }] },
-    {
-      type: 'function_call',
-      name: 'propose_intent',
-      arguments: {
-        action: 'deliver',
-        amountWholeTokens: '200',
-        pricePerToken: '47',
-        recipient: COUNTERPARTY,
-        rationale: 'the bid clears the floor and the occupancy note argues for sizing down',
-      },
-    },
-  ],
-  usage: { total_input_tokens: 10, total_output_tokens: 20 },
-  ...over,
-});
+const DECLINE = {
+  action: 'decline',
+  amountWholeTokens: '0',
+  pricePerToken: '47',
+  recipient: '',
+  rationale: 'the evidence is too weak to sell into',
+};
+
+const DELIVER = {
+  action: 'deliver',
+  amountWholeTokens: '200',
+  pricePerToken: '47',
+  recipient: COUNTERPARTY,
+  rationale: 'the bid clears the floor and the occupancy note argues for sizing down',
+};
+
+const answer = (calls: Called[] = [{ name: 'propose_intent', input: DELIVER }]): unknown =>
+  modelAnswer({ calls });
 
 let directory: string;
 let modelFile: string;
@@ -123,46 +123,40 @@ describe('what Keeper is shown separates what it may trust from what it may not'
 
 describe('Keeper decides, and only a structured intent crosses to the guard', () => {
   it('passes a well judged proposal and records the guard verdict', async () => {
-    const { intent, decision } = await run();
+    const { intent, decision } = proposedBy(await run());
 
     expect(intent.amount).toBe(sunl(200n));
     expect(decision.verdict).toBe('proceed');
   });
 
   it('refuses a model that proposes twice, because exactly one intent is accepted', async () => {
-    const twice = answer({
-      steps: [
-        {
-          type: 'function_call',
-          name: 'propose_intent',
-          arguments: { action: 'decline', amountWholeTokens: '0', recipient: '', rationale: 'no' },
-        },
-        {
-          type: 'function_call',
-          name: 'propose_intent',
-          arguments: { action: 'decline', amountWholeTokens: '0', recipient: '', rationale: 'no' },
-        },
-      ],
-    });
+    const twice = answer([
+      { name: 'propose_intent', input: DECLINE },
+      { name: 'propose_intent', input: DECLINE },
+    ]);
 
     const error = await captureError(() => run({ asker: () => Promise.resolve(twice) }));
 
     expect(error.kind).toBe('intentMalformed');
   });
 
-  it('refuses a model that proposes nothing at all', async () => {
-    const error = await captureError(() =>
-      run({ asker: () => Promise.resolve(answer({ steps: [] })) }),
-    );
+  it('lets it answer without proposing, because silence is an answer in a conversation', async () => {
+    const said = await run({ asker: () => Promise.resolve(answer([])) });
+
+    expect(said.intent).toBeNull();
+    expect(said.decision).toBeNull();
+  });
+
+  it('refuses to read a proposal out of a turn that made none', async () => {
+    const said = await run({ asker: () => Promise.resolve(answer([])) });
+
+    const error = await captureError(() => Promise.resolve(proposedBy(said)));
 
     expect(error.kind).toBe('intentMalformed');
   });
 
   it('surfaces a model that declined instead of treating it as a decision', async () => {
-    const declined = answer({
-      status: 'failed',
-      steps: [{ type: 'model_output', error: { message: 'declined' } }],
-    });
+    const declined = modelAnswer({ refusal: 'declined' });
 
     const error = await captureError(() => run({ asker: () => Promise.resolve(declined) }));
 

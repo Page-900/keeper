@@ -10,7 +10,7 @@ import { readRecords } from '../shared/jsonl.js';
 import {
   approveCalldata,
   simulateRefusal,
-  transferCalldata,
+  transferFromCalldata,
   writeWithGasLimit,
   type RevertReason,
   type SignerRole,
@@ -91,7 +91,7 @@ export const CHAIN: CaseChain = {
 export const calldataFor = (spec: CaseSpec): `0x${string}` =>
   spec.action === SECOND_ACTION_ID
     ? approveCalldata(requireAddress(spec.to), spec.amount)
-    : transferCalldata(requireAddress('principal'), requireAddress(spec.to), spec.amount);
+    : transferFromCalldata(requireAddress('principal'), requireAddress(spec.to), spec.amount);
 
 export const alreadyRun = (name: string, file: string = BATTERY_FILE): boolean =>
   readRecords<BatteryCase>(file).some((record) => record.case === name);

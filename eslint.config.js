@@ -18,6 +18,20 @@ export default tseslint.config(
   {
     files: ['**/*.js'],
     extends: [tseslint.configs.disableTypeChecked],
-    languageOptions: { globals: { process: 'readonly' } },
+    languageOptions: {
+      globals: { AbortSignal: 'readonly', fetch: 'readonly', process: 'readonly' },
+    },
+  },
+  {
+    files: ['public/**/*.js'],
+    languageOptions: {
+      globals: {
+        document: 'readonly',
+        fetch: 'readonly',
+        window: 'readonly',
+        IntersectionObserver: 'readonly',
+        TextDecoder: 'readonly',
+      },
+    },
   },
 );

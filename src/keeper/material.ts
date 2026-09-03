@@ -32,6 +32,9 @@ export function issuerTerms(file: string = OPENS_FILE, symbol: string = SUNL_SYM
 
 export const readDocument = (file: string = DOCUMENT_FILE): string => readFileSync(file, 'utf8');
 
+export const payloadFile = (family: string): string =>
+  fileURLToPath(new URL(`../../material/jailbreak-${family}.md`, import.meta.url));
+
 export interface Material {
   document: string;
   issuer: IssuerRecord;

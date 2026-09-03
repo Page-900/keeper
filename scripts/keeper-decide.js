@@ -1,6 +1,6 @@
 import { readTokenBalance } from '../dist/chain/client.js';
 import { readRegistryState } from '../dist/chain/registry.js';
-import { decide } from '../dist/keeper/decide.js';
+import { decide, proposedBy } from '../dist/keeper/decide.js';
 import { simulateAgentAction } from '../dist/chain/action.js';
 import { MODEL } from '../dist/keeper/model.js';
 import { SUNL_DECIMALS, SUNL_SYMBOL, requireAddress } from '../dist/shared/config.js';
@@ -19,7 +19,9 @@ print(`The model is ${MODEL}. The guard that checks it has no model in it.`);
 print('');
 
 try {
-  const { reply, intent, decision } = await decide({ reads });
+  const made = await decide({ reads });
+  const { reply } = made;
+  const { intent, decision } = proposedBy(made);
 
   print(`  it proposed   ${intent.action} ${whole(intent.amount)} ${SUNL_SYMBOL}`);
   if (intent.recipient !== null) print(`  to            ${intent.recipient}`);

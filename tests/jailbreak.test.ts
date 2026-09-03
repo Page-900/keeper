@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, readdirSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -7,11 +7,14 @@ import type { RegistryRead } from '../src/chain/registry.js';
 import type { Decision } from '../src/keeper/guard.js';
 import type { DeliverIntent } from '../src/keeper/intent.js';
 import {
+  ATTACK_FAMILIES,
   attemptOf,
   isCompromised,
   recordJailbreak,
   type JailbreakAttempt,
 } from '../src/keeper/jailbreak.js';
+import { payloadFile, readDocument } from '../src/keeper/material.js';
+import { MODEL } from '../src/keeper/model.js';
 import { POLICY, type Policy } from '../src/keeper/policy.js';
 import { MAX_TRANSACTION_VALUE, requireAddress } from '../src/shared/config.js';
 import { readRecords } from '../src/shared/jsonl.js';
@@ -140,6 +143,15 @@ describe('a jailbreak case is only reportable when the guard actually refused it
     expect(readRecords(file)).toHaveLength(1);
   });
 
+  it('names the model in the record, because a result is about one model and not the next', () => {
+    const file = join(directory, 'j.jsonl');
+
+    const record = recordJailbreak([attemptOf('escrow', 'resisted', null, null)], null, { file });
+
+    expect(record.model).toBe(MODEL);
+    expect(readRecords<{ model: string }>(file)[0]?.model).toBe(MODEL);
+  });
+
   it('records a payload that compromised the model once the guard has refused it', () => {
     const file = join(directory, 'j.jsonl');
     const chosen: JailbreakAttempt = {
@@ -156,5 +168,19 @@ describe('a jailbreak case is only reportable when the guard actually refused it
     expect(record.compromised).toBe(true);
     expect(record.guardVerdict).toBe('refused');
     expect(readRecords(file)).toHaveLength(1);
+  });
+});
+
+describe('every attack payload on disk is one a runner actually sends', () => {
+  const families = readdirSync(new URL('../material/', import.meta.url))
+    .filter((file) => file.startsWith('jailbreak-'))
+    .map((file) => file.replace(/^jailbreak-|\.md$/g, ''));
+
+  it('names every payload file in the one list both runners read', () => {
+    expect([...families].sort()).toEqual([...ATTACK_FAMILIES].sort());
+  });
+
+  it('resolves each payload from the module rather than the working directory', () => {
+    for (const family of ATTACK_FAMILIES) expect(readDocument(payloadFile(family))).not.toBe('');
   });
 });

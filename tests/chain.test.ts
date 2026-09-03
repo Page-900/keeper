@@ -1,8 +1,9 @@
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { blockNumber, sendTransaction, signerAddress } from '../src/chain/client.js';
-import { CHAIN_ID } from '../src/shared/config.js';
+import { agentActionRefusal, firstAction, simulateAgentAction } from '../src/chain/action.js';
+import { blockNumber, sendDirect, signerAddress } from '../src/chain/client.js';
+import { CHAIN_ID, requireAddress } from '../src/shared/config.js';
 import { KeeperError } from '../src/shared/errors.js';
 
 const captureError = (run: () => unknown): Error => {
@@ -59,16 +60,7 @@ describe('the endpoint is asked which chain it serves', () => {
     vi.stubEnv('AGENT_PRIVATE_KEY', generatePrivateKey());
     const asked = endpointServing(1, 'wrong-chain-for-a-send');
 
-    const error = await asyncCaptureError(() =>
-      sendTransaction('agent', {
-        to: `0x${'ab'.repeat(20)}`,
-        data: '0x',
-        value: 0n,
-        nonce: 0,
-        gas: 21_000n,
-        chainId: CHAIN_ID,
-      }),
-    );
+    const error = await asyncCaptureError(() => sendDirect('agent', `0x${'ab'.repeat(20)}`, 0n));
 
     expect(error.kind).toBe('wrongChain');
     expect(asked).toEqual(['eth_chainId']);
@@ -134,5 +126,57 @@ describe('a forced failure carries no key material', () => {
     vi.stubEnv('AGENT_PRIVATE_KEY', '0xnotakey');
 
     expect(captureError(() => signerAddress('agent')).message).not.toContain('notakey');
+  });
+});
+
+const EMPTY_RETURN = `0x${'00'.repeat(31)}20${'00'.repeat(32)}`;
+
+const callServing = (result: string): Record<string, unknown>[] => {
+  const asked: Record<string, unknown>[] = [];
+  vi.stubEnv('SEPOLIA_RPC_URL', 'https://no-key-needed.invalid/rpc');
+  vi.stubGlobal('fetch', (_url: unknown, init: { body: string }) => {
+    const { id, method, params } = JSON.parse(init.body) as {
+      id: number;
+      method: string;
+      params: unknown[];
+    };
+    asked.push({ method, params });
+    const served = method === 'eth_chainId' ? `0x${CHAIN_ID.toString(16)}` : result;
+    const body = JSON.stringify({ jsonrpc: '2.0', id, result: served });
+    return Promise.resolve(new Response(body, { headers: { 'content-type': 'application/json' } }));
+  });
+  return asked;
+};
+
+const callerIn = (asked: Record<string, unknown>[]): string => {
+  const call = asked.find((one) => one['method'] === 'eth_call');
+  const params = (call?.['params'] ?? []) as { from?: string }[];
+  return params[0]?.from ?? '';
+};
+
+describe('the dry run asks as the agent without holding the agent key', () => {
+  it('answers with no private key in the environment at all', async () => {
+    vi.stubEnv('AGENT_PRIVATE_KEY', '');
+    const asked = callServing(EMPTY_RETURN);
+
+    expect(await agentActionRefusal(firstAction())).toBeNull();
+    expect(callerIn(asked).toLowerCase()).toBe(requireAddress('agent').toLowerCase());
+  });
+
+  it('carries the block it was asked at, so three layers answer about one instant', async () => {
+    vi.stubEnv('AGENT_PRIVATE_KEY', '');
+    const asked = callServing(EMPTY_RETURN);
+
+    await agentActionRefusal(firstAction(), 11_612_601n);
+
+    const call = asked.find((one) => one['method'] === 'eth_call');
+    expect((call?.['params'] as unknown[])[1]).toBe(`0x${(11_612_601).toString(16)}`);
+  });
+
+  it('leaves the keyed path needing its key, which is what makes the new one worth having', async () => {
+    vi.stubEnv('AGENT_PRIVATE_KEY', '');
+    callServing(EMPTY_RETURN);
+
+    await expect(simulateAgentAction(firstAction())).rejects.toThrow(/AGENT_PRIVATE_KEY/);
   });
 });

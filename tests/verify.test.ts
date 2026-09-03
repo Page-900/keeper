@@ -2,6 +2,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import { CHECKS, FAILED, PASSED, render, report } from '../scripts/checks.js';
+import { RUNNERS } from '../scripts/confirmations.js';
 
 const PACKAGE = new URL('../package.json', import.meta.url);
 
@@ -42,6 +43,13 @@ describe('the operator can read what passed and what did not', () => {
 
     expect(ownVoice.length).toBeGreaterThan(0);
     for (const check of ownVoice) expect(check.whenFailed).toBeTypeOf('string');
+  });
+
+  it('gives every row of its own a way to run, so none can reach the operator unrun', () => {
+    const named = Object.keys(RUNNERS);
+    const ownVoice = CHECKS.filter((check) => check.script === undefined);
+
+    for (const check of ownVoice) expect(named).toContain(check.id);
   });
 
   it('shows every declared check on the table, so no row can be hidden', () => {

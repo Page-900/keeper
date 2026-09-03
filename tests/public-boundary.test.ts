@@ -17,6 +17,7 @@ const PRIVATE_REFERENCE: RegExp[] = [
   /\bAH-\d+\b/,
   /\b(CLAUDE|SECURITY_PROTOCOL|PHASE_LOG|ASSUMPTIONS|DEFERRED|MILESTONES|QUESTIONS)\b/,
   /\bworkflow\.md\b/,
+  /\bgoal-\d/i,
   /\b(Core Law|Law \d|rule \d+|criterion \d+|subgoal \d|Milestone \d)\b/i,
 ];
 

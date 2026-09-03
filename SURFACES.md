@@ -10,12 +10,12 @@ A row is one endpoint, and the method column holds the HTTP verb. Answered means
 
 | Method | Path | Answered |
 | --- | --- | --- |
-| GET | /get-balance-whitelist | yes |
+| GET | /get-balance-whitelist | not every time |
 | GET | /get-stos | yes |
 | GET | /get-token-info | not every time |
 | GET | /get-transaction-status | yes |
-| GET | /get-whitelist-status | yes |
-| GET | /rams/status | yes |
+| GET | /get-whitelist-status | not every time |
+| GET | /rams/status | not every time |
 | GET | /rams/typed-data/grant-mandate | yes |
 
 ## The SDK

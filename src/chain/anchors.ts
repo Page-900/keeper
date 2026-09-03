@@ -26,6 +26,8 @@ export type AnchorAction =
   | `battery-${string}`
   | `signature-${string}`
   | 'agent-refusal'
+  | 'fund-counterparty'
+  | 'return-holding'
   | 'create-rehearsal-token'
   | 'open-rehearsal-offering'
   | 'open-offering';
