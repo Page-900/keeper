@@ -259,6 +259,38 @@ export const CHECKS = [
       'The page shows a transaction the test network does not confirm the way the page describes it. Take the page down before anything else, because it is showing a judge something that is not true.',
   },
   {
+    id: 'evidencePage',
+    title: 'Every claim, with the receipt beside it',
+    proves:
+      'The page a judge reads is rebuilt from the records this project captured as each call was made, never typed by hand. This confirms the page still matches those records, that every hash on it links to where anybody can open it, and that not one transaction this project ever sent has been left off it.',
+    whenFailed:
+      'The page and the records disagree, or a transaction is recorded and not shown. Run npm run evidence and read what changed, because a page that omits a transaction is the kind of selective evidence this project argues against.',
+  },
+  {
+    id: 'venues',
+    title: 'Our own copies, told apart from theirs',
+    proves:
+      'Some of this work runs against copies of the published contracts that this project deploys itself, because it shows a permission failing to protect the investor and it must never be sent anywhere shared. Every record ever written says which deployment it came from, and this reads all of them back and confirms that no record from one deployment names an address belonging to the other.',
+    whenFailed:
+      "A result from our own copies is filed as though it came from the shared network, or the reverse. Publish nothing from either until it is resolved, because a lab result read as a statement about someone else's contracts is the one mistake this project exists to argue against.",
+  },
+  {
+    id: 'differential',
+    title: 'What each layer is worth',
+    proves:
+      'The same attack is run four times with one defence taken away each time, and the published table is rebuilt from what those runs measured rather than from anything written by hand. This confirms the table still matches the measurements, and reads out the configuration in which nothing refused the delivery at all.',
+    whenFailed:
+      'The published table and the measurements behind it disagree. Run npm run layers to rebuild it from the evidence, and read what changed before publishing it.',
+  },
+  {
+    id: 'nothingSent',
+    title: 'The adversarial work stayed off the shared network',
+    proves:
+      'The genuinely adversarial work, the wrongly configured gate and the permission that lets an attacker be paid, was measured only on contracts this project deployed itself. This confirms that not one transaction on the shared test network came from that work.',
+    whenFailed:
+      'A transaction was sent from our own deployment to the shared network. Stop and establish what was sent before anything else, because that is the line this project undertook not to cross.',
+  },
+  {
     id: 'chain',
     title: 'Live chain read',
     proves:

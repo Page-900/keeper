@@ -83,6 +83,7 @@ const PUBLISHED: Record<string, RegExp[]> = {
   [REFUSAL_LOG]: [PUBLISHED_HASH],
   'README.md': [LINKED_HASH],
   'SURFACES.md': [LINKED_HASH],
+  'EVIDENCE.md': [LINKED_HASH],
   [REQUEST_LOG]: [
     PREPARED_ID,
     /(?<=[?&](?:hash|txId|identityRef|metadata|actions)=)0x[0-9a-fA-F]{64}/g,

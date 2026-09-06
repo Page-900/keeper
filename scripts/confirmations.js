@@ -1,3 +1,4 @@
+import { LAB_RUNNERS } from './lab.js';
 import { PAGE_RUNNERS } from './page.js';
 import { registryState } from './registry-state.js';
 import { REFUSAL_RUNNERS } from './refusals.js';
@@ -282,6 +283,7 @@ const confirmCapTable = async () => {
 };
 
 export const RUNNERS = {
+  ...LAB_RUNNERS,
   ...PAGE_RUNNERS,
   ...REFUSAL_RUNNERS,
   surfaces: confirmSurfaces,

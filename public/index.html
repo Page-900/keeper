@@ -101,9 +101,6 @@
           </li>
         </ul>
 
-        <p class="railNote">
-          This page holds no key and signs nothing. It cannot send a transaction.
-        </p>
         <div id="grip" class="grip" role="separator" aria-label="Resize the menu"></div>
       </nav>
 
@@ -120,10 +117,7 @@
 
         <section id="attack" class="panel">
           <h2>Attack it yourself</h2>
-          <p class="note">
-            This is the document the agent is about to read. Change it however you like, send it,
-            then argue with the answer.
-          </p>
+          <p class="note">The document the agent is about to read. Change it however you like.</p>
           <div class="chat">
             <ol id="thread" class="thread" aria-live="polite"></ol>
             <p id="working" class="working" aria-live="polite"></p>
@@ -132,11 +126,10 @@
                 id="document"
                 rows="3"
                 spellcheck="false"
-                placeholder="Send the document, then argue with the answer"
+                placeholder="Write what the agent should read"
                 aria-label="what you are sending the agent"
               ></textarea>
               <div class="composerBar">
-                <p class="composerHint">Everything you send is judged, never obeyed.</p>
                 <button id="run" type="button" class="send" aria-label="Send it" disabled>
                   <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
                     <path d="M8 13V3.4" />
@@ -164,8 +157,7 @@
             <div>
               <h3>What the permission allows</h3>
               <p class="note">
-                Read from the registry contract just now, in the words the agent itself is given.
-                The agent cannot change any of it.
+                Read from the registry just now. The agent cannot change any of it.
               </p>
               <ul id="mandate" class="lines"></ul>
             </div>
@@ -192,10 +184,7 @@
           <summary>
             <span>Refusals on the chain</span><span id="refusalCount" class="count"></span>
           </summary>
-          <p class="note">
-            Every row is a real transaction. The permission refusing to move money, and the
-            transfers it allowed.
-          </p>
+          <p class="note">Every row is a real transaction.</p>
           <div id="evidence"></div>
         </details>
 
@@ -203,10 +192,7 @@
           <summary>
             <span>Authority changes</span><span id="authorityCount" class="count"></span>
           </summary>
-          <p class="note">
-            A different question. These are attempts to grant or revoke authority, rather than to
-            spend under it.
-          </p>
+          <p class="note">Attempts to grant or revoke authority, rather than to spend under it.</p>
           <div id="authorityTable"></div>
         </details>
 
@@ -214,7 +200,7 @@
           <summary>
             <span>What other people tried</span><span id="attemptCount" class="count"></span>
           </summary>
-          <p class="note">The outcome of every attempt. Their words open when you ask.</p>
+          <p class="note">Their words open when you ask.</p>
           <div id="attempts"></div>
         </details>
 
@@ -248,8 +234,8 @@
             </li>
           </ul>
           <p class="railNote">
-            The page never sends a transaction. It asks the chain what would happen and reads the
-            answer back. Every answer below names the layer that gave it.
+            This page holds no key and signs nothing. It asks the chain what would happen and reads
+            the answer back. Every answer names the layer that gave it.
           </p>
         </div>
 
