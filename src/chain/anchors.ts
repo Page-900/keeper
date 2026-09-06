@@ -4,6 +4,7 @@ import { CHAIN_ID } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { appendRecord, readRecords } from '../shared/jsonl.js';
 import { transactionReceipt, type Receipt } from './client.js';
+import { checkVenue, type Venue } from './venue.js';
 
 /** Resolved from this module, so the file cannot follow the working directory. */
 export const ANCHOR_FILE = fileURLToPath(
@@ -43,13 +44,20 @@ export interface Anchor {
   /** The contract the claim is about, and null when the transaction created none. */
   contract: `0x${string}` | null;
   gasUsed: string;
+  venue?: Venue;
 }
 
 export type Claim = Omit<Anchor, 'at' | 'chainId'>;
 
 /** Written before the outcome is judged, so a refusal is captured as readily as a success. */
 export function recordAnchor(file: string, claim: Claim): Anchor {
-  const anchor: Anchor = { at: new Date().toISOString(), chainId: CHAIN_ID, ...claim };
+  const anchor: Anchor = {
+    at: new Date().toISOString(),
+    chainId: CHAIN_ID,
+    ...claim,
+    venue: claim.venue ?? 'registry',
+  };
+  checkVenue(anchor);
   appendRecord(file, anchor);
   return anchor;
 }

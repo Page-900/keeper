@@ -251,6 +251,7 @@ describe('the token is created once, and the chain is asked what happened', () =
         gasUsed: '61000',
         status: 'success',
         contract: TOKEN,
+        venue: 'registry',
       },
     ]);
   });

@@ -85,3 +85,32 @@ describe('a node exit handler is called, never handed a function to call with th
     expect(offenders).toEqual([]);
   });
 });
+
+describe('a contract test file cannot be written and then left out of the run', () => {
+  const scripts = (): Record<string, string> =>
+    (JSON.parse(read('package.json')) as { scripts: Record<string, string> }).scripts;
+
+  const named = (script: string): string[] => {
+    const command = scripts()[script];
+    if (command === undefined) throw new Error(`package.json has no ${script} script`);
+    return [...command.matchAll(/contracts\/test\/(\w+)\.t\.sol/g)].flatMap((match) =>
+      match[1] === undefined ? [] : [match[1]],
+    );
+  };
+
+  const files = (): string[] =>
+    readdirSync(new URL('../contracts/test/', import.meta.url))
+      .filter((entry) => entry.endsWith('.t.sol'))
+      .map((entry) => entry.replace('.t.sol', ''));
+
+  it('runs every contract test file in one of the two suites, and never neither', () => {
+    const run = [...named('test:contracts'), ...named('test:fork')].sort();
+
+    expect(files().sort()).toEqual(run);
+  });
+
+  it('keeps the suites apart, so a fork test never runs where no network is configured', () => {
+    for (const name of named('test:fork')) expect(name.startsWith('Fork')).toBe(true);
+    for (const name of named('test:contracts')) expect(name.startsWith('Fork')).toBe(false);
+  });
+});

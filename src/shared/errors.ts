@@ -29,6 +29,8 @@ export const ERROR_COPY = {
   offeringBroadcast: 'A prepare that must open nothing reported a send or left an offering',
   skillUnverified:
     'The Brickken agent skill on this machine is not the artifact the evidence recorded',
+  venueMismatch: 'A record is filed against a deployment other than the one it names',
+  venueMixed: 'One record names two deployments, so no claim from it can be attributed',
 } as const;
 
 export type ErrorKind = keyof typeof ERROR_COPY;

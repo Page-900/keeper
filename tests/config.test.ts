@@ -19,6 +19,7 @@ import {
   SUNL_DECIMALS,
   SUNL_SUPPLY,
   UNCAPPED,
+  LAB_SLOTS,
   addressSlots,
   requireAddress,
   type AddressName,
@@ -181,13 +182,22 @@ describe('the probe mandate exists to be spent, so it must be cheap and reachabl
   });
 });
 
-const SLOTS = Object.keys(addressSlots) as AddressName[];
+const SLOTS = (Object.keys(addressSlots) as AddressName[]).filter(
+  (name) => !LAB_SLOTS.includes(name),
+);
 
 describe('address slots, empty until onboarding issues them or a deploy fills them', () => {
-  it('holds a real address in every slot, and never a zero-filled one', () => {
+  it('holds a real address in every issued slot, and never a zero-filled one', () => {
     for (const name of SLOTS) {
       expect(addressSlots[name], `slot ${name}`).toMatch(/^0x[0-9a-fA-F]{40}$/);
       expect(BigInt(addressSlots[name] ?? '0x0'), `slot ${name}`).not.toBe(0n);
+    }
+  });
+
+  it('leaves every lab slot empty until that deployment exists', () => {
+    for (const name of LAB_SLOTS) {
+      expect(addressSlots[name], `slot ${name}`).toBeNull();
+      expect(() => requireAddress(name)).toThrow(new RegExp(name));
     }
   });
 

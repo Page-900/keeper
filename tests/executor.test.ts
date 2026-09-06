@@ -128,6 +128,7 @@ describe('what the chain reports is captured as it happens, whatever it says', (
         gasUsed: '61000',
         status: 'success',
         contract: EXECUTOR,
+        venue: 'registry',
       },
     ]);
   });
@@ -282,6 +283,7 @@ describe('the permitted action is registered by the owner, never by the agent', 
         gasUsed: '61000',
         status: 'success',
         contract: EXECUTOR_SLOT,
+        venue: 'registry',
       },
     ]);
   });

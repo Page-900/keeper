@@ -13,6 +13,7 @@ const config: HardhatUserConfig = {
   test: {
     solidity: {
       forking: { rpcEndpoints: { sepolia: configVariable('SEPOLIA_RPC_URL', { default: '' }) } },
+      fsPermissions: { readWriteFile: ['evidence/lab-differential.jsonl'] },
     },
   },
   solidity: {

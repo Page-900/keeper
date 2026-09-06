@@ -6,6 +6,7 @@ import { appendRecord } from '../shared/jsonl.js';
 import type { RevertReason } from './client.js';
 import { CLAUSES, type Clause, type ClauseResult } from './differential.js';
 import type { RegistryRead } from './registry.js';
+import { checkVenue, type Venue } from './venue.js';
 
 /** Resolved from this module, so the file cannot follow the working directory. */
 export const BATTERY_FILE = fileURLToPath(new URL('../../evidence/battery.jsonl', import.meta.url));
@@ -24,6 +25,7 @@ export interface BatteryCase {
   clauses: ClauseResult[];
   agreedWithChain: boolean;
   state: RegistryRead;
+  venue?: Venue;
 }
 
 export type BatteryClaim = Omit<BatteryCase, 'at' | 'chainId'>;
@@ -68,7 +70,13 @@ function requireAttribution(claim: BatteryClaim): void {
 
 export function recordCase(file: string, claim: BatteryClaim): BatteryCase {
   requireAttribution(claim);
-  const record: BatteryCase = { at: new Date().toISOString(), chainId: CHAIN_ID, ...claim };
+  const record: BatteryCase = {
+    at: new Date().toISOString(),
+    chainId: CHAIN_ID,
+    ...claim,
+    venue: claim.venue ?? 'registry',
+  };
+  checkVenue(record);
   appendRecord(file, record);
   return record;
 }

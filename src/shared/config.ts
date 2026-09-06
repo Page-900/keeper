@@ -174,7 +174,18 @@ export type AddressName =
   | 'asset'
   | 'executor'
   | 'agentMandate'
-  | 'complianceProvider';
+  | 'complianceProvider'
+  | 'labAsset'
+  | 'labExecutor'
+  | 'labMandate'
+  | 'labComplianceProvider';
+
+export const LAB_SLOTS: readonly AddressName[] = Object.freeze([
+  'labAsset',
+  'labExecutor',
+  'labMandate',
+  'labComplianceProvider',
+]);
 
 export const addressSlots: Readonly<Record<AddressName, AddressSlot>> = Object.freeze({
   counterparty: '0xd34B78Ff018835b7124FCf347a319A788d2DC71E',
@@ -186,6 +197,10 @@ export const addressSlots: Readonly<Record<AddressName, AddressSlot>> = Object.f
   executor: '0x914f32af870b11739c68cbc8c4561c139a820c41',
   agentMandate: '0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e',
   complianceProvider: '0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278',
+  labAsset: null,
+  labExecutor: null,
+  labMandate: null,
+  labComplianceProvider: null,
 });
 
 /** recordExecution is refused unless the caller holds this role, which only Brickken can grant. */
@@ -195,9 +210,12 @@ export const RECORDER_ROLE = keccak256(toHex('RECORDER_ROLE'));
 export const identityRef: `0x${string}` =
   '0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0';
 
-export function addressNamed(address: string): AddressName | null {
+export function addressNamed(
+  address: string,
+  slots: Readonly<Record<AddressName, AddressSlot>> = addressSlots,
+): AddressName | null {
   const wanted = address.toLowerCase();
-  for (const [name, slot] of Object.entries(addressSlots) as [AddressName, AddressSlot][]) {
+  for (const [name, slot] of Object.entries(slots) as [AddressName, AddressSlot][]) {
     if (slot !== null && slot.toLowerCase() === wanted) return name;
   }
   return null;
