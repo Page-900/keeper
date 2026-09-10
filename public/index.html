@@ -188,6 +188,30 @@
           <div id="evidence"></div>
         </details>
 
+        <details id="yours" class="drop" open>
+          <summary>
+            <span>Try it with your own address</span>
+          </summary>
+          <p class="note">
+            Type any address you like. Yours, or one you invent. This page asks the deployed
+            contracts what would happen if the agent tried to deliver to it, and shows the answer
+            they give. Nothing is sent and nothing moves.
+          </p>
+          <form id="yoursForm" class="yoursForm">
+            <label class="sr" for="yoursInput">An address on this test network</label>
+            <input
+              id="yoursInput"
+              class="yoursInput"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="0x..."
+            />
+            <button id="yoursButton" class="yoursButton" type="submit">Ask the chain</button>
+          </form>
+          <div id="yoursAnswer" class="yoursAnswer"></div>
+        </details>
+
         <details id="authority" class="drop">
           <summary>
             <span>Authority changes</span><span id="authorityCount" class="count"></span>

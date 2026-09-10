@@ -106,25 +106,48 @@ const confirmWindow = async () => {
 const confirmRecipient = async () => {
   const { agentActionRefusal } = await import('../dist/chain/action.js');
   const { blockNumber } = await import('../dist/chain/client.js');
-  const { MAX_TRANSACTION_VALUE, requireAddress } = await import('../dist/shared/config.js');
+  const { readCanExecute } = await import('../dist/chain/registry.js');
+  const { MAX_TRANSACTION_VALUE, TRANSFER_ACTION, mandateAgent, requireAddress } =
+    await import('../dist/shared/config.js');
   const at = await blockNumber();
   const ask = (name, amount) => agentActionRefusal({ to: requireAddress(name), amount }, at);
 
-  const named = 'counterparty';
-  const uncleared = 'uncleared';
-  for (const name of [named, uncleared]) {
-    const refusal = await ask(name, MAX_TRANSACTION_VALUE);
-    if (refusal !== null)
-      throw new Error(
-        `A delivery to the ${name} address was refused with ${refusal.error}, so the recipient is no longer the thing that makes no difference.`,
-      );
-  }
+  const permits = await readCanExecute({
+    agent: mandateAgent(),
+    principal: requireAddress('principal'),
+    asset: requireAddress('asset'),
+    action: TRANSFER_ACTION,
+    amount: MAX_TRANSACTION_VALUE,
+    atBlock: at,
+  });
+  if (!permits)
+    throw new Error('The registry does not permit the amount at all, so nothing here is measured.');
 
-  const overCap = await ask(named, MAX_TRANSACTION_VALUE + 1n);
+  const listed = await ask('counterparty', MAX_TRANSACTION_VALUE);
+  if (listed !== null)
+    throw new Error(
+      `A delivery to the address the investor listed was refused with ${listed.error}.`,
+    );
+
+  const stranger = await ask('uncleared', MAX_TRANSACTION_VALUE);
+  if (stranger === null)
+    throw new Error(
+      'A delivery to an address nobody listed was allowed, so the recipient check is not on the chain.',
+    );
+  if (stranger.error !== 'RecipientNotAllowed')
+    throw new Error(
+      `A delivery to an address nobody listed was refused with ${stranger.error}, which is not the recipient check.`,
+    );
+
+  const overCap = await ask('counterparty', MAX_TRANSACTION_VALUE + 1n);
   if (overCap === null)
     throw new Error('One unit above the limit was not refused, so this reading cannot say no.');
+  if (overCap.error !== 'CannotExecute')
+    throw new Error(
+      `One unit above the limit was refused with ${overCap.error}, so the mandate is not what refused it.`,
+    );
 
-  return `At block ${at} the same delivery is allowed to ${requireAddress(named)}, the address the investor named, and to ${requireAddress(uncleared)}, which nobody ever cleared. One unit above the limit is still refused with ${overCap.error}. Nothing was sent.`;
+  return `At block ${at} the registry permits the amount and says nothing at all about who receives it. The same delivery to ${requireAddress('counterparty')}, the address the investor listed, goes through. To ${requireAddress('uncleared')}, which nobody listed, it is refused with ${stranger.error} by our own contract and not by the standard. One unit above the limit is refused with ${overCap.error} by the mandate. Nothing was sent.`;
 };
 
 export const REFUSAL_RUNNERS = {

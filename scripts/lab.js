@@ -43,8 +43,9 @@ const confirmNothingSent = async () => {
   const fromLab = sent.filter((record) => record.venue === 'lab');
   if (fromLab.length > 0)
     throw new Error(`${String(fromLab.length)} transactions were sent from our own deployment.`);
-  const hashes = sent.filter((record) => record.transactionHash !== null).length;
-  return `All ${String(hashes)} transactions this project has ever sent went to the shared network, and none of them came from the adversarial work. That work is held in files that carry no transaction hash at all, because it was never sent anywhere.`;
+  const hashes = sent.map((record) => record.transactionHash).filter((hash) => hash !== null);
+  const distinct = new Set(hashes).size;
+  return `All ${String(distinct)} transactions this project has ever sent went to the shared network, and none of them came from the adversarial work. They are recorded ${String(hashes.length)} times over, because a few are recorded twice from two angles. That work is held in files that carry no transaction hash at all, because it was never sent anywhere.`;
 };
 
 const confirmEvidencePage = async () => {
@@ -56,7 +57,7 @@ const confirmEvidencePage = async () => {
   const missing = hashes.filter((hash) => !page.includes(hash));
   if (missing.length > 0)
     throw new Error(`${String(missing.length)} transactions are recorded but not on the page.`);
-  return `${String(hashes.length)} transactions are on the page, every one linked to where anybody can open it, and not one recorded transaction is left off.`;
+  return `${String(new Set(hashes).size)} transactions are on the page, from ${String(hashes.length)} records of them, every one linked to where anybody can open it, and not one recorded transaction is left off.`;
 };
 
 export const LAB_RUNNERS = {

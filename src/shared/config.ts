@@ -1,4 +1,13 @@
-import { getAddress, keccak256, pad, toFunctionSelector, toHex, zeroAddress, zeroHash } from 'viem';
+import {
+  getAddress,
+  isAddress,
+  keccak256,
+  pad,
+  toFunctionSelector,
+  toHex,
+  zeroAddress,
+  zeroHash,
+} from 'viem';
 
 import { KeeperError } from './errors.js';
 
@@ -81,7 +90,7 @@ export function offeringWindow(
 export const MAX_TRANSACTION_VALUE = sunl(250n);
 
 /** Lifetime total across the whole window, never a monthly or rolling allowance. */
-export const MAX_CUMULATIVE_VALUE = sunl(1_000n);
+export const MAX_CUMULATIVE_VALUE = sunl(1_750n);
 
 export const MANDATE_WINDOW_SECONDS = 60 * 24 * 60 * 60;
 
@@ -104,7 +113,7 @@ export interface MandateSpec {
 }
 
 export const KEEPER_MANDATE: MandateSpec = Object.freeze({
-  agent: 'agent',
+  agent: 'router',
   maxTransactionValue: MAX_TRANSACTION_VALUE,
   maxCumulativeValue: MAX_CUMULATIVE_VALUE,
   opensIn: 0,
@@ -131,13 +140,14 @@ export function specWindow(spec: MandateSpec, nowSeconds: number): MandateWindow
 
 const TRANSFER_FROM = 'transferFrom(address,address,uint256)';
 
-/** The transfer the executor forwards. The amount is its third argument, so the index is 2. */
+/** transferFrom(from, to, amount): the recipient is argument 1 and the amount argument 2. */
 export const PERMITTED_ACTION = Object.freeze({
   signature: TRANSFER_FROM,
   selector: toFunctionSelector(TRANSFER_FROM),
   supported: true,
   hasAmount: true,
   amountIndex: 2,
+  recipientIndex: 1,
 });
 
 /** The executor labels the action bytes32(selector), and that cast pads on the right. */
@@ -156,6 +166,7 @@ export const SECOND_ACTION = Object.freeze({
   supported: true,
   hasAmount: true,
   amountIndex: 1,
+  recipientIndex: 0,
 });
 
 export const SECOND_ACTION_ID: `0x${string}` = pad(SECOND_ACTION.selector, {
@@ -173,6 +184,7 @@ export type AddressName =
   | 'uncleared'
   | 'asset'
   | 'executor'
+  | 'router'
   | 'agentMandate'
   | 'complianceProvider'
   | 'labAsset'
@@ -195,6 +207,7 @@ export const addressSlots: Readonly<Record<AddressName, AddressSlot>> = Object.f
   uncleared: '0x3Fb193fB1b205d3d5c258D907c2E3D259CE00521',
   asset: '0x2ae3bb75ab04957ae3b8944094bc9e96d33db255',
   executor: '0x914f32af870b11739c68cbc8c4561c139a820c41',
+  router: '0x8ac2bdd2f04c68fb03134bf1dc6c7552f15a8058',
   agentMandate: '0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e',
   complianceProvider: '0xa90D2503D5D9b80ECC27856Ff76F892B8C02f278',
   labAsset: null,
@@ -209,6 +222,13 @@ export const RECORDER_ROLE = keccak256(toHex('RECORDER_ROLE'));
 /** Issued by Brickken with the principal's compliance record, and used exactly as issued. */
 export const identityRef: `0x${string}` =
   '0x59d0004b514dbb6948b1b54ba9dbf20767d8f9a87925cfd65ea3419ebca512e0';
+
+export const mandateAgent = (): `0x${string}` => requireAddress(KEEPER_MANDATE.agent);
+
+export const asAddress = (value: unknown): `0x${string}` | null => {
+  const trimmed = typeof value === 'string' ? value.trim() : '';
+  return isAddress(trimmed, { strict: false }) ? trimmed : null;
+};
 
 export function addressNamed(
   address: string,

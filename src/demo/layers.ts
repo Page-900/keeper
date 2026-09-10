@@ -4,7 +4,7 @@ import { sunlAmount } from '../chain/mandate.js';
 import { readCanExecute, type RegistryRead } from '../chain/registry.js';
 import type { Decision } from '../keeper/guard.js';
 import type { DeliverIntent, Intent } from '../keeper/intent.js';
-import { TRANSFER_ACTION, requireAddress } from '../shared/config.js';
+import { mandateAgent, requireAddress, TRANSFER_ACTION } from '../shared/config.js';
 import { dryRun, type DryRun, type DryRunReads } from './dryrun.js';
 
 export type LayerVerdict = 'allows' | 'refuses' | 'not asked';
@@ -66,7 +66,7 @@ export interface MandateReads {
 const CHAIN: MandateReads = {
   canExecute: (amount, atBlock) =>
     readCanExecute({
-      agent: requireAddress('agent'),
+      agent: mandateAgent(),
       principal: requireAddress('principal'),
       asset: requireAddress('asset'),
       action: TRANSFER_ACTION,

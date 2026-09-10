@@ -148,11 +148,11 @@ export const CHECKS = [
   },
   {
     id: 'recipient',
-    title: 'The recipient makes no difference',
+    title: 'Who receives it, and who says no',
     proves:
-      'The chain is asked, without sending anything, whether the agent could deliver to an address nobody ever cleared to hold the token. It answers yes, exactly as it does for the address the investor named, because the permission never looks at who receives and the token only asks who is sending. The same reading refuses one unit above the limit, so it is a reading that can say no. This is the claim the public page makes, measured against the contracts as they are really deployed rather than against a copy of them.',
+      'The chain is asked, without sending anything, what happens to a delivery aimed at an address nobody ever cleared to hold the token. Two answers come back and they disagree, which is the point. The permission the investor granted allows it, because that permission has no recipient in it at all and the token only asks who is sending. Our own contract in front of it refuses it by name, because the investor listed one address and that is not it. The same reading still allows the address the investor did list, and still refuses one unit above the limit, so it is a reading that can say both yes and no.',
     whenFailed:
-      'Either the chain now refuses a delivery it used to allow, or it allows an amount above the limit. The first would mean the page is telling a judge something the chain no longer agrees with. The second would mean this reading cannot refuse anything and proves nothing.',
+      'Either our own contract has stopped refusing a delivery nobody listed, which is the one thing standing between a stolen key and an address of the thief choosing, or it has started refusing the address the investor did list, which stops the demonstration. Read which of the two it is before anything else.',
   },
   {
     id: 'refused',

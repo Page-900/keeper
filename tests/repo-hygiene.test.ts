@@ -86,10 +86,10 @@ describe('a node exit handler is called, never handed a function to call with th
   });
 });
 
-describe('a contract test file cannot be written and then left out of the run', () => {
-  const scripts = (): Record<string, string> =>
-    (JSON.parse(read('package.json')) as { scripts: Record<string, string> }).scripts;
+const scripts = (): Record<string, string> =>
+  (JSON.parse(read('package.json')) as { scripts: Record<string, string> }).scripts;
 
+describe('a contract test file cannot be written and then left out of the run', () => {
   const named = (script: string): string[] => {
     const command = scripts()[script];
     if (command === undefined) throw new Error(`package.json has no ${script} script`);
@@ -112,5 +112,17 @@ describe('a contract test file cannot be written and then left out of the run', 
   it('keeps the suites apart, so a fork test never runs where no network is configured', () => {
     for (const name of named('test:fork')) expect(name.startsWith('Fork')).toBe(true);
     for (const name of named('test:contracts')) expect(name.startsWith('Fork')).toBe(false);
+  });
+});
+
+describe('no script leans on an npm lifecycle hook, because they are turned off here', () => {
+  it('chains a step it needs rather than naming it pre or post something', () => {
+    const names = Object.keys(scripts());
+    const dead = names.filter((name) => {
+      const target = name.replace(/^(pre|post)/, '');
+      return target !== name && names.includes(target);
+    });
+
+    expect(dead).toEqual([]);
   });
 });

@@ -12,9 +12,10 @@ import {
 } from '../src/chain/registry.js';
 import {
   CHAIN_ID,
-  MANDATE_ACTIONS,
-  RECORDER_ROLE,
   identityRef,
+  MANDATE_ACTIONS,
+  mandateAgent,
+  RECORDER_ROLE,
   requireAddress,
 } from '../src/shared/config.js';
 import { readRecords } from '../src/shared/jsonl.js';
@@ -25,7 +26,7 @@ const address = (tail: string): `0x${string}` => `0x${tail.padStart(40, '0')}`;
 const ARTIFACT: Artifact = { abi: [], bytecode: '0x' };
 
 const PRINCIPAL = requireAddress('principal');
-const AGENT = requireAddress('agent');
+const AGENT = mandateAgent();
 const BLOCK = 11_514_300n;
 const BLOCK_TIME = 1_789_000_000n;
 

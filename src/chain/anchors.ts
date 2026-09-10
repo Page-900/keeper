@@ -13,6 +13,9 @@ export const ANCHOR_FILE = fileURLToPath(
 
 export type AnchorAction =
   | 'deploy-executor'
+  | 'deploy-router'
+  | 'route-action'
+  | 'allow-recipient'
   | 'register-action'
   | 'register-second-action'
   | 'create-token'
@@ -21,6 +24,9 @@ export type AnchorAction =
   | 'mint-holding'
   | 'approve-executor'
   | 'grant-mandate'
+  | `grant-mandate-${number}`
+  | 'revoke-mandate'
+  | `approve-executor-${number}`
   | `grant-probe-${number}`
   | 'agent-action'
   | 'keeper-action'

@@ -10,6 +10,8 @@ const compiled = (path: string): string =>
 
 export const EXECUTOR_ARTIFACT = compiled('AgentExecutor.sol/AgentExecutor.json');
 
+export const ROUTER_ARTIFACT = compiled('SettlementRouter.sol/SettlementRouter.json');
+
 export const REGISTRY_ARTIFACT = compiled('interfaces/IAgentMandate.sol/IAgentMandate.json');
 
 export const ROLES_ARTIFACT = compiled('interfaces/IMandateRoles.sol/IMandateRoles.json');
@@ -35,3 +37,14 @@ export function compiledArtifact(file: string): Artifact {
     throw new KeeperError('artifactUnusable', `${file} holds no compiled contract`);
   return { abi, bytecode };
 }
+
+/** A router forwards, so a revert from behind it needs the errors of every contract in the path. */
+export const withErrorsOf = (base: Artifact, ...behind: Artifact[]): Artifact => ({
+  abi: [
+    ...base.abi,
+    ...behind.flatMap((one) =>
+      one.abi.filter((entry) => (entry as { type?: string }).type === 'error'),
+    ),
+  ],
+  bytecode: base.bytecode,
+});

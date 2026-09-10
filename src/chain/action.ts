@@ -1,14 +1,29 @@
 import { MAX_TRANSACTION_VALUE, requireAddress } from '../shared/config.js';
-import { EXECUTOR_ARTIFACT, compiledArtifact } from './artifacts.js';
+import {
+  EXECUTOR_ARTIFACT,
+  MANDATE_ERRORS_ARTIFACT,
+  ROUTER_ARTIFACT,
+  compiledArtifact,
+  withErrorsOf,
+} from './artifacts.js';
 import {
   simulateCall,
   simulateRefusalAs,
   transferFromCalldata,
+  type Artifact,
   type RevertReason,
 } from './client.js';
 
 export const agentCalldata = (to: `0x${string}`, amount: bigint): `0x${string}` =>
   transferFromCalldata(requireAddress('principal'), to, amount);
+
+/** A revert can come from the router, the executor behind it, or the registry behind that. */
+const routerPath = (): Artifact =>
+  withErrorsOf(
+    compiledArtifact(ROUTER_ARTIFACT),
+    compiledArtifact(EXECUTOR_ARTIFACT),
+    compiledArtifact(MANDATE_ERRORS_ARTIFACT),
+  );
 
 export interface AgentAction {
   to: `0x${string}`;
@@ -27,8 +42,8 @@ export const agentActionRefusal = (
 ): Promise<RevertReason | null> =>
   simulateRefusalAs(
     requireAddress('agent'),
-    requireAddress('executor'),
-    compiledArtifact(EXECUTOR_ARTIFACT),
+    requireAddress('router'),
+    routerPath(),
     'execute',
     [requireAddress('asset'), agentCalldata(to, amount)],
     atBlock,
@@ -36,11 +51,8 @@ export const agentActionRefusal = (
 
 /** Free, and it reverts for the same reason the real send would, so it runs first every time. */
 export async function simulateAgentAction({ to, amount }: AgentAction): Promise<void> {
-  await simulateCall(
-    'agent',
-    requireAddress('executor'),
-    compiledArtifact(EXECUTOR_ARTIFACT),
-    'execute',
-    [requireAddress('asset'), agentCalldata(to, amount)],
-  );
+  await simulateCall('agent', requireAddress('router'), routerPath(), 'execute', [
+    requireAddress('asset'),
+    agentCalldata(to, amount),
+  ]);
 }

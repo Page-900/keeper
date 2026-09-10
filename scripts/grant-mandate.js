@@ -2,14 +2,17 @@ import { grantMandate } from '../dist/brickken/grant.js';
 import { explorerTransaction } from '../dist/shared/config.js';
 
 const print = (text) => process.stdout.write(`${text}\n`);
+const again = process.argv.includes('--again');
 
 print('');
 print('Granting the mandate through Brickken, signed by the investor.');
-print('This is a real transaction and it happens once.');
+print(
+  `This is a real transaction. ${again ? 'It replaces the one that was revoked.' : 'It happens once.'}`,
+);
 print('');
 
 try {
-  const { txId, transactionHash } = await grantMandate();
+  const { txId, transactionHash } = await grantMandate(again ? { action: 'grant-mandate-2' } : {});
   print(`  prepared    ${txId}`);
   print(`  transaction ${explorerTransaction(transactionHash)}`);
   print('');

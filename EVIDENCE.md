@@ -87,6 +87,17 @@ Listed so that no transaction this project ever sent is missing from this page.
 | A permitted amount, sent so the running total reaches the limit the next one breaks | went through | 11593792 | [0x6977b2b7…](https://sepolia.etherscan.io/tx/0x6977b2b738f0fdf5e0d1060e0ec2b9180052e7bbbc56404ee5928bfb51f6f359) |
 | A permitted amount, sent so the running total reaches the limit the next one breaks | went through | 11598788 | [0xf3f8767d…](https://sepolia.etherscan.io/tx/0xf3f8767d197f34d7afb5b0f4bcadf573140628409a65c7b2aa85a9c41a14d341) |
 | A signed revocation, sent legitimately, so its signature could be replayed after | went through | 11598788 | [0x87747c3e…](https://sepolia.etherscan.io/tx/0x87747c3e673ba0556810a30f84f58525b671d81209cef3819009b77459bef437) |
+| A settlement router that was replaced before any mandate named it | went through | 11673108 | [0x69c49e9e…](https://sepolia.etherscan.io/tx/0x69c49e9e693ca8b2ae57c208c2b65e78805b687b9e13a5cf9d56a16001bd5695) |
+| A settlement router that was replaced before any mandate named it | went through | 11673138 | [0xdd055f3a…](https://sepolia.etherscan.io/tx/0xdd055f3afdb143de315fe7425872cdf917338c7cf3be5c5830f938c87929ff15) |
+| A settlement router that was replaced before any mandate named it | went through | 11673173 | [0x4de63d72…](https://sepolia.etherscan.io/tx/0x4de63d72ed72e45333c94ff9e054973f326877772dc2e7c14b62f524079b23a8) |
+| A settlement router that was replaced before any mandate named it | went through | 11673183 | [0xe1a224b9…](https://sepolia.etherscan.io/tx/0xe1a224b94e53e3ef21b71d42c9397aa0f9815f5cfff3ab3c643ad8e9f6faf81b) |
+| The settlement router now in front of the executor was deployed | went through | 11673201 | [0x9381e9a6…](https://sepolia.etherscan.io/tx/0x9381e9a64b7e60ec0d1384510ed759ca3c274042ee64fa01e6763b404a1dc7db) |
+| The router was told where the recipient sits in one kind of call | went through | 11673262 | [0xe6a38716…](https://sepolia.etherscan.io/tx/0xe6a38716077b3ca3171a49bd7acbe0a0127f3fe45f578f92e0fc950e9ed0ec3f) |
+| The router was told where the recipient sits in one kind of call | went through | 11673263 | [0x95a12bfa…](https://sepolia.etherscan.io/tx/0x95a12bfaf8eb5ff11fe86a987ea06e6c14f20aeee3e4783b7e4f08799a9229aa) |
+| The only address the router will deliver to was listed by the investor | went through | 11673264 | [0x9056a2d9…](https://sepolia.etherscan.io/tx/0x9056a2d9d09a8155983e0036f4cad7663f8ff39c1319782ccaa4aadb60eade59) |
+| The investor approved the executor a second time, so the permission stays the thing that refuses | went through | 11674232 | [0x20cfb28d…](https://sepolia.etherscan.io/tx/0x20cfb28d0581ae9a097b2121007ec77732b6f47a0b01cbbefad3cbba7b2b5d8d) |
+| The investor revoked the mandate, through the issuer own tool | went through | 11674259 | [0xfc85ee9b…](https://sepolia.etherscan.io/tx/0xfc85ee9bdeb64c319a2774d54fa088fd8e036071c36b9965bf4596cbd24b1d63) |
+| The investor granted a fresh mandate, this time to the router rather than to a wallet | went through | 11674266 | [0xa84a596a…](https://sepolia.etherscan.io/tx/0xa84a596a9c4beea4a6317de40240aa6b411b48f9db6d76015781863d8c830cdc) |
 
 ## Measured off the shared network
 

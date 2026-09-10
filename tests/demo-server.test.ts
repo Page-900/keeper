@@ -7,11 +7,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CapTable } from '../src/captable.js';
 import type { runTurn } from '../src/demo/attempt.js';
-import { createLimits } from '../src/demo/limits.js';
+import { READS_PER_SESSION, createLimits } from '../src/demo/limits.js';
 import { createThreads } from '../src/demo/thread.js';
 import { type Attempt } from '../src/demo/log.js';
 import {
   MAX_BODY_BYTES,
+  SECURITY_HEADERS,
   WAIT_SECONDS,
   demoServer,
   type DemoSources,
@@ -20,7 +21,8 @@ import {
 import { asRamsStatus } from '../src/demo/sources.js';
 import type { GuardReads } from '../src/keeper/guard.js';
 import { ERROR_COPY, KeeperError } from '../src/shared/errors.js';
-import { SUNL_SYMBOL, requireAddress } from '../src/shared/config.js';
+import { MAX_TRANSACTION_VALUE, SUNL_SYMBOL, requireAddress } from '../src/shared/config.js';
+import { addressIn } from '../src/demo/recipient.js';
 import { appendRecord } from '../src/shared/jsonl.js';
 import { captureError } from './support/capture-error.js';
 import { registryState } from './support/registry-state.js';
@@ -91,6 +93,7 @@ const sources = (over: Partial<DemoSources> = {}): DemoSources => ({
 interface Answer {
   status: number;
   body: string;
+  headers: Headers;
 }
 
 const opened = async (
@@ -103,7 +106,7 @@ const opened = async (
   try {
     await run(async (path, init) => {
       const answer = await fetch(`http://127.0.0.1:${String(port)}${path}`, init);
-      return { status: answer.status, body: await answer.text() };
+      return { status: answer.status, body: await answer.text(), headers: answer.headers };
     });
   } finally {
     await new Promise((closed) => server.close(closed));
@@ -134,6 +137,21 @@ afterEach(() => {
 });
 
 describe('every route the page needs answers', () => {
+  it('refuses off-origin loading on the page and on the streams a visitor drives', async () => {
+    await opened(async (ask) => {
+      for (const path of ['/', '/app.js', '/api/state']) {
+        const { headers } = await ask(path);
+        for (const [name, value] of Object.entries(SECURITY_HEADERS))
+          expect([path, name, headers.get(name)]).toEqual([path, name, value]);
+      }
+
+      const streamed = await ask('/api/attempt', posted('a bid at 47'));
+      expect(streamed.headers.get('content-security-policy')).toEqual(
+        SECURITY_HEADERS['content-security-policy'],
+      );
+    });
+  });
+
   it('serves the state, the evidence, the attempts, and one attempt by name', async () => {
     appendRecord(attempts, RECORD);
 
@@ -476,5 +494,77 @@ describe('what Brickken send back is read rather than assumed', () => {
     expect(
       (await captureError(() => Promise.resolve(asRamsStatus({ isFrozen: false })))).kind,
     ).toBe('brickkenUnreadable');
+  });
+});
+
+describe('a visitor may name an address, and the page asks the chain about that one', () => {
+  const reading = {
+    recipient: (said: unknown) => {
+      const address = addressIn(said);
+      return Promise.resolve({
+        address,
+        explorer: `https://sepolia.etherscan.io/address/${address}`,
+        amount: String(MAX_TRANSACTION_VALUE),
+        atBlock: '11673400',
+        allowed: false,
+        refusal: { error: 'RecipientNotAllowed', args: [address] },
+        layer: 'app' as const,
+        says: 'Refused by this project, before the permission was even asked.',
+      });
+    },
+  };
+
+  const ask = (address: unknown): RequestInit => ({
+    method: 'POST',
+    body: JSON.stringify({ address }),
+  });
+
+  it('answers with the chain reading and names the layer that refused', async () => {
+    await opened(async (call) => {
+      const answer = await call('/api/recipient', ask(requireAddress('uncleared')));
+      const body = JSON.parse(answer.body) as { address: string; layer: string; amount: string };
+
+      expect(answer.status).toBe(200);
+      expect(body.address).toBe(requireAddress('uncleared'));
+      expect(body.layer).toBe('app');
+      expect(body.amount).toBe(String(MAX_TRANSACTION_VALUE));
+    }, reading);
+  });
+
+  it('turns away anything that is not an address, in plain words', async () => {
+    await opened(async (call) => {
+      const answer = await call('/api/recipient', ask('the moon'));
+
+      expect(answer.status).toBe(400);
+      expect(answer.body).not.toContain('0x');
+    }, reading);
+  });
+
+  it('stops one visitor checking address after address without end', async () => {
+    await opened(async (call) => {
+      const many = [];
+      for (let at = 0; at <= READS_PER_SESSION; at += 1)
+        many.push(await call('/api/recipient', ask(requireAddress('uncleared'))));
+
+      expect(many.at(-1)?.status).toBe(429);
+      expect(many.filter((one) => one.status === 200)).toHaveLength(READS_PER_SESSION);
+    }, reading);
+  });
+
+  it('never sends anything, whatever the request carries beside the address', async () => {
+    await opened(async (call) => {
+      const answer = await call('/api/recipient', {
+        method: 'POST',
+        body: JSON.stringify({
+          address: requireAddress('uncleared'),
+          amount: '999999',
+          to: requireAddress('principal'),
+        }),
+      });
+      const body = JSON.parse(answer.body) as { amount: string; address: string };
+
+      expect(body.amount).toBe(String(MAX_TRANSACTION_VALUE));
+      expect(body.address).toBe(requireAddress('uncleared'));
+    }, reading);
   });
 });

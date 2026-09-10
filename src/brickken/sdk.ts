@@ -15,6 +15,7 @@ export type {
   ExecuteInput,
   GrantMandateInput,
   MintTokenInput,
+  RevokeMandateInput,
   UnsignedTransactionLike,
   WhitelistInput,
   WriteOptions,

@@ -54,6 +54,11 @@ const confirmRecord = async () => {
   return `${held.tokenName} is held as ${held.tokenSymbol}, ${held.maxSupply} tokens.`;
 };
 
+const drawnMoved = async () => {
+  const { retiredSpend } = await import('../dist/chain/retired.js');
+  return BigInt((await registryState()).cumulativeUsed) + retiredSpend();
+};
+
 const confirmHolding = async () => {
   const { readTokenBalance } = await import('../dist/chain/client.js');
   const { returnedByBuyer } = await import('../dist/demo/reset.js');
@@ -61,7 +66,7 @@ const confirmHolding = async () => {
     await import('../dist/shared/config.js');
   const holder = requireAddress('principal');
   const held = await readTokenBalance(requireAddress('asset'), holder);
-  const spent = BigInt((await registryState()).cumulativeUsed);
+  const spent = await drawnMoved();
   const back = await returnedByBuyer();
   const expected = PRINCIPAL_HOLDING - spent + back;
   if (held !== expected)
@@ -83,21 +88,10 @@ const confirmAllowed = async () => {
   return `Cleared, and they read it from the ${source}.`;
 };
 
-/** A re-grant resets the registry counter and never the approval, so the sends are counted. */
-const probeDrawn = async () => {
-  const { ANCHOR_FILE } = await import('../dist/chain/anchors.js');
-  const { readRecords } = await import('../dist/shared/jsonl.js');
-  const { PROBE_MANDATE } = await import('../dist/shared/config.js');
-  const sent = new Set(
-    readRecords(ANCHOR_FILE)
-      .filter((a) => String(a.action).startsWith('battery-legal') && a.status === 'success')
-      .map((a) => a.transactionHash),
-  );
-  return BigInt(sent.size) * PROBE_MANDATE.maxTransactionValue;
-};
-
 const confirmAllowance = async () => {
   const { readTokenAllowance } = await import('../dist/chain/client.js');
+  const { drawnEver } = await import('../dist/chain/drawn.js');
+  const { allowanceExpected, latestApproval } = await import('../dist/chain/approvals.js');
   const { MAX_CUMULATIVE_VALUE, PRINCIPAL_HOLDING, SUNL_SYMBOL, requireAddress } =
     await import('../dist/shared/config.js');
   const spender = requireAddress('executor');
@@ -106,18 +100,23 @@ const confirmAllowance = async () => {
     requireAddress('principal'),
     spender,
   );
-  const spent = BigInt((await registryState()).cumulativeUsed);
-  const probeSpent = await probeDrawn();
-  const drawn = spent + probeSpent;
-  if (allowed !== PRINCIPAL_HOLDING - drawn)
+  const drawn = await drawnEver();
+  const approval = latestApproval();
+  const approved = approval === null ? PRINCIPAL_HOLDING : BigInt(approval.amount);
+  const expected =
+    approval === null ? PRINCIPAL_HOLDING - drawn : allowanceExpected(approval, drawn);
+  if (allowed !== expected)
     throw new Error(
-      `The executor may spend ${allowed} base units. Every mandate that draws on it has spent ${drawn} of the ${PRINCIPAL_HOLDING} approved, which leaves ${PRINCIPAL_HOLDING - drawn}.`,
+      `The executor may spend ${allowed} base units. The approval in force set ${approved} and every mandate drawing on it has spent ${drawn} in total, which leaves ${expected}.`,
     );
+
+  const spent = BigInt((await registryState()).cumulativeUsed);
   if (allowed <= MAX_CUMULATIVE_VALUE - spent)
     throw new Error(
       'The permission is not above what the mandate still allows, so a refusal could not be attributed.',
     );
-  return `${spender} may still spend ${allowed / 10n ** 18n} ${SUNL_SYMBOL}, above the ${(MAX_CUMULATIVE_VALUE - spent) / 10n ** 18n} the investor mandate has left. The probe mandates have drawn ${probeSpent / 10n ** 18n} of the same approval across every cycle.`;
+
+  return `${spender} may still spend ${allowed / 10n ** 18n} ${SUNL_SYMBOL}, above the ${(MAX_CUMULATIVE_VALUE - spent) / 10n ** 18n} the investor mandate has left. Every mandate that has ever drawn on this approval has spent ${drawn / 10n ** 18n} of the ${approved / 10n ** 18n} approved.`;
 };
 
 const confirmEligibility = async () => {
@@ -146,13 +145,14 @@ const confirmMandate = async () => {
     MAX_CUMULATIVE_VALUE,
     MAX_TRANSACTION_VALUE,
     SUNL_SYMBOL,
+    mandateAgent,
     requireAddress,
   } = await import('../dist/shared/config.js');
   const state = await registryState();
   if (!state.mandateGranted)
     throw new Error('No mandate is granted, so there is nothing to check.');
   const expected = {
-    'the agent': [state.mandateAgent, requireAddress('agent')],
+    'the agent': [state.mandateAgent, mandateAgent()],
     'the token': [state.mandateAsset, requireAddress('asset')],
     'the per-transfer limit': [state.maxTransactionValue, String(MAX_TRANSACTION_VALUE)],
     'the total limit': [state.maxCumulativeValue, String(MAX_CUMULATIVE_VALUE)],
@@ -174,9 +174,8 @@ const confirmMoved = async () => {
   const { returnedByBuyer } = await import('../dist/demo/reset.js');
   const { PRINCIPAL_HOLDING, SUNL_DECIMALS, SUNL_SYMBOL, requireAddress } =
     await import('../dist/shared/config.js');
-  const state = await registryState();
   const asset = requireAddress('asset');
-  const moved = BigInt(state.cumulativeUsed);
+  const moved = await drawnMoved();
   const back = await returnedByBuyer();
   const held = await readTokenBalance(asset, requireAddress('counterparty'));
   const left = await readTokenBalance(asset, requireAddress('principal'));
@@ -219,7 +218,7 @@ const confirmKeeper = async () => {
   const chose = BigInt(decision.amount);
   if (chose > BigInt(state.maxTransactionValue))
     throw new Error(`The agent chose ${whole(chose)}, above the limit the mandate publishes.`);
-  if (BigInt(state.cumulativeUsed) < chose)
+  if ((await drawnMoved()) < chose)
     throw new Error(`The registry has counted less than the ${whole(chose)} the agent chose.`);
 
   return `The agent chose ${whole(chose)} ${SUNL_SYMBOL}, and its transaction succeeded in block ${receipt.blockNumber}.`;

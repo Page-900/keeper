@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 import {
+  addressSlots,
   CHAIN_ID,
   MANDATE_WINDOW_SECONDS,
   MAX_CUMULATIVE_VALUE,
@@ -117,6 +118,15 @@ describe('an address this project deployed is the one the chain recorded', () =>
     );
 
     expect(deployed?.contract?.toLowerCase()).toBe(requireAddress('executor').toLowerCase());
+  });
+
+  it('fills the router slot the moment the evidence log records that deploy, and not before', () => {
+    const deployed = readRecords<Anchor>(ANCHOR_FILE).findLast(
+      (anchor) => anchor.action === 'deploy-router' && anchor.status === 'success',
+    );
+
+    if (deployed === undefined) expect(addressSlots.router).toBeNull();
+    else expect(deployed.contract?.toLowerCase()).toBe(requireAddress('router').toLowerCase());
   });
 });
 

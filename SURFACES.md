@@ -17,6 +17,7 @@ A row is one endpoint, and the method column holds the HTTP verb. Answered means
 | GET | /get-whitelist-status | not every time |
 | GET | /rams/status | not every time |
 | GET | /rams/typed-data/grant-mandate | yes |
+| GET | /rams/typed-data/revoke-mandate | yes |
 
 ## The SDK
 
@@ -30,8 +31,9 @@ A row is one Brickken method and the path their own SDK resolves it to. Answered
 | newSto | /prepare-transactions | not every time |
 | newTokenization | /prepare-transactions | not every time |
 | ramsExecute | /prepare-transactions | not every time |
-| ramsExecute | /x402/rams/execute | yes |
+| ramsExecute | /x402/rams/execute | not every time |
 | ramsGrantMandate | /x402/rams/grant-mandate | yes |
+| ramsRevokeMandate | /x402/rams/revoke-mandate | yes |
 | whitelist | /prepare-transactions | yes |
 
 Reached at more than one path, and reported rather than merged: ramsExecute.

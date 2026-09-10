@@ -998,3 +998,70 @@ footer {
   color: var(--ink-soft);
   overflow-wrap: anywhere;
 }
+
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.yoursForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+
+.yoursInput {
+  flex: 1 1 16rem;
+  min-width: 0;
+  padding: 0.6rem 0.7rem;
+  font: inherit;
+  font-family: var(--mono, monospace);
+  color: inherit;
+  background: var(--sunk, rgba(0, 0, 0, 0.2));
+  border: 1px solid var(--edge, rgba(255, 255, 255, 0.18));
+  border-radius: 0.4rem;
+}
+
+.yoursButton {
+  padding: 0.6rem 1rem;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: var(--raised, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--edge, rgba(255, 255, 255, 0.18));
+  border-radius: 0.4rem;
+}
+
+.yoursButton:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.yoursAnswer:empty {
+  display: none;
+}
+
+.yoursAnswer {
+  padding: 0.75rem;
+  border: 1px solid var(--edge, rgba(255, 255, 255, 0.18));
+  border-left-width: 3px;
+  border-radius: 0.4rem;
+}
+
+.yoursAnswer[data-tone='refused'] {
+  border-left-color: var(--good, #4ac08a);
+}
+
+.yoursAnswer[data-tone='allowed'] {
+  border-left-color: var(--warn, #d8a13a);
+}
+
+.yoursHead {
+  margin: 0 0 0.4rem;
+  font-weight: 600;
+}

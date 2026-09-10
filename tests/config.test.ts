@@ -1,31 +1,32 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  addressSlots,
   BRICKKEN_API_BASE_URL,
   CHAIN_ID,
+  KEEPER_MANDATE,
+  LAB_SLOTS,
   MANDATE_ACTIONS,
   MANDATE_METADATA,
   MANDATE_MUST_HOLD_UNTIL,
   MANDATE_MUST_HOLD_UNTIL_ISO,
   MANDATE_WINDOW_SECONDS,
-  KEEPER_MANDATE,
-  PROBE_MANDATE,
-  SIGNATURE_DEADLINE_SECONDS,
-  specWindow,
+  mandateAgent,
   MAX_CUMULATIVE_VALUE,
   MAX_TRANSACTION_VALUE,
-  PRINCIPAL_HOLDING,
   PERMITTED_ACTION,
-  SUNL_DECIMALS,
-  SUNL_SUPPLY,
-  UNCAPPED,
-  LAB_SLOTS,
-  addressSlots,
+  PRINCIPAL_HOLDING,
+  PROBE_MANDATE,
   requireAddress,
-  type AddressName,
   SECOND_ACTION,
   SECOND_ACTION_ID,
+  SIGNATURE_DEADLINE_SECONDS,
+  specWindow,
+  SUNL_DECIMALS,
+  SUNL_SUPPLY,
   TRANSFER_ACTION,
+  UNCAPPED,
+  type AddressName,
 } from '../src/shared/config.js';
 
 describe('chain', () => {
@@ -143,7 +144,7 @@ const whole = (value: bigint): bigint => value / 10n ** BigInt(SUNL_DECIMALS);
 describe("the investor's mandate is what the demonstration spends, so it is pinned", () => {
   it('still carries the granted caps, which no anchor may be allowed to outgrow', () => {
     expect(whole(KEEPER_MANDATE.maxTransactionValue)).toBe(250n);
-    expect(whole(KEEPER_MANDATE.maxCumulativeValue)).toBe(1_000n);
+    expect(whole(KEEPER_MANDATE.maxCumulativeValue)).toBe(1_750n);
   });
 
   it('opens immediately, because a granted mandate has no waiting period', () => {
@@ -268,5 +269,17 @@ describe('the second action exists so the mandate can be the only thing refusing
 
   it('is a different action from the transfer, or it would prove nothing', () => {
     expect(SECOND_ACTION_ID).not.toBe(TRANSFER_ACTION);
+  });
+});
+
+describe('the wallet that signs and the address the mandate names are two different things', () => {
+  it('names the router as the agent, so the recipient check cannot be walked around', () => {
+    expect(KEEPER_MANDATE.agent).toBe('router');
+    expect(mandateAgent()).toBe(requireAddress('router'));
+  });
+
+  it('keeps the signing wallet out of the mandate, so a stolen key reaches only the router', () => {
+    expect(mandateAgent()).not.toBe(requireAddress('agent'));
+    expect(mandateAgent()).not.toBe(requireAddress('principal'));
   });
 });

@@ -2,7 +2,7 @@ import { execFile } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { promisify } from 'node:util';
 
-import { CHAIN_ID, requireAddress } from '../shared/config.js';
+import { CHAIN_ID, mandateAgent, requireAddress } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { childEnvKeeping } from '../shared/secrets.js';
 import { API_KEY_VARIABLE } from './client.js';
@@ -79,7 +79,7 @@ export function readMandateOverCli({ file = EVIDENCE_FILE, run = withApiKey }: C
     '--chain',
     String(CHAIN_ID),
     '--agent',
-    requireAddress('agent'),
+    mandateAgent(),
     '--principal',
     requireAddress('principal'),
   ];

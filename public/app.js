@@ -14,6 +14,7 @@ import {
   stamped,
   ask,
   saidBy,
+  waitFor,
 } from './ui.js';
 import { growBox, wireChat } from './chat.js';
 
@@ -199,8 +200,67 @@ const dragRail = () => {
   });
 };
 
+const askedAnswer = (answer) => {
+  const body = answer.body;
+  if (answer.status !== 200)
+    return { tone: 'trouble', head: saidBy(answer) + waitFor(body.retryAfterSeconds), lines: [] };
+  const head = body.allowed
+    ? `Nothing refuses a delivery to that address.`
+    : `Refused: ${body.refusal === null ? 'no reason given' : body.refusal.error}`;
+  return {
+    tone: body.allowed ? 'allowed' : 'refused',
+    head,
+    lines: [
+      body.says,
+      `Read at block ${body.atBlock}. Nothing was sent.`,
+      body.layer === null
+        ? 'The layer is not named, so this page names none.'
+        : `Layer: ${LAYER[body.layer] ?? body.layer}`,
+    ],
+  };
+};
+
+const showAsked = (answer, address) => {
+  const box = clear(find('yoursAnswer'));
+  const shown = askedAnswer(answer);
+  box.dataset.tone = shown.tone;
+  put(box, el('p', 'yoursHead', shown.head));
+  const list = el('ul', 'lines tight');
+  for (const text of shown.lines) put(list, el('li', undefined, text));
+  put(box, list);
+  if (typeof answer.body.explorer === 'string')
+    put(box, put(el('p', 'note'), link(answer.body.explorer, `Look up ${shortened(address)}`)));
+};
+
+const wireYours = () => {
+  const form = find('yoursForm');
+  const input = find('yoursInput');
+  const button = find('yoursButton');
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const address = input.value.trim();
+    button.disabled = true;
+    clear(find('yoursAnswer')).textContent = 'Asking the chain.';
+    void ask('/api/recipient', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ address }),
+    })
+      .then((answer) => {
+        showAsked(answer, address);
+      })
+      .catch(() => {
+        clear(find('yoursAnswer')).textContent = 'This page could not reach its own server.';
+      })
+      .finally(() => {
+        button.disabled = false;
+      });
+  });
+};
+
 const start = async () => {
   wireChat(() => showAttempts());
+  wireYours();
   foldRail();
   dragRail();
   watchRail();

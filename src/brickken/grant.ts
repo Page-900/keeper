@@ -19,7 +19,7 @@ import { createBrickkenClient, type BrickkenClient } from './client.js';
 import { EVIDENCE_FILE, sdkWrite } from './log.js';
 import { sdkClient, type GrantMandateInput, type WriteResult } from './sdk.js';
 import { settledHash, type Settlement } from './settlement.js';
-import { readTypedData, requireSamePayload } from './typed-data.js';
+import { GRANT as GRANT_SHAPE, readTypedData, requireSamePayload } from './typed-data.js';
 
 const SIGNER = 'principal' as const;
 
@@ -107,7 +107,12 @@ export async function reviewGrant(
     actions: message.actions.join(','),
     deadline: String(message.deadline),
   });
-  const digest = requireSamePayload(message, grantMandateDomain(), readTypedData(body));
+  const digest = requireSamePayload(
+    message,
+    grantMandateDomain(),
+    readTypedData(body, GRANT_SHAPE),
+    GRANT_SHAPE,
+  );
   return { message, digest, nonce };
 }
 

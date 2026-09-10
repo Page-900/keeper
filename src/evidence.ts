@@ -5,7 +5,7 @@ import { ANCHOR_FILE, type Anchor } from './chain/anchors.js';
 import { BATTERY_FILE, type BatteryCase } from './chain/battery.js';
 import { SIGNATURE_FILE, type SignatureRecord } from './chain/signatures.js';
 import { differential, type Differential } from './layers.js';
-import { CHAIN_ID, explorerTransaction } from './shared/config.js';
+import { CHAIN_ID, addressSlots, explorerTransaction } from './shared/config.js';
 import { KeeperError } from './shared/errors.js';
 import { readRecords } from './shared/jsonl.js';
 import { table } from './shared/markdown.js';
@@ -144,9 +144,23 @@ const shown = (found: Proof): Set<string> =>
 const OTHERWISE: Readonly<Record<string, string>> = Object.freeze({
   'signature-revoke':
     'A signed revocation, sent legitimately, so its signature could be replayed after',
+  'route-action': 'The router was told where the recipient sits in one kind of call',
+  'approve-executor-2':
+    'The investor approved the executor a second time, so the permission stays the thing that refuses',
+  'revoke-mandate': 'The investor revoked the mandate, through the issuer own tool',
+  'grant-mandate-2':
+    'The investor granted a fresh mandate, this time to the router rather than to a wallet',
+  'allow-recipient': 'The only address the router will deliver to was listed by the investor',
 });
 
 const LEGAL = 'battery-legal-';
+
+const ROUTER = 'deploy-router';
+
+const routerRow = (anchor: Anchor): string =>
+  anchor.contract?.toLowerCase() === addressSlots.router?.toLowerCase()
+    ? 'The settlement router now in front of the executor was deployed'
+    : 'A settlement router that was replaced before any mandate named it';
 
 const remainder = (found: Proof): string[][] => {
   const already = shown(found);
@@ -157,7 +171,9 @@ const remainder = (found: Proof): string[][] => {
         anchor,
         anchor.action.startsWith(LEGAL)
           ? 'A permitted amount, sent so the running total reaches the limit the next one breaks'
-          : (OTHERWISE[anchor.action] ?? anchor.action),
+          : anchor.action === ROUTER
+            ? routerRow(anchor)
+            : (OTHERWISE[anchor.action] ?? anchor.action),
       ),
     );
 };

@@ -13,13 +13,17 @@ import { runTurn, type AttemptFiles } from './attempt.js';
 import type { MandateReads } from './layers.js';
 import {
   ATTEMPTS_PER_DAY,
+  READS_PER_SESSION,
+  SESSION_WINDOW_SECONDS,
   attackBoxOff,
   attemptsRecordedOn,
   createLimits,
+  slidingWindow,
   utcDay,
   type Limits,
 } from './limits.js';
 import { ATTEMPT_FILE, listAttempts, withoutWords, wordsOf } from './log.js';
+import { askAboutRecipient, type Asked } from './recipient.js';
 import { createThreads, type Threads } from './thread.js';
 import { authorityTable, demoView, evidenceTable } from './view.js';
 import { warmed } from './warm.js';
@@ -104,6 +108,7 @@ export interface DemoSources {
   ramsStatus: () => Promise<RamsStatus>;
   mandate?: MandateReads;
   attempt?: typeof runTurn;
+  recipient?: (said: unknown) => Promise<Asked>;
   threads?: Threads;
   limits?: Limits;
   files?: AttemptFiles;
@@ -119,8 +124,21 @@ const PAGE: Readonly<Record<string, { file: string; type: string }>> = Object.fr
   '/style.css': { file: 'style.css', type: 'text/css; charset=utf-8' },
 });
 
+/** The page loads nothing off-origin, so the policy can refuse every source. */
+export const SECURITY_HEADERS: Readonly<Record<string, string>> = Object.freeze({
+  'content-security-policy':
+    "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  'x-content-type-options': 'nosniff',
+  'referrer-policy': 'no-referrer',
+  'strict-transport-security': 'max-age=31536000',
+});
+
 const send = (response: ServerResponse, status: number, type: string, body: string): void => {
-  response.writeHead(status, { 'content-type': type, 'cache-control': 'no-store' });
+  response.writeHead(status, {
+    ...SECURITY_HEADERS,
+    'content-type': type,
+    'cache-control': 'no-store',
+  });
   response.end(body);
 };
 
@@ -135,7 +153,11 @@ const stated = (response: ServerResponse, status: number, says: string, extra = 
 /** The head is written on the first line, so a failure before any work keeps its status. */
 const streamed = (response: ServerResponse) => (body: unknown) => {
   if (!response.headersSent)
-    response.writeHead(200, { 'content-type': NDJSON, 'cache-control': 'no-store' });
+    response.writeHead(200, {
+      ...SECURITY_HEADERS,
+      'content-type': NDJSON,
+      'cache-control': 'no-store',
+    });
   response.write(`${JSON.stringify(body)}
 `);
 };
@@ -188,6 +210,7 @@ export function demoServer(sources: DemoSources): Server {
   const {
     reads,
     attempt = runTurn,
+    recipient = askAboutRecipient,
     limits = createLimits(),
     threads = createThreads(),
     publicDirectory = PUBLIC_DIRECTORY,
@@ -212,6 +235,30 @@ export function demoServer(sources: DemoSources): Server {
     },
     { now },
   );
+
+  const looks = slidingWindow(READS_PER_SESSION, SESSION_WINDOW_SECONDS);
+
+  const recipientFor = async (
+    request: IncomingMessage,
+    response: ServerResponse,
+  ): Promise<void> => {
+    const body = await readBody(request);
+    let said: unknown;
+    try {
+      said = (JSON.parse(body) as { address?: unknown } | null)?.address;
+    } catch {
+      throw new KeeperError('requestUnusable', 'the body is not JSON');
+    }
+    const wait = looks.take(sessionOf(request), now());
+    if (wait !== null) {
+      stated(response, 429, 'That is as many addresses as one visitor may check just now.', {
+        limit: 'session',
+        retryAfterSeconds: wait,
+      });
+      return;
+    }
+    json(response, 200, await recipient(said));
+  };
 
   const attemptFor = async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
     const said = sayingIn(await readBody(request));
@@ -279,6 +326,8 @@ export function demoServer(sources: DemoSources): Server {
       return;
     }
     if (request.method === 'POST' && path === '/api/attempt') return attemptFor(request, response);
+    if (request.method === 'POST' && path === '/api/recipient')
+      return recipientFor(request, response);
     if (request.method !== 'GET') {
       stated(response, 404, 'There is nothing at that address.');
       return;

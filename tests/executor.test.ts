@@ -8,6 +8,8 @@ import type { ActionSpec, Artifact, Receipt, SignerRole } from '../src/chain/cli
 import { EXECUTOR_ARTIFACT, compiledArtifact } from '../src/chain/artifacts.js';
 import {
   deployExecutor,
+  deployRouter,
+  lastDeployed,
   registerAction,
   type ActionChain,
   type ExecutorChain,
@@ -321,5 +323,84 @@ describe('all three fields are read back, because a wrong one disables the cap s
 
     expect(error.kind).toBe('readBackMismatch');
     expect(error.detail).toContain('amountIndex');
+  });
+});
+
+describe('the router is deployed once, in front of the executor', () => {
+  const routerReads = {
+    executor: requireAddress('executor'),
+    agentWallet: requireAddress('agent'),
+  };
+
+  it('constructs it against the executor and the agent wallet, owned by the principal', async () => {
+    const { sent, chain } = fakeChain({ reads: routerReads });
+
+    const deployment = await deployRouter({ chain, file, artifact: ARTIFACT });
+
+    expect(sent).toEqual([
+      {
+        role: 'principal',
+        args: [requireAddress('executor'), requireAddress('agent'), PRINCIPAL],
+      },
+    ]);
+    expect(deployment.address).toBe(EXECUTOR);
+    expect(anchors()[0]?.action).toBe('deploy-router');
+  });
+
+  it('refuses a second deploy once the evidence log records the first', async () => {
+    const { chain } = fakeChain({ reads: routerReads });
+    await deployRouter({ chain, file, artifact: ARTIFACT });
+
+    const error = await captureError(() => deployRouter({ chain, file, artifact: ARTIFACT }));
+
+    expect(error.kind).toBe('alreadyDeployed');
+    expect(anchors()).toHaveLength(1);
+  });
+
+  it('refuses a router that reads back a different executor than it was given', async () => {
+    const { chain } = fakeChain({ reads: { ...routerReads, executor: address('bad') } });
+
+    const error = await captureError(() => deployRouter({ chain, file, artifact: ARTIFACT }));
+
+    expect(error.kind).toBe('readBackMismatch');
+  });
+
+  it('refuses a router that would answer to a wallet other than the agent', async () => {
+    const { chain } = fakeChain({ reads: { ...routerReads, agentWallet: address('bad') } });
+
+    const error = await captureError(() => deployRouter({ chain, file, artifact: ARTIFACT }));
+
+    expect(error.kind).toBe('readBackMismatch');
+  });
+
+  it('refuses a replacement that names a router the log never recorded', async () => {
+    const { chain } = fakeChain({ reads: routerReads });
+    await deployRouter({ chain, file, artifact: ARTIFACT });
+
+    const error = await captureError(() =>
+      deployRouter({ chain, file, artifact: ARTIFACT, replaces: address('bad') }),
+    );
+
+    expect(error.kind).toBe('alreadyDeployed');
+    expect(anchors()).toHaveLength(1);
+  });
+
+  it('records a replacement beside the one it replaces rather than in place of it', async () => {
+    const { chain } = fakeChain({ reads: routerReads });
+    await deployRouter({ chain, file, artifact: ARTIFACT });
+
+    await deployRouter({ chain, file, artifact: ARTIFACT, replaces: EXECUTOR });
+
+    expect(anchors()).toHaveLength(2);
+    expect(lastDeployed('deploy-router', file)).toBe(EXECUTOR);
+  });
+
+  it('does not let the executor deploy and the router deploy share one record', async () => {
+    const { chain } = fakeChain({ reads: { ...registryRead, ...routerReads } });
+    await deployExecutor({ chain, file, artifact: ARTIFACT });
+
+    await deployRouter({ chain, file, artifact: ARTIFACT });
+
+    expect(anchors().map((anchor) => anchor.action)).toEqual(['deploy-executor', 'deploy-router']);
   });
 });

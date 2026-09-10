@@ -1,6 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import type { AddressInfo } from 'node:net';
-import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { PUBLIC_DIRECTORY, demoServer, type DemoSources } from '../src/demo/server.js';
@@ -43,6 +44,7 @@ describe('the page and the code that fills it agree', () => {
       'What the permission allows',
       'What the investor told the agent',
       'Attack it yourself',
+      'Try it with your own address',
       'The cap table',
       'Refusals on the chain',
       'Authority changes',
@@ -63,6 +65,13 @@ describe('the page and the code that fills it agree', () => {
     const shown = SCRIPT.slice(SCRIPT.indexOf('const trouble ='), SCRIPT.indexOf('const NOT_FROM'));
 
     expect(shown).toContain("find('run').disabled = false");
+  });
+
+  it('promises the visitor a reading and never a payment, in the section that invites them', () => {
+    const section = PAGE.slice(PAGE.indexOf('id="yours"'), PAGE.indexOf('id="authority"'));
+
+    expect(section).toContain('Nothing is sent and nothing moves');
+    expect(section).not.toMatch(/receive|paid|payout|send you/i);
   });
 
   it('says what it is and what it cannot do without waiting for a single answer', () => {
@@ -123,5 +132,37 @@ describe('a judge with nothing working still gets a page', () => {
     } finally {
       await new Promise((closed) => server.close(closed));
     }
+  });
+});
+
+describe('the page that says it signs nothing', () => {
+  const SOURCE = fileURLToPath(new URL('../src/', import.meta.url));
+
+  const importsOf = (file: string): string[] =>
+    [...readFileSync(file, 'utf8').matchAll(/^import(?! type)[\s\S]*?from '(\.[^']+)'/gm)]
+      .map((found) => join(dirname(file), (found[1] ?? '').replace(/\.js$/, '.ts')))
+      .filter((path) => existsSync(path));
+
+  const reachedFrom = (entries: string[]): Set<string> => {
+    const seen = new Set<string>();
+    const left = [...entries];
+    while (left.length > 0) {
+      const file = left.pop() ?? '';
+      if (seen.has(file)) continue;
+      seen.add(file);
+      left.push(...importsOf(file));
+    }
+    return seen;
+  };
+
+  const deployed = (): Set<string> =>
+    reachedFrom([join(SOURCE, 'demo/server.ts'), join(SOURCE, 'demo/sources.ts')]);
+
+  it('cannot reach the one module that turns a decision into a transaction', () => {
+    expect([...deployed()].filter((file) => file.endsWith('keeper/act.ts'))).toEqual([]);
+  });
+
+  it('cannot reach the surface that broadcasts an agent action', () => {
+    expect([...deployed()].filter((file) => file.endsWith('brickken/execute.ts'))).toEqual([]);
   });
 });

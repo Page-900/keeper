@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { grantMandateDomain, grantMandateMessage } from '../src/chain/mandate.js';
-import { readTypedData, requireSamePayload } from '../src/brickken/typed-data.js';
+import { GRANT, readTypedData, requireSamePayload } from '../src/brickken/typed-data.js';
 import { identityRef } from '../src/shared/config.js';
 import { captureError } from './support/capture-error.js';
 
@@ -58,7 +58,7 @@ const theirs = (overrides: Record<string, unknown> = {}): unknown => {
 };
 
 const check = (body: unknown): `0x${string}` =>
-  requireSamePayload(ours(), grantMandateDomain(), readTypedData(body));
+  requireSamePayload(ours(), grantMandateDomain(), readTypedData(body, GRANT), GRANT);
 
 describe('the payload Brickken hand back is held against the one this project built', () => {
   it('agrees on every field and returns the digest they both describe', () => {

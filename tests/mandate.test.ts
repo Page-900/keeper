@@ -66,8 +66,9 @@ describe('the message carries the bound the investor is agreeing to', () => {
     expect(message().deadline).toBeLessThan(BigInt(message().validUntil));
   });
 
-  it('names the agent and the principal as different wallets', () => {
-    expect(message().agent).toBe(requireAddress('agent'));
+  it('names the router as the agent, not the wallet that signs for it', () => {
+    expect(message().agent).toBe(requireAddress('router'));
+    expect(message().agent).not.toBe(requireAddress('agent'));
     expect(message().principal).toBe(requireAddress('principal'));
   });
 });
@@ -92,11 +93,11 @@ const valueOf = (label: string): string =>
 describe('the bound reads in plain language, because the investor has to understand it', () => {
   it('states both caps in whole tokens and never in base units', () => {
     expect(valueOf('Most it may move at once')).toBe('250 SUNL');
-    expect(valueOf('Most it may move in total, ever')).toBe('1000 SUNL');
+    expect(valueOf('Most it may move in total, ever')).toBe('1750 SUNL');
   });
 
-  it('names the wallet that may act and the wallet it acts for', () => {
-    expect(valueOf('Who may act')).toBe(requireAddress('agent'));
+  it('names the contract that may act and the wallet it acts for', () => {
+    expect(valueOf('Who may act')).toBe(requireAddress('router'));
     expect(valueOf('Whose tokens it moves')).toBe(requireAddress('principal'));
   });
 

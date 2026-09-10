@@ -224,19 +224,49 @@ export interface ActionSpec {
   amountIndex: number;
 }
 
+const readFrom = (
+  contract: `0x${string}`,
+  artifact: Artifact,
+  functionName: string,
+  args: readonly unknown[] = [],
+): Promise<unknown> =>
+  withReader((reader) =>
+    reader.readContract({ address: contract, abi: artifact.abi, functionName, args }),
+  );
+
+export interface Route {
+  supported: boolean;
+  recipientIndex: number;
+}
+
+export async function readRoute(
+  contract: `0x${string}`,
+  artifact: Artifact,
+  selector: `0x${string}`,
+): Promise<Route> {
+  const value = await readFrom(contract, artifact, 'routes', [selector]);
+  if (!Array.isArray(value) || value.length !== 2)
+    throw new KeeperError('readBackMismatch', 'routes() did not return a route');
+  return { supported: Boolean(value[0]), recipientIndex: Number(value[1]) };
+}
+
+export async function readAllowed(
+  contract: `0x${string}`,
+  artifact: Artifact,
+  recipient: `0x${string}`,
+): Promise<boolean> {
+  const value = await readFrom(contract, artifact, 'allowed', [recipient]);
+  if (typeof value !== 'boolean')
+    throw new KeeperError('readBackMismatch', 'allowed() did not return a yes or no');
+  return value;
+}
+
 export async function readAction(
   contract: `0x${string}`,
   artifact: Artifact,
   selector: `0x${string}`,
 ): Promise<ActionSpec> {
-  const value = await withReader((reader) =>
-    reader.readContract({
-      address: contract,
-      abi: artifact.abi,
-      functionName: 'actions',
-      args: [selector],
-    }),
-  );
+  const value = await readFrom(contract, artifact, 'actions', [selector]);
   if (!Array.isArray(value) || value.length !== 3)
     throw new KeeperError('readBackMismatch', 'actions() did not return an action');
   const [supported, hasAmount, amountIndex] = value as unknown[];
@@ -339,9 +369,7 @@ export async function readAddress(
   artifact: Artifact,
   functionName: string,
 ): Promise<`0x${string}`> {
-  const value = await withReader((reader) =>
-    reader.readContract({ address: contract, abi: artifact.abi, functionName }),
-  );
+  const value = await readFrom(contract, artifact, functionName);
   if (typeof value !== 'string' || !isAddress(value))
     throw new KeeperError('readBackMismatch', `${functionName}() did not return an address`);
   return getAddress(value);

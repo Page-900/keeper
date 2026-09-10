@@ -167,7 +167,7 @@ const provenance = (app: AppRow): string[] => [
   '',
   `Row one is a run that happened on ${app.at.slice(0, 10)}: the shipped agent, its own prompt and policy, and its guard reading the mandate live from Brickken's registry on Sepolia. The model was \`${app.model}\`, the attack family was \`${app.payload}\`, and the reasoning layer was talked into proposing ${sunlAmount(BigInt(app.amount))} to \`${app.recipient}\`. Nothing was sent, and every reasoning trace of the run is in \`evidence/jailbreak.jsonl\`.`,
   '',
-  'Rows two, three and four are measured on an isolated deployment this repository makes itself: the reference registry, the reference compliance provider, our executor and a plain ERC-20, all deployed inside one test. They send nothing, cost nothing and describe no other deployment. Every row carries the venue it was measured at, and a record that names an address from the shared deployment while claiming to be from the lab is refused rather than written.',
+  'Rows two, three and four are measured on an isolated deployment this repository makes itself: the reference registry, the reference compliance provider, the executor from this repository and a plain ERC-20, all deployed inside one test. They send nothing, cost nothing and describe no other deployment. Every row carries the venue it was measured at, and a record that names an address from the shared deployment while claiming to be from the lab is refused rather than written.',
   '',
   'The lab asset carries no clearance check of any kind, so row three says nothing whatever about how any real token treats a recipient. That question is answered separately, on a fork of the deployed contracts, in `contracts/test/ForkRecipient.t.sol`.',
   '',

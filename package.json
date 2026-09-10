@@ -14,14 +14,16 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "compile": "hardhat build",
-    "pretest": "npm run compile",
-    "test": "vitest run",
-    "test:contracts": "hardhat test solidity contracts/test/AgentExecutor.t.sol contracts/test/Lab.t.sol contracts/test/Misgate.t.sol contracts/test/Differential.t.sol",
+    "test": "npm run compile && vitest run",
+    "test:contracts": "hardhat test solidity contracts/test/AgentExecutor.t.sol contracts/test/Lab.t.sol contracts/test/Misgate.t.sol contracts/test/Differential.t.sol contracts/test/Router.t.sol",
     "test:fork": "node --env-file-if-exists=.env node_modules/hardhat/dist/src/cli.js test solidity contracts/test/ForkRehearsal.t.sol contracts/test/ForkBattery.t.sol contracts/test/ForkRecipient.t.sol",
     "scan": "aislop ci",
     "verify": "node scripts/verify.js",
     "wallets": "node scripts/wallets.js",
-    "deploy:executor": "node scripts/deploy-executor.js",
+    "deploy:executor": "npm run compile && node scripts/deploy-executor.js",
+    "deploy:router": "npm run compile && node scripts/deploy-router.js",
+    "router:configure": "npm run build && node scripts/configure-router.js",
+    "router:allow": "npm run build && node scripts/allow-recipient.js",
     "register:action": "node scripts/register-action.js",
     "prepare:token": "node scripts/prepare-token.js",
     "create:token": "node scripts/create-token.js",
@@ -31,6 +33,7 @@
     "mint:holding": "node scripts/mint-holding.js",
     "prepare:approval": "node scripts/prepare-approval.js",
     "approve:executor": "node scripts/approve-executor.js",
+    "approve:again": "npm run build && node scripts/approve-executor.js --again",
     "confirm:tx": "node scripts/confirm-transaction.js",
     "verify:source": "node scripts/verify-source.js",
     "read:registry": "node scripts/read-registry.js",
@@ -62,11 +65,12 @@
     "battery:replay": "node scripts/battery-replay.js",
     "battery:duplicate": "node scripts/battery-duplicate.js",
     "mandate:grant": "node scripts/grant-mandate.js",
+    "mandate:revoke": "npm run build && node scripts/revoke-mandate.js",
+    "mandate:regrant": "npm run build && node scripts/grant-mandate.js --again",
     "mandate:grant-probe": "node scripts/grant-probe.js",
     "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test:contracts && npm run test && npm run build && npm run scan",
     "ablation": "node scripts/ablation.js",
-    "predemo": "npm run compile && npm run build",
-    "demo": "node scripts/demo.js"
+    "demo": "npm run compile && npm run build && node scripts/demo.js"
   },
   "lint-staged": {
     "*.{ts,js}": [
@@ -95,6 +99,6 @@
     "prettier": "3.9.6",
     "typescript": "6.0.3",
     "typescript-eslint": "8.67.0",
-    "vitest": "4.1.10"
+    "vitest": "4.1.11"
   }
 }

@@ -31,10 +31,13 @@ const SURFACE: ExecuteSurface = {
   settled: (txId) => createBrickkenClient().getTransactionStatus(txId),
 };
 
-const executeInput = ({ to, amount }: AgentAction): ExecuteInput => ({
+const executeInput = (
+  { to, amount }: AgentAction,
+  via: `0x${string}` = requireAddress('router'),
+): ExecuteInput => ({
   chainId: CHAIN_ID,
   agentMandateAddress: requireAddress('agentMandate'),
-  executorAddress: requireAddress('executor'),
+  executorAddress: via,
   asset: requireAddress('asset'),
   from: requireAddress('principal'),
   to,
@@ -57,9 +60,10 @@ export async function prepareAgentAction(
   action: AgentAction = firstAction(),
   surface: ExecuteSurface = SURFACE,
   file: string = EVIDENCE_FILE,
+  via?: `0x${string}`,
 ): Promise<PreparedAction> {
   const { txId, transactions } = await sdkWrite(file, METHOD, () =>
-    surface.execute(executeInput(action), options(false)),
+    surface.execute(executeInput(action, via), options(false)),
   );
   if (txId === '' || transactions.length === 0)
     throw new KeeperError('brickkenUnreadable', 'the prepare returned no transaction to sign');

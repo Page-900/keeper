@@ -11,8 +11,12 @@ export interface DryRun {
   atBlock: string;
 }
 
-/** AgentExecutor.execute checks its own two first, then canExecute, then calls the token. */
-const REFUSED_BY: Readonly<Record<string, Layer>> = Object.freeze({
+/** The router checks the recipient, the executor its own two, then the mandate, then the token. */
+export const REFUSED_BY: Readonly<Record<string, Layer>> = Object.freeze({
+  NotTheAgentWallet: 'app',
+  RecipientNotAllowed: 'app',
+  ActionNotRouted: 'app',
+  CalldataUnreadable: 'app',
   InvalidData: 'app',
   UnsupportedAction: 'app',
   CannotExecute: 'mandate',

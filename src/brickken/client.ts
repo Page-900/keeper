@@ -168,6 +168,7 @@ export interface BrickkenClient {
   countOfferings(tokenSymbol: string): Promise<number>;
   getRamsStatus(query: Record<string, string>): Promise<unknown>;
   getGrantMandateTypedData(query: Record<string, string>): Promise<unknown>;
+  getRevokeMandateTypedData(query: Record<string, string>): Promise<unknown>;
 }
 
 /** The only door to Brickken. */
@@ -214,6 +215,9 @@ export function createBrickkenClient(logFile: string = EVIDENCE_FILE): BrickkenC
     },
     getGrantMandateTypedData(query) {
       return getJson(logFile, '/rams/typed-data/grant-mandate', query);
+    },
+    getRevokeMandateTypedData(query) {
+      return getJson(logFile, '/rams/typed-data/revoke-mandate', query);
     },
   };
 }

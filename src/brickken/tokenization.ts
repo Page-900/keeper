@@ -188,7 +188,10 @@ export const prepareExecutorApproval = (run: WriteRun = {}): Promise<Prepared> =
     scaled: PRINCIPAL_HOLDING,
   });
 
-export const approveExecutor = (run: WriteRun = {}): Promise<Settlement> =>
-  sendAndConfirm('approve-executor', 'approve', run, (sandbox, options) =>
+export const approveExecutor = (
+  run: WriteRun = {},
+  action: AnchorAction = 'approve-executor',
+): Promise<Settlement> =>
+  sendAndConfirm(action, 'approve', run, (sandbox, options) =>
     sandbox.approve(approveInput(), options),
   );

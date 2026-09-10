@@ -2,10 +2,11 @@ import { fileURLToPath } from 'node:url';
 
 import {
   CHAIN_ID,
-  RECORDER_ROLE,
-  TRANSFER_ACTION,
   identityRef,
+  KEEPER_MANDATE,
+  RECORDER_ROLE,
   requireAddress,
+  TRANSFER_ACTION,
   type AddressName,
 } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
@@ -182,7 +183,7 @@ export async function readRegistryState({
   executor = compiledArtifact(EXECUTOR_ARTIFACT),
   roles = compiledArtifact(ROLES_ARTIFACT),
   compliance = compiledArtifact(COMPLIANCE_ARTIFACT),
-  agent: agentName = 'agent',
+  agent: agentName = KEEPER_MANDATE.agent,
   action = TRANSFER_ACTION,
 }: RegistryOptions = {}): Promise<RegistryRead> {
   const registryAddress = requireAddress('agentMandate');

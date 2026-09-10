@@ -8,6 +8,8 @@ export const SESSION_WINDOW_SECONDS = 10 * 60;
 
 export const ATTEMPTS_PER_DAY = 200;
 
+export const READS_PER_SESSION = 20;
+
 /** Not a secret and never read through the env file, so its value is never made redactable. */
 export const OFF_SWITCH = 'DEMO_ATTEMPTS_OFF';
 
@@ -43,6 +45,32 @@ const untilMidnight = (nowMs: number): number =>
 export const attemptsRecordedOn = (day: string, file: string = ATTEMPT_FILE): number =>
   listAttempts(file).filter((attempt) => attempt.at.startsWith(day)).length;
 
+export interface Window {
+  take: (session: string, nowMs: number) => number | null;
+}
+
+/** Counts what one visitor did inside a moving window, and forgets a visitor who stopped. */
+export function slidingWindow(most: number, seconds: number): Window {
+  const seen = new Map<string, number[]>();
+  return {
+    take: (session, nowMs) => {
+      const since = nowMs - seconds * 1000;
+      for (const [key, times] of seen) {
+        const live = times.filter((at) => at > since);
+        if (live.length === 0) seen.delete(key);
+        else seen.set(key, live);
+      }
+      const times = seen.get(session) ?? [];
+      if (times.length >= most) {
+        const oldest = times[0] ?? nowMs;
+        return Math.ceil((oldest + seconds * 1000 - nowMs) / 1000);
+      }
+      seen.set(session, [...times, nowMs]);
+      return null;
+    },
+  };
+}
+
 export interface LimitsRun {
   now?: () => number;
   spentOn?: (day: string) => number;
@@ -64,23 +92,13 @@ export function createLimits({
   spentOn = attemptsRecordedOn,
   switchedOff = attackBoxOff,
 }: LimitsRun = {}): Limits {
-  const sessions = new Map<string, number[]>();
+  const sessions = slidingWindow(ATTEMPTS_PER_SESSION, SESSION_WINDOW_SECONDS);
   let today: Day = { day: '', used: 0 };
 
   const dayOf = (nowMs: number): Day => {
     const day = utcDay(nowMs);
     if (today.day !== day) today = { day, used: spentOn(day) };
     return today;
-  };
-
-  const recent = (nowMs: number, session: string): number[] => {
-    const since = nowMs - SESSION_WINDOW_SECONDS * 1000;
-    for (const [key, times] of sessions) {
-      const live = times.filter((at) => at > since);
-      if (live.length === 0) sessions.delete(key);
-      else sessions.set(key, live);
-    }
-    return sessions.get(session) ?? [];
   };
 
   return {
@@ -108,17 +126,14 @@ export function createLimits({
           untilMidnight(nowMs),
         );
 
-      const times = recent(nowMs, session);
-      if (times.length >= ATTEMPTS_PER_SESSION) {
-        const oldest = times[0] ?? nowMs;
+      const wait = sessions.take(session, nowMs);
+      if (wait !== null)
         return blocked(
           'session',
           `That is ${String(ATTEMPTS_PER_SESSION)} attempts from you inside ${String(SESSION_WINDOW_SECONDS / 60)} minutes, which is as many as one visitor may run.`,
-          Math.ceil((oldest + SESSION_WINDOW_SECONDS * 1000 - nowMs) / 1000),
+          wait,
         );
-      }
 
-      sessions.set(session, [...times, nowMs]);
       day.used += 1;
       return ALLOWED;
     },

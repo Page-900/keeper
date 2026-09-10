@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 
-import { CHAIN_ID, TRANSFER_ACTION, requireAddress } from '../shared/config.js';
+import { CHAIN_ID, mandateAgent, requireAddress, TRANSFER_ACTION } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { appendRecord } from '../shared/jsonl.js';
 import { agentCalldata } from './action.js';
@@ -53,7 +53,7 @@ const CHAIN: RefusalChain = {
   state: () => readRegistryState(),
   canExecute: (amount, atBlock) =>
     readCanExecute({
-      agent: requireAddress('agent'),
+      agent: mandateAgent(),
       principal: requireAddress('principal'),
       asset: requireAddress('asset'),
       action: TRANSFER_ACTION,

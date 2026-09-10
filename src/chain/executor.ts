@@ -2,7 +2,7 @@ import { PERMITTED_ACTION, requireAddress } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { readRecords } from '../shared/jsonl.js';
 import { ANCHOR_FILE, recordAnchor, type Anchor, type AnchorAction } from './anchors.js';
-import { EXECUTOR_ARTIFACT, compiledArtifact } from './artifacts.js';
+import { EXECUTOR_ARTIFACT, ROUTER_ARTIFACT, compiledArtifact } from './artifacts.js';
 import {
   deployContract,
   readAction,
@@ -18,6 +18,7 @@ import {
 
 const OWNER: SignerRole = 'principal';
 const DEPLOY: AnchorAction = 'deploy-executor';
+const DEPLOY_ROUTER: AnchorAction = 'deploy-router';
 const REGISTER: AnchorAction = 'register-action';
 
 export interface ExecutorChain {
@@ -70,27 +71,40 @@ async function confirmConstructorArguments(
   }
 }
 
-/** The executor owner is the principal and never the agent: setAction is onlyOwner. */
-export async function deployExecutor({
-  chain = CHAIN,
-  file = ANCHOR_FILE,
-  artifact = compiledArtifact(EXECUTOR_ARTIFACT),
-}: DeployOptions = {}): Promise<Deployment> {
-  const already = readRecords<Anchor>(file).find(
-    (anchor) => anchor.action === DEPLOY && anchor.status === 'success',
-  );
-  if (already !== undefined)
-    throw new KeeperError(
-      'alreadyDeployed',
-      `${already.contract ?? 'an executor'} already holds it`,
-    );
+interface DeployOnce {
+  action: AnchorAction;
+  chain: ExecutorChain;
+  file: string;
+  artifact: Artifact;
+  args: readonly unknown[];
+  reads: Record<string, `0x${string}`>;
+  replaces?: `0x${string}`;
+}
 
-  const registry = requireAddress('agentMandate');
-  const principal = chain.deployer();
-  const transactionHash = await chain.deploy(OWNER, artifact, [registry, principal, principal]);
+export const lastDeployed = (action: AnchorAction, file: string): `0x${string}` | null =>
+  readRecords<Anchor>(file).findLast(
+    (anchor) => anchor.action === action && anchor.status === 'success',
+  )?.contract ?? null;
+
+async function deployOnce({
+  action,
+  chain,
+  file,
+  artifact,
+  args,
+  reads,
+  replaces,
+}: DeployOnce): Promise<Deployment> {
+  const already = lastDeployed(action, file);
+  if (already !== null && replaces === undefined)
+    throw new KeeperError('alreadyDeployed', `${already} already holds it`);
+  if (replaces !== undefined && !sameAddress(replaces, already ?? ''))
+    throw new KeeperError('alreadyDeployed', `the last one recorded is ${already ?? 'none'}`);
+
+  const transactionHash = await chain.deploy(OWNER, artifact, args);
   const { status, blockNumber, contractAddress, gasUsed } = await chain.receipt(transactionHash);
   recordAnchor(file, {
-    action: DEPLOY,
+    action,
     transactionHash,
     blockNumber: String(blockNumber),
     status,
@@ -101,12 +115,47 @@ export async function deployExecutor({
   if (status !== 'success' || contractAddress === null)
     throw new KeeperError('writeUnconfirmed', `the deploy is ${status}`);
 
-  await confirmConstructorArguments(chain, artifact, contractAddress, {
-    rams: registry,
-    principal,
-    owner: principal,
-  });
+  await confirmConstructorArguments(chain, artifact, contractAddress, reads);
   return { address: contractAddress, transactionHash, blockNumber: String(blockNumber) };
+}
+
+/** The executor owner is the principal and never the agent: setAction is onlyOwner. */
+export async function deployExecutor({
+  chain = CHAIN,
+  file = ANCHOR_FILE,
+  artifact = compiledArtifact(EXECUTOR_ARTIFACT),
+}: DeployOptions = {}): Promise<Deployment> {
+  const registry = requireAddress('agentMandate');
+  const principal = chain.deployer();
+  return deployOnce({
+    action: DEPLOY,
+    chain,
+    file,
+    artifact,
+    args: [registry, principal, principal],
+    reads: { rams: registry, principal, owner: principal },
+  });
+}
+
+/** The router owns no tokens and no allowance: it only refuses a recipient and forwards. */
+export async function deployRouter({
+  chain = CHAIN,
+  file = ANCHOR_FILE,
+  artifact = compiledArtifact(ROUTER_ARTIFACT),
+  replaces,
+}: DeployOptions & { replaces?: `0x${string}` } = {}): Promise<Deployment> {
+  const executor = requireAddress('executor');
+  const agentWallet = requireAddress('agent');
+  const principal = chain.deployer();
+  return deployOnce({
+    action: DEPLOY_ROUTER,
+    chain,
+    file,
+    artifact,
+    args: [executor, agentWallet, principal],
+    reads: { executor, agentWallet, owner: principal },
+    ...(replaces === undefined ? {} : { replaces }),
+  });
 }
 
 export interface ActionChain {
