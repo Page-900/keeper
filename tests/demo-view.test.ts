@@ -14,6 +14,7 @@ import {
   boundInFigures,
   demoView,
   evidenceTable,
+  scenarioInPlainWords,
   type EvidenceFiles,
 } from '../src/demo/view.js';
 import { sunlAmount } from '../src/chain/mandate.js';
@@ -400,5 +401,34 @@ describe('the bound reads as figures, so a glance carries it', () => {
 
     expect(standing?.figure).toBe('Stopped');
     expect(standing?.say).toContain('frozen');
+  });
+});
+
+describe('the offering line reads its tense off the date it names', () => {
+  const at = (iso: string): string =>
+    scenarioInPlainWords(
+      { ...ISSUER, endDate: '2026-09-04T21:25:35.000Z' },
+      null,
+      Date.parse(iso),
+    ).join(' ');
+
+  it('says an offering whose date has passed is closed, and never that it ends', () => {
+    const said = at('2026-09-12T00:00:00.000Z');
+
+    expect(said).toContain('closed on 2026-09-04T21:25:35.000Z');
+    expect(said).not.toContain('ends 2026-09-04T21:25:35.000Z');
+    expect(said).toContain('sold at');
+  });
+
+  it('says an offering still running ends on its date', () => {
+    const said = at('2026-09-01T00:00:00.000Z');
+
+    expect(said).toContain('ends 2026-09-04T21:25:35.000Z');
+    expect(said).not.toContain('closed on');
+    expect(said).toContain('sells at');
+  });
+
+  it('treats the closing instant itself as closed rather than as still running', () => {
+    expect(at('2026-09-04T21:25:35.000Z')).toContain('closed on');
   });
 });

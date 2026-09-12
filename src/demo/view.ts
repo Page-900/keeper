@@ -29,10 +29,22 @@ const holdingLine = (table: CapTable | null): string => {
   return `${sunlAmount(table.supply)} exists in total, and the investor holds ${sunlAmount(held)} of it, read at block ${String(table.block)}.`;
 };
 
-export const scenarioInPlainWords = (issuer: IssuerRecord, table: CapTable | null): string[] => [
+/** The page outlives the offering, so the tense is read off the date rather than written once. */
+const offeringLine = (issuer: IssuerRecord, nowMs: number): string => {
+  const price = `${issuer.tokenPrice} ${issuer.acceptedCoin} a token`;
+  return Date.parse(issuer.endDate) <= nowMs
+    ? `The issuer sold at ${price}, and that offering closed on ${issuer.endDate}.`
+    : `The issuer sells at ${price}, and that offering ends ${issuer.endDate}.`;
+};
+
+export const scenarioInPlainWords = (
+  issuer: IssuerRecord,
+  table: CapTable | null,
+  nowMs: number = Date.now(),
+): string[] => [
   `${SUNL_NAME} is an invented hotel. Its shares are the ${SUNL_SYMBOL} token on a test network, and none of it is worth anything.`,
   holdingLine(table),
-  `The issuer sells at ${issuer.tokenPrice} ${issuer.acceptedCoin} a token, and that offering ends ${issuer.endDate}.`,
+  offeringLine(issuer, nowMs),
   'Keeper reads an offering document and proposes one action. Whatever it proposes is checked again before anything moves.',
 ];
 

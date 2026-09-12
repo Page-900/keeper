@@ -1656,3 +1656,5 @@
 {"at":"2026-09-12T15:38:33.379Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=holder%40example.com","outcome":"success","status":200}
 {"at":"2026-09-12T15:38:34.965Z","surface":"rest","method":"GET","path":"/get-balance-whitelist?tokenSymbol=SUNL&investorEmail=counterparty%40example.com","outcome":"success","status":200}
 {"at":"2026-09-12T15:38:36.473Z","surface":"rest","method":"GET","path":"/rams/status?chainId=11155111&agentMandateAddress=0xD68E1bb972cA4EF7F5764FBf6d685a6DfC26778e&agent=0x8ac2bDD2F04c68fb03134bf1dc6C7552f15a8058&principal=0x6EF3A7D250F3E7e04Cf8B64E950FB1f8225832Dc","outcome":"success","status":200}
+{"at":"2026-09-12T17:16:54.533Z","surface":"rest","method":"GET","path":"/get-stos?tokenSymbol=SUNL","outcome":"success","status":200}
+{"at":"2026-09-12T17:16:59.195Z","surface":"sdk","method":"newSto","path":"/prepare-transactions","outcome":"failure"}
