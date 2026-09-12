@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CapTable } from '../src/captable.js';
 import type { runTurn } from '../src/demo/attempt.js';
-import { READS_PER_SESSION, createLimits } from '../src/demo/limits.js';
+import { ATTEMPTS_PER_DAY, READS_PER_SESSION, createLimits } from '../src/demo/limits.js';
 import { createThreads } from '../src/demo/thread.js';
 import { type Attempt } from '../src/demo/log.js';
 import {
@@ -361,6 +361,24 @@ describe('the server holds the conversation, so the page cannot invent one', () 
         );
       },
       { threads: createThreads({ turns: 2 }) },
+    );
+  });
+
+  it('spends none of a visitor allowance on a turn the conversation had no room for', async () => {
+    const limits = createLimits({
+      spentOn: () => ATTEMPTS_PER_DAY - 2,
+      switchedOff: () => false,
+    });
+
+    await opened(
+      async (ask) => {
+        await ask('/api/attempt', posted('one'));
+        await ask('/api/attempt', posted('two'));
+        await ask('/api/thread', { method: 'POST' });
+
+        expect((await ask('/api/attempt', posted('three'))).status).toBe(200);
+      },
+      { threads: createThreads({ turns: 2 }), limits },
     );
   });
 });

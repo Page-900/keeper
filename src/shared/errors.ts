@@ -8,6 +8,7 @@ export const ERROR_COPY = {
   brickkenRejected: 'The Brickken API refused the request',
   brickkenRateLimited: 'The Brickken API rate limit was reached, and this project never retries',
   brickkenUnreadable: 'The Brickken API returned a body this project cannot read',
+  bidUnreadable: 'A bid document written for this page could not be read',
   argumentUnsafe: 'An argument cannot be passed to a shell, so the command was not run',
   requestUnusable: 'This page could not read the request it was sent',
   requestTooLarge: 'The request is larger than this page accepts',

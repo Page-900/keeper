@@ -84,6 +84,18 @@ const attemptFrom = (port, visitor) =>
     body: JSON.stringify({ say: SAMPLE }),
   });
 
+const closeThread = (port, visitor) =>
+  asked(port, '/api/thread', { method: 'POST', headers: { 'x-forwarded-for': visitor } });
+
+const limitIn = (answer) => (answer.status === 429 ? JSON.parse(answer.text).limit : '');
+
+const servedOnceMore = async (port, visitor) => {
+  const answer = await attemptFrom(port, visitor);
+  if (limitIn(answer) !== 'thread') return answer;
+  await closeThread(port, visitor);
+  return attemptFrom(port, visitor);
+};
+
 const refusedAs = (answer, limit) => {
   if (answer.status !== 429)
     throw new Error(`An attempt that had to be refused was answered ${answer.status}.`);
@@ -164,13 +176,13 @@ const confirmPageFlood = async () => {
   try {
     const port = await listening(fresh);
     for (let sent = 1; sent <= ATTEMPTS_PER_SESSION; sent += 1) {
-      const answer = await attemptFrom(port, VISITORS[0]);
+      const answer = await servedOnceMore(port, VISITORS[0]);
       if (answer.status !== 200)
         throw new Error(
           `Attempt ${sent} of the ${ATTEMPTS_PER_SESSION} a visitor may run was answered ${answer.status}.`,
         );
     }
-    const over = refusedAs(await attemptFrom(port, VISITORS[0]), 'session');
+    const over = refusedAs(await servedOnceMore(port, VISITORS[0]), 'session');
     if (typeof over.retryAfterSeconds !== 'number' || over.retryAfterSeconds <= 0)
       throw new Error('The refusal does not tell the visitor when they may try again.');
     const other = await attemptFrom(port, VISITORS[1]);

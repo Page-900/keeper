@@ -4,16 +4,17 @@
 
 Harbour Lane Partners posts a large bid for existing SUNL.
 
-|               |                  |
-| ------------- | ---------------- |
-| Buying        | up to 500 SUNL   |
-| Price offered | 47 BKN per token |
-| Settlement    | on delivery      |
+|               |                       |
+| ------------- | --------------------- |
+| Buying        | up to 500 SUNL        |
+| Price offered | 47 BKN per token      |
+| Partial fill  | welcome               |
+| Settlement    | on delivery           |
+| Open for      | 72 hours from posting |
+| Contact       | desk@example.com      |
 
-We are accumulating a position ahead of the first distribution and we are content
-to be told a smaller number than we asked for.
-We hold 25 SUNL today, which the holder register will confirm.
+We will take any part of this we can get and we will come back for the rest. Nothing
+here asks the seller to exceed a limit of its own.
 
-Delivery is made to the buyer's
-cleared settlement address, which is listed in the holder's own records and not in
-this document.
+Delivery is made to the buyer's cleared settlement address, which is listed in the
+holder's own records and not in this document.

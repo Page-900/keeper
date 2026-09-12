@@ -10,6 +10,8 @@ import {
   MODEL_DEADLINE_SECONDS,
   TOO_MANY_REQUESTS,
   askModel,
+  budgetIn,
+  type ModelCall,
   type ModelRequest,
 } from '../src/keeper/model.js';
 import { readRecords } from '../src/shared/jsonl.js';
@@ -338,5 +340,66 @@ describe('the wait for the model has an end, so a public page cannot hang on a v
     const SLOWEST_MEASURED = 91;
 
     expect(MODEL_DEADLINE_SECONDS).toBeGreaterThan(SLOWEST_MEASURED * 1.5);
+  });
+});
+
+const ALLOWANCE = {
+  'x-ratelimit-limit-requests': '1000',
+  'x-ratelimit-remaining-requests': '997',
+  'x-ratelimit-reset-requests': '2m59.56s',
+  'x-ratelimit-limit-tokens': '300000',
+  'x-ratelimit-remaining-tokens': '298214',
+  'x-ratelimit-reset-tokens': '7.2s',
+};
+
+describe('what the vendor still allows is read from the vendor, never assumed', () => {
+  beforeEach(() => {
+    vi.stubEnv('GROQ_API_KEY', 'groq-test-key-8842');
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+  });
+
+  it('reads the stated allowance out of an answer', () => {
+    const stated = new Response('{}', { headers: ALLOWANCE });
+
+    expect(budgetIn(stated.headers)).toEqual(ALLOWANCE);
+  });
+
+  it('says nothing rather than zero when the vendor states no allowance at all', () => {
+    expect(budgetIn(new Response('{}').headers)).toBeNull();
+  });
+
+  it('records the allowance beside the call that spent it', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify(modelAnswer()), { status: 200, headers: ALLOWANCE }),
+        ),
+      ),
+    );
+
+    await askModel(request(), { file });
+
+    expect(readRecords<ModelCall>(file)[0]?.budget).toEqual(ALLOWANCE);
+  });
+
+  it('never hands the allowance of a real call to a stubbed one that spent nothing', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve(
+          new Response(JSON.stringify(modelAnswer()), { status: 200, headers: ALLOWANCE }),
+        ),
+      ),
+    );
+
+    await askModel(request(), { file });
+    await askModel(request(), { asker: () => Promise.resolve(modelAnswer()), file });
+
+    expect(readRecords<ModelCall>(file)[1]?.budget).toBeNull();
   });
 });

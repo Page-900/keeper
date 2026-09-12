@@ -16,6 +16,7 @@ export type Told = { allowed: true } | { allowed: false; because: string };
 
 export interface Threads {
   turns: (session: string) => readonly Turn[];
+  room: (session: string, text: string) => Told;
   heard: (session: string, text: string) => Told;
   answered: (session: string, text: string) => void;
   forget: (session: string) => void;
@@ -80,22 +81,28 @@ export function createThreads(run: ThreadRun = {}): Threads {
     thread.at = at;
   };
 
+  const room = (session: string, text: string): Told => {
+    const at = now();
+    dropStale(at);
+    const thread = threadFor(session, at);
+    if (thread.turns.length >= mostTurns)
+      return refused(
+        `This conversation has run its ${String(mostTurns)} turns. Reload the page to start another.`,
+      );
+    if (thread.size + text.length > characters)
+      return refused(
+        'This conversation is as long as the page will carry. Reload to start another.',
+      );
+    return ALLOWED;
+  };
+
   return {
     turns: (session) => held.get(session)?.turns ?? [],
+    room,
     heard: (session, text) => {
-      const at = now();
-      dropStale(at);
-      const thread = threadFor(session, at);
-      if (thread.turns.length >= mostTurns)
-        return refused(
-          `This conversation has run its ${String(mostTurns)} turns. Reload the page to start another.`,
-        );
-      if (thread.size + text.length > characters)
-        return refused(
-          'This conversation is as long as the page will carry. Reload to start another.',
-        );
-      add(session, 'visitor', text);
-      return ALLOWED;
+      const answer = room(session, text);
+      if (answer.allowed) add(session, 'visitor', text);
+      return answer;
     },
     answered: (session, text) => {
       add(session, 'agent', text);

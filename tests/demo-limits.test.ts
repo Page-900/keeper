@@ -10,12 +10,16 @@ import {
   MAX_DOCUMENT_CHARACTERS,
   OFF_SWITCH,
   SESSION_WINDOW_SECONDS,
+  TOKENS_PER_ATTEMPT,
   createLimits,
   type LimitAnswer,
   type Limits,
   type LimitsRun,
 } from '../src/demo/limits.js';
+import { VENDOR_REQUESTS_PER_DAY, VENDOR_TOKENS_PER_MINUTE } from '../src/keeper/model.js';
 import { appendRecord } from '../src/shared/jsonl.js';
+
+const CALLS_PER_ATTEMPT = 2;
 
 const NOON = Date.parse('2026-09-01T12:00:00.000Z');
 const DOCUMENT = 'Harbour Lane Partners will buy 200 SUNL at 47 BKN.';
@@ -207,5 +211,21 @@ describe('the day is counted off the attempts the record already holds', () => {
 
   it('starts a day at nothing when the record holds no attempts at all', () => {
     expect(attemptsRecordedOn('2026-09-01', file)).toBe(0);
+  });
+});
+
+describe('the ceilings sit under what the vendor allows, rather than over it', () => {
+  it('leaves the day within the requests the vendor grants, with room for our own runs', () => {
+    expect(ATTEMPTS_PER_DAY * CALLS_PER_ATTEMPT).toBeLessThan(VENDOR_REQUESTS_PER_DAY);
+  });
+
+  it('never lets one visitor take more than a quarter of the day', () => {
+    expect(ATTEMPTS_PER_SESSION * 4).toBeLessThanOrEqual(ATTEMPTS_PER_DAY);
+  });
+
+  it('leaves one visitor inside the tokens the vendor grants across their window', () => {
+    const granted = VENDOR_TOKENS_PER_MINUTE * (SESSION_WINDOW_SECONDS / 60);
+
+    expect(ATTEMPTS_PER_SESSION * TOKENS_PER_ATTEMPT).toBeLessThanOrEqual(granted);
   });
 });

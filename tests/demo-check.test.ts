@@ -101,7 +101,7 @@ describe('the check asks the deployed page to think once, and says what happened
 
   it('says the page refused the attempt on its own ceiling, rather than calling it broken', async () => {
     const busy = JSON.stringify({
-      says: 'That is 5 attempts from you inside 10 minutes',
+      says: 'That is 10 attempts from you inside 10 minutes',
       limit: 'session',
     });
 

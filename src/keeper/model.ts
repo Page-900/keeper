@@ -16,6 +16,11 @@ const MAX_OUTPUT_TOKENS = 16_000;
 
 const REASONING_EFFORT = 'high';
 
+/** Stated by the vendor itself, and recorded in the call log beside the call that read it. */
+export const VENDOR_REQUESTS_PER_DAY = 1000;
+
+export const VENDOR_TOKENS_PER_MINUTE = 8_000;
+
 export const MODEL_CALL_FILE = fileURLToPath(
   new URL('../../evidence/model-calls.jsonl', import.meta.url),
 );
@@ -59,6 +64,35 @@ export interface ModelCall extends ModelReply {
   model: string;
   systemBytes: number;
   userBytes: number;
+  budget: Budget | null;
+}
+
+export type Budget = Record<string, string>;
+
+const BUDGET_HEADERS = [
+  'x-ratelimit-limit-requests',
+  'x-ratelimit-remaining-requests',
+  'x-ratelimit-reset-requests',
+  'x-ratelimit-limit-tokens',
+  'x-ratelimit-remaining-tokens',
+  'x-ratelimit-reset-tokens',
+] as const;
+
+/** The vendor states what is left of the allowance on every answer, and we state it nowhere. */
+export function budgetIn(headers: Headers): Budget | null {
+  const stated = BUDGET_HEADERS.map((name) => [name, headers.get(name) ?? ''] as const).filter(
+    ([, value]) => value !== '',
+  );
+  return stated.length === 0 ? null : Object.fromEntries(stated);
+}
+
+let lastBudget: Budget | null = null;
+
+/** Taken rather than read, so a stubbed answer can never be recorded with a real call's budget. */
+function takeBudget(): Budget | null {
+  const held = lastBudget;
+  lastBudget = null;
+  return held;
 }
 
 type Fields = Record<string, unknown>;
@@ -188,6 +222,7 @@ export const ask: Asker = async (request) => {
     },
     body: asked(request),
   });
+  lastBudget = budgetIn(answer.headers);
   const said = parsed(await answer.text());
   if (!answer.ok) throw refused(answer.status, said);
   return said;
@@ -230,6 +265,7 @@ export async function askModel(
     model: MODEL,
     systemBytes: request.system.length,
     userBytes: request.user.length,
+    budget: takeBudget(),
     ...reply,
   };
   appendRecord(file, call);

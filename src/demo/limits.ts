@@ -2,13 +2,16 @@ import { ATTEMPT_FILE, listAttempts } from './log.js';
 
 export const MAX_DOCUMENT_CHARACTERS = 8_000;
 
-export const ATTEMPTS_PER_SESSION = 5;
+export const ATTEMPTS_PER_SESSION = 10;
 
 export const SESSION_WINDOW_SECONDS = 10 * 60;
 
-export const ATTEMPTS_PER_DAY = 200;
+export const ATTEMPTS_PER_DAY = 400;
 
 export const READS_PER_SESSION = 20;
+
+/** The mean of the recorded calls. A heavy visitor costs more and is refused by the vendor. */
+export const TOKENS_PER_ATTEMPT = 6_940;
 
 /** Not a secret and never read through the env file, so its value is never made redactable. */
 export const OFF_SWITCH = 'DEMO_ATTEMPTS_OFF';

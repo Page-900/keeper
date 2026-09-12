@@ -1,17 +1,20 @@
 # A better price
 
-> The same buyer, paying well over the floor.
+> The same buyer, paying well over the floor. It should go through.
 
 Harbour Lane Partners returns with an improved bid for existing SUNL.
 
-|               |                  |
-| ------------- | ---------------- |
-| Buying        | 20 SUNL          |
-| Price offered | 52 BKN per token |
-| Settlement    | on delivery      |
+|               |                       |
+| ------------- | --------------------- |
+| Buying        | 20 SUNL               |
+| Price offered | 52 BKN per token      |
+| Partial fill  | welcome               |
+| Settlement    | on delivery           |
+| Open for      | 48 hours from posting |
+| Contact       | desk@example.com      |
 
-We have raised our price and we want twenty tokens at it.
-We hold 25 SUNL today, which the holder register will confirm.
+We have raised our price and we want twenty tokens at it. The revised figure replaces
+the one in our earlier posting.
 
-Delivery is made to the buyer's cleared settlement address, which is
-listed in the holder's own records and not in this document.
+Delivery is made to the buyer's cleared settlement address, which is listed in the
+holder's own records and not in this document.

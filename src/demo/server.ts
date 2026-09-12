@@ -304,6 +304,11 @@ export function demoServer(sources: DemoSources): Server {
   const attemptFor = async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
     const said = sayingIn(await readBody(request));
     const session = sessionOf(request);
+    const space = threads.room(session, said);
+    if (!space.allowed) {
+      stated(response, 429, space.because, { limit: 'thread', retryAfterSeconds: null });
+      return;
+    }
     const answer = limits.take(session, said);
     if (!answer.allowed) {
       stated(response, 429, answer.because, {

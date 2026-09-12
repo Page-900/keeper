@@ -70,6 +70,7 @@
     "mandate:grant-probe": "node scripts/grant-probe.js",
     "ci": "npm run format:check && npm run lint && npm run typecheck && npm run test:contracts && npm run test && npm run build && npm run scan",
     "ablation": "node scripts/ablation.js",
+    "model:budget": "npm run build && node scripts/model-budget.js",
     "demo": "npm run compile && npm run build && node scripts/demo.js"
   },
   "lint-staged": {
