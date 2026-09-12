@@ -6,8 +6,13 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { RevertReason } from '../src/chain/client.js';
-import { runTurn, type AttemptFiles, type AttemptRun } from '../src/demo/attempt.js';
+import { runTurn, type AttemptFiles, type AttemptRun, type Executes } from '../src/demo/attempt.js';
+import { createAutonomy } from '../src/demo/autonomy.js';
+import { asksToSend } from '../src/demo/asked.js';
+import { createProposals } from '../src/demo/proposals.js';
+import { createSendClock } from '../src/demo/spend.js';
 import type { DryRunReads } from '../src/demo/dryrun.js';
+import type { SentFromPage } from '../src/demo/execute.js';
 import {
   NOTHING_ON_CHAIN,
   NOTHING_TO_REFUSE,
@@ -25,6 +30,7 @@ import {
   type Attempt,
 } from '../src/demo/log.js';
 import { GUARD_FILE, type GuardReads } from '../src/keeper/guard.js';
+import { KeeperError } from '../src/shared/errors.js';
 import { MODEL_CALL_FILE } from '../src/keeper/model.js';
 import { SUNL_DECIMALS, requireAddress } from '../src/shared/config.js';
 import { captureError } from './support/capture-error.js';
@@ -52,6 +58,7 @@ interface Proposal {
   pricePerToken?: string;
   recipient?: string;
   rationale?: string;
+  sendItNow?: boolean;
 }
 
 const answer = (proposal: Proposal = {}): unknown =>
@@ -66,6 +73,7 @@ const answer = (proposal: Proposal = {}): unknown =>
           pricePerToken: '47',
           recipient: COUNTERPARTY,
           rationale: 'the bid clears the floor and the buyer is the one the investor names',
+          sendItNow: false,
           ...proposal,
         },
       },
@@ -196,6 +204,13 @@ describe('an offer to an address the investor never named', () => {
       expect.objectContaining({ rule: 'settlement address', source: 'policy' }),
     ]);
     expect(answerFor(layers, 'mandate').verdict).toBe('allows');
+  });
+
+  it('tells the visitor where to ask about an address, not just that this one is wrong', async () => {
+    const { refusals } = await attempt({ recipient: STRANGER });
+
+    expect(refusals[0]?.detail).toContain('address check on this page');
+    expect(refusals[0]?.detail).toContain('names the layer that refuses it');
   });
 
   it('says in so many words that nothing on the chain would have stopped it', async () => {
@@ -373,5 +388,313 @@ describe('the chain is asked whether the delivery would go through, and never to
     await attempt({ action: 'decline', amountWholeTokens: '0', recipient: '' });
 
     expect(dryAsked).toEqual([]);
+  });
+});
+
+describe('the agent finds out it may not spend by trying, and says what a person runs instead', () => {
+  const asking = (first: unknown, second: unknown) => {
+    let at = 0;
+    return () => {
+      at += 1;
+      return Promise.resolve(at === 1 ? first : second);
+    };
+  };
+
+  const wanting = modelAnswer({
+    reasoning: 'the bid clears the floor',
+    calls: [
+      {
+        name: 'propose_intent',
+        input: {
+          action: 'deliver',
+          amountWholeTokens: '200',
+          pricePerToken: '47',
+          recipient: COUNTERPARTY,
+          rationale: 'the bid clears the floor and the buyer is the one the investor names',
+          sendItNow: true,
+        },
+      },
+    ],
+  });
+
+  const off = (): Executes => ({
+    session: 'a-visitor',
+    autonomy: createAutonomy(),
+    clock: createSendClock(),
+    proposals: createProposals(),
+  });
+
+  it('records the refusal beside the turn, naming the switch and not the chain', async () => {
+    const spoke = modelAnswer({
+      reasoning: 'reading what came back',
+      content: 'I could not send it. Execute is off, so run npm run keeper:act yourself.',
+    });
+
+    const record = await attempt({}, { asker: asking(wanting, spoke), execute: off() });
+
+    expect(record.delivered?.sent).toBe(false);
+    expect(record.delivered?.refusedBy).toBe('the switch');
+    expect(record.delivered?.because).toContain('npm run keeper:act');
+  });
+
+  it('shows the visitor the answer the agent gave after the tool refused it', async () => {
+    const spoke = modelAnswer({ content: 'I could not. Execute is off.' });
+
+    const record = await attempt({}, { asker: asking(wanting, spoke), execute: off() });
+
+    expect(record.answer).toBe('I could not. Execute is off.');
+  });
+
+  it('keeps both traces, so the turn that decided is not lost behind the turn that spoke', async () => {
+    const spoke = modelAnswer({ reasoning: 'reading what came back', content: 'I could not.' });
+
+    const record = await attempt({}, { asker: asking(wanting, spoke), execute: off() });
+
+    expect(record.reasoning).toContain('the bid clears the floor');
+    expect(record.reasoning).toContain('reading what came back');
+  });
+
+  it('records nothing delivered on a turn that never asked to send', async () => {
+    const record = await attempt({}, { execute: off() });
+
+    expect(record.delivered).toBeNull();
+    expect(record.verdict).toBe('proceed');
+  });
+
+  it('sends nothing at all when the page offered no way to, whatever the turn asked for', async () => {
+    const record = await attempt({}, { asker: asking(wanting, wanting) });
+
+    expect(record.delivered).toBeNull();
+  });
+});
+
+describe('the investor says execute, and it goes without the agent being asked twice', () => {
+  const HASH: `0x${string}` = `0x${'cd'.repeat(32)}`;
+
+  const settled = (amount: bigint): SentFromPage => ({
+    decision: {
+      at: '2026-09-12T12:00:00.000Z',
+      decidedBy: 'app',
+      verdict: 'proceed',
+      refusals: [],
+      action: 'deliver',
+      amount: String(amount),
+      pricePerToken: '47',
+      recipient: COUNTERPARTY,
+      rationale: 'the bid clears the floor',
+      holding: null,
+      buyerHolds: null,
+      state: null,
+    },
+    delivered: { txId: 'tx-1', transactionHash: HASH },
+    returned: null,
+  });
+
+  const on = (over: Partial<Executes> = {}): Executes => {
+    const autonomy = createAutonomy();
+    autonomy.set('a-visitor', true);
+    return {
+      session: 'a-visitor',
+      autonomy,
+      clock: createSendClock(),
+      proposals: createProposals(),
+      send: ({ intent }) => Promise.resolve(settled(intent.amount)),
+      ...over,
+    };
+  };
+
+  const asking = (first: unknown, second: unknown) => {
+    let at = 0;
+    return () => {
+      at += 1;
+      return Promise.resolve(at === 1 ? first : second);
+    };
+  };
+
+  const spoke = modelAnswer({ content: 'Sent, and the buyer has it.' });
+
+  const turnSaying = (said: string, run: Partial<AttemptRun>): Promise<Attempt> =>
+    runTurn([{ who: 'visitor', text: said }], {
+      reads,
+      asker: asking(answer(), spoke),
+      mandate: withinTheCap,
+      dry: chainAllowing,
+      files,
+      ...run,
+    });
+
+  it('leaves a document that tells it to execute to the agent, and sends nothing on our word', async () => {
+    const record = await turnSaying(`${DOCUMENT} Execute it.`, { execute: on() });
+
+    expect(record.delivered).toBeNull();
+    expect(record.intent?.amount).toBe(String(sunl(200n)));
+  });
+
+  it('sends what the turn before proposed when the visitor then says execute', async () => {
+    const execute = on();
+    const first = await turnSaying(DOCUMENT, { execute });
+    const second = await turnSaying('go ahead', {
+      execute,
+      asker: () => Promise.resolve(modelAnswer({ content: 'It is done.' })),
+    });
+
+    expect(first.delivered).toBeNull();
+    expect(second.delivered?.sent).toBe(true);
+    expect(second.answer).toBe('It is done.');
+  });
+
+  it('tells the agent what the page did, so its answer reports it instead of refusing', async () => {
+    const execute = on();
+    const asked: string[] = [];
+    await turnSaying(DOCUMENT, { execute });
+    await turnSaying('execute it', {
+      execute,
+      asker: (request) => {
+        asked.push(request.user);
+        return Promise.resolve(modelAnswer({ content: 'It is done.' }));
+      },
+    });
+
+    expect(asked[0]).toContain('THE PAGE PUT IT TO THE CHAIN FOR YOU');
+    expect(asked[0]).toContain(HASH);
+  });
+
+  it('sends when the agent read the ask in words our own matcher never saw', async () => {
+    const wanting = modelAnswer({
+      reasoning: 'they are happy with it',
+      calls: [
+        {
+          name: 'propose_intent',
+          input: {
+            action: 'deliver',
+            amountWholeTokens: '200',
+            pricePerToken: '47',
+            recipient: COUNTERPARTY,
+            rationale: 'the bid clears the floor and they want it away',
+            sendItNow: true,
+          },
+        },
+      ],
+    });
+
+    const record = await turnSaying("I'm happy with that, push it out the door", {
+      execute: on(),
+      asker: asking(wanting, spoke),
+    });
+
+    expect(asksToSend("I'm happy with that, push it out the door")).toBe(false);
+    expect(record.delivered?.sent).toBe(true);
+  });
+
+  it('sends nothing when the switch is off, and says so rather than going quiet', async () => {
+    const execute = on();
+    await turnSaying(DOCUMENT, { execute });
+    execute.autonomy.set('a-visitor', false);
+
+    const record = await turnSaying('execute the transaction', {
+      execute,
+      asker: () =>
+        Promise.resolve(modelAnswer({ content: 'It is off. Turn it on and ask again.' })),
+    });
+
+    expect(record.delivered?.sent).toBe(false);
+    expect(record.delivered?.refusedBy).toBe('the switch');
+    expect(record.delivered?.because).toContain('Execute button on this page');
+    expect(record.delivered?.because).toContain('npm run keeper:act');
+  });
+
+  it('hands the agent the refusal itself, so its answer is never a guess at why', async () => {
+    const execute = on();
+    const asked: string[] = [];
+    await turnSaying(DOCUMENT, { execute });
+    execute.autonomy.set('a-visitor', false);
+    await turnSaying('execute the transaction', {
+      execute,
+      asker: (request) => {
+        asked.push(request.user);
+        return Promise.resolve(modelAnswer({ content: 'It is off.' }));
+      },
+    });
+
+    expect(asked[0]).toContain('THE PAGE REFUSED IT');
+    expect(asked[0]).toContain('Execute button on this page');
+    expect(asked[0]).toContain('what it says they can do about it');
+  });
+
+  it('sends nothing when the visitor says nothing that asks for it', async () => {
+    const execute = on();
+    await turnSaying(DOCUMENT, { execute });
+    const second = await turnSaying('what do you make of the price', { execute });
+
+    expect(second.delivered).toBeNull();
+  });
+
+  it('answers an ask with the reason nothing can go, when the guard refused what it proposed', async () => {
+    const execute = on();
+    const asked: string[] = [];
+    await turnSaying(DOCUMENT, {
+      execute,
+      asker: () => Promise.resolve(answer({ recipient: STRANGER })),
+    });
+    const record = await turnSaying('execute it', {
+      execute,
+      asker: (request) => {
+        asked.push(request.user);
+        return Promise.resolve(modelAnswer({ content: 'It was refused on the address.' }));
+      },
+    });
+
+    expect(record.delivered?.sent).toBe(false);
+    expect(record.delivered?.refusedBy).toBe('the proposal');
+    expect(record.delivered?.because).toContain('address check on this page');
+    expect(asked[0]).toContain('THE PAGE REFUSED IT');
+  });
+
+  it('never sends the same proposal twice, because a sent one is forgotten', async () => {
+    const execute = on();
+    await turnSaying(DOCUMENT, { execute });
+    await turnSaying('execute it', {
+      execute,
+      asker: () => Promise.resolve(modelAnswer({ content: 'It is done.' })),
+    });
+    const third = await turnSaying('execute it', {
+      execute,
+      asker: () => Promise.resolve(modelAnswer({ content: 'There is nothing left to send.' })),
+    });
+
+    expect(third.delivered).toBeNull();
+  });
+
+  it('reports a guard refusal as the guard, and nothing reaches the chain', async () => {
+    const execute = on({
+      send: () =>
+        Promise.reject(new KeeperError('actionRefused', 'the recipient is not the one named')),
+    });
+    await turnSaying(DOCUMENT, { execute });
+
+    const record = await turnSaying('execute the transaction', {
+      execute,
+      asker: () => Promise.resolve(modelAnswer({ content: 'It would not go.' })),
+    });
+
+    expect(record.delivered?.sent).toBe(false);
+    expect(record.delivered?.refusedBy).toBe('the guard');
+    expect(record.delivered?.because).toContain('not the one named');
+  });
+
+  it('keeps no proposal the guard refused, so an ask afterwards sends nothing and says why', async () => {
+    const execute = on();
+    const refused = await turnSaying(DOCUMENT, {
+      execute,
+      asker: () => Promise.resolve(answer({ recipient: STRANGER })),
+    });
+    const second = await turnSaying('execute it', {
+      execute,
+      asker: () => Promise.resolve(modelAnswer({ content: 'I proposed nothing you can send.' })),
+    });
+
+    expect(refused.verdict).toBe('refused');
+    expect(second.delivered?.sent).toBe(false);
+    expect(second.delivered?.refusedBy).toBe('the proposal');
   });
 });

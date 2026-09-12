@@ -464,6 +464,12 @@ export async function readTokenSupply(contract: `0x${string}`, atBlock: bigint):
 }
 
 /** The only transferFrom calldata this project builds, so no caller hand-rolls a selector. */
+export const callData = (
+  artifact: Artifact,
+  functionName: string,
+  args: readonly unknown[],
+): `0x${string}` => encodeFunctionData({ abi: artifact.abi, functionName, args });
+
 export const transferFromCalldata = (
   from: `0x${string}`,
   to: `0x${string}`,

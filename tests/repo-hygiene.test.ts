@@ -6,6 +6,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { MODEL_KEY_VARIABLE } from '../src/keeper/model.js';
 
+/** This gate walks the whole repository, which is seconds of real work under a full run. */
+const SCAN_TIMEOUT = 30_000;
+
 const APP_ROOT = fileURLToPath(new URL('../', import.meta.url));
 
 const read = (file: string): string => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
@@ -53,14 +56,18 @@ describe('a private key never leaves .env', () => {
     expect(read('.env.example')).toContain(`${MODEL_KEY_VARIABLE}=`);
   });
 
-  it('carries no variable the code stopped reading, which is how a dead key survives', () => {
-    const code = ['src/', 'scripts/']
-      .flatMap((dir) => textUnder(new URL(`../${dir}`, import.meta.url)))
-      .concat(read('hardhat.config.ts'))
-      .join('\n');
+  it(
+    'carries no variable the code stopped reading, which is how a dead key survives',
+    { timeout: SCAN_TIMEOUT },
+    () => {
+      const code = ['src/', 'scripts/']
+        .flatMap((dir) => textUnder(new URL(`../${dir}`, import.meta.url)))
+        .concat(read('hardhat.config.ts'))
+        .join('\n');
 
-    expect(exampleNames().filter((name) => !code.includes(name))).toEqual([]);
-  });
+      expect(exampleNames().filter((name) => !code.includes(name))).toEqual([]);
+    },
+  );
 
   it('leaves every value in .env.example empty', () => {
     const assignments = read('.env.example')

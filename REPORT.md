@@ -11,7 +11,9 @@ Three kinds of statement, never mixed.
 - **Read from the reference implementation.** The contracts merged into the ERCs repository.
 - **Not measured.** Said plainly, with what is missing.
 
-I measured nothing on, and read nothing from, anyone's operated infrastructure.
+Nothing adversarial was ever sent to a shared network. That half was measured only on contracts this
+repository deploys itself. Where an ordinary measurement did touch a live deployment, the section
+says so, and the closing section says exactly which ones did.
 
 ## 1. A cap bounds how much, never to whom
 
@@ -19,7 +21,7 @@ I measured nothing on, and read nothing from, anyone's operated infrastructure.
 
 I ran the same delivery four times, taking one defence away each time.
 
-With my own application checks removed and nothing else changed, 250 tokens went to an address that
+With my own application checks removed and nothing else changed, 25 tokens went to an address that
 appears nowhere in the mandate. Nothing refused it. The registry counted it as ordinary use of the
 limit.
 
@@ -39,7 +41,7 @@ assumed the opposite for two weeks. My own test corrected me.
 
 **Then I took my own advice, and the shape of the answer is worth writing down.** I had the check, but
 it lived in my application, on the same machine as the agent's key. That is fine until the machine is
-not. So I put it on chain, in forty lines: a contract that implements the executor interface, sits in
+not. So I put it on chain, in a hundred lines: a contract that implements the executor interface, sits in
 front of the real executor, reads the recipient out of the forwarded call, and refuses any address the
 principal has not listed. Only the principal can change that list.
 
@@ -65,7 +67,7 @@ I found four outcomes. Only the first is that sentence.
   "a mis-map is silently unbounded" is the natural reading and it is not always true.
 - **Saying an action carries no amount is the cleanest failure.** The executor gates at zero. Zero
   passes the per transaction cap, and the total plus zero passes the cumulative cap. The full holding
-  moved against a 250 cap, and the running total stayed at zero, so the audit trail never records that
+  moved against a 25 cap, and the running total stayed at zero, so the audit trail never records that
   anything happened. This is a boolean, not an index. It sits outside the documented risk entirely.
 - **A dynamic argument cannot be gated at all.** The extraction reads a fixed calldata word in place.
   For a batch transfer of the shape ERC-3643 defines, that word is an ABI offset, so 192 was gated
@@ -142,6 +144,19 @@ check is worth.
 
 ## What this does not say
 
-None of this describes any operated deployment. Every measurement was taken on contracts this
-repository deploys in its own tests, the executor is the reference contract unchanged, and the batch
-function in the third finding belongs to a token these tests create.
+**No finding here is a finding about anyone's operated deployment.** Every one of them is about the
+standard, about its reference contracts, or about my own code. The executor is the reference contract
+unchanged, and the batch function in the third bullet of the second finding belongs to a token these
+tests create.
+
+**The adversarial half never left my own copies.** The mis-mapped gate, and the delivery that no limit
+refuses, were measured on contracts this repository deploys inside its own tests. Nothing from that
+work was sent anywhere shared, and a check reads every record back and fails if a single one of them
+names an address from a shared network.
+
+**The ordinary half did run on a shared test network, and I would rather name that than imply
+otherwise.** A live registry is the only place a real refusal can happen, so the mandates were granted
+and revoked there, and the six rules I broke in the sixth section are real transactions there. Two test
+files also fork that network at a fixed block, so that the two structural claims in the first section
+are read off contracts as they are really deployed rather than off prose about them. Every transaction
+is listed in `EVIDENCE.md` and every one of them can be opened.

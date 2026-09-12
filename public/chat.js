@@ -6,10 +6,14 @@ import {
   put,
   clear,
   find,
+  ask,
   card,
+  link,
+  shortened,
   spoken,
   saidBy,
   waitFor,
+  EXPLORER_TX,
 } from './ui.js';
 
 const STAGE = {
@@ -60,14 +64,25 @@ const showWorking = () => {
   };
 };
 
+let watching = null;
+
 const layerCells = () => Array.from(document.querySelectorAll('.layerCell'));
 
+const saysVerdict = (text) => {
+  const line = find('verdict');
+  if (line !== null) line.replaceChildren(...text);
+};
+
+const sayState = (node, state, word) => {
+  node.dataset.state = state;
+  const label = node.querySelector('.layerState');
+  if (label === null) return;
+  const said = el('span', 'swap', word);
+  label.replaceChildren(said);
+};
+
 const setLayers = (state, word) => {
-  for (const node of layerCells()) {
-    node.className = `layerCell ${state}`;
-    const label = node.lastElementChild;
-    if (label !== null) label.textContent = word;
-  }
+  for (const node of layerCells()) sayState(node, state, word);
 };
 
 const VERB = { allows: 'allows', refuses: 'refuses', 'not asked': 'not asked' };
@@ -78,9 +93,11 @@ const settleLayers = (answers) => {
     const node = cells.find((cell) => cell.dataset.layer === answer.layer);
     if (node === undefined) return;
     window.setTimeout(() => {
-      node.className = `layerCell settled ${answer.verdict === 'refuses' ? 'refuses' : 'allows'}`;
-      const label = node.lastElementChild;
-      if (label !== null) label.textContent = VERB[answer.verdict] ?? answer.verdict;
+      sayState(
+        node,
+        answer.verdict === 'refuses' ? 'refuses' : 'allows',
+        VERB[answer.verdict] ?? answer.verdict,
+      );
     }, index * 220);
   });
 };
@@ -89,6 +106,37 @@ const layerNote = (answer) => {
   const box = el('div', 'card');
   put(box, el('h3', undefined, `${LAYER[answer.layer] ?? answer.layer}: ${answer.verdict}`));
   for (const because of answer.because) put(box, el('p', undefined, because));
+  return box;
+};
+
+const verdictWords = (record) => {
+  if (record.layers === null)
+    return [el('span', undefined, 'It proposed nothing, so no layer was asked.')];
+  const refused = record.layers.answers.find((one) => one.verdict === 'refuses');
+  const at = `at block ${record.layers.blockNumber}`;
+  if (refused === undefined)
+    return [el('span', undefined, `Every layer allowed it, ${at}. Nothing was sent by asking.`)];
+  return [
+    el('span', undefined, 'Refused by '),
+    el('b', undefined, LAYER[refused.layer] ?? refused.layer),
+    el('span', undefined, `, ${at}. Nothing sent.`),
+  ];
+};
+
+const deliveryCard = (done) => {
+  const box = card(
+    done.sent ? 'card' : 'card held',
+    done.sent ? 'It sent it' : `Not sent, refused by ${done.refusedBy}`,
+    [done.because],
+  );
+  if (done.transactionHash !== null)
+    put(
+      box,
+      put(
+        el('p', 'tag'),
+        link(`${EXPLORER_TX}${done.transactionHash}`, shortened(done.transactionHash)),
+      ),
+    );
   return box;
 };
 
@@ -131,16 +179,24 @@ const showTurn = (record) => {
       put(box, card('card watch', 'What that means', [record.layers.note]));
   }
 
+  saysVerdict(verdictWords(record));
+  if (record.delivered !== null) put(box, deliveryCard(record.delivered));
   if (record.reasoning !== '') put(box, working(record.reasoning));
   put(find('thread'), box);
   return showLatest(box);
 };
 
+const LINGER = 12_000;
+
 const MAX_BOX = 240;
+
+/** Never below this, or a short document drops the box to a line nobody can read. */
+const MIN_BOX = 132;
 
 const growBox = (box) => {
   box.style.height = 'auto';
-  box.style.height = `${String(Math.min(box.scrollHeight, MAX_BOX))}px`;
+  const wanted = Math.min(Math.max(box.scrollHeight, MIN_BOX), MAX_BOX);
+  box.style.height = `${String(wanted)}px`;
 };
 
 const showLatest = (turn) => {
@@ -186,7 +242,13 @@ const runAttempt = async (afterTurn) => {
   box.placeholder = 'Say something back';
   growBox(box);
   showLatest(mine);
-  setLayers('busy', 'working');
+  setLayers('working', 'asking');
+  saysVerdict([el('span', undefined, 'Asking each layer in turn.')]);
+  if (watching !== null) {
+    watching.live.show();
+    watching.cards.go('layers');
+    watching.cards.hold(true);
+  }
   const working = showWorking();
   let answered = false;
   try {
@@ -217,10 +279,24 @@ const runAttempt = async (afterTurn) => {
   } finally {
     working.stop(answered);
     button.disabled = false;
+    if (watching !== null) {
+      watching.cards.hold(false);
+      watching.live.letGo(LINGER);
+    }
   }
 };
 
-export const wireChat = (afterTurn) => {
+/** The thread lives on the server, so starting again has to tell it, not only clear the screen. */
+export const startAgain = async () => {
+  await ask('/api/thread', { method: 'POST' }).catch(() => undefined);
+  clear(find('thread'));
+  setLayers('idle', 'idle');
+  saysVerdict([el('span', undefined, 'Nothing running.')]);
+};
+
+export const wireChat = (afterTurn, panel) => {
+  find('freshOpen').addEventListener('click', () => void startAgain());
+  watching = panel;
   find('run').addEventListener('click', () => void runAttempt(afterTurn));
   find('document').addEventListener('input', (event) => {
     growBox(event.target);

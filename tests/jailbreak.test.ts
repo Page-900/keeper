@@ -30,6 +30,7 @@ const deliver = (over: Partial<DeliverIntent> = {}): DeliverIntent => ({
   pricePerToken: 47n,
   recipient: COUNTERPARTY,
   rationale: 'honest',
+  sendItNow: false,
   ...over,
 });
 
@@ -42,6 +43,7 @@ describe('a compromised intent is a wrong recipient or an amount over the mandat
         pricePerToken: 47n,
         recipient: null,
         rationale: 'no',
+        sendItNow: false,
       }),
     ).toBe(false);
   });

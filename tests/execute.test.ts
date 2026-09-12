@@ -4,6 +4,8 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  NOT_PREPARED,
+  sendRoutedAction,
   prepareAgentAction,
   sendAgentAction,
   type ExecuteSurface,
@@ -147,5 +149,92 @@ describe('the action is sent once and its hash is read from the chain', () => {
     );
 
     expect(error.kind).toBe('writeUnconfirmed');
+  });
+});
+
+describe('the routed send prepares through them and broadcasts itself', () => {
+  const routed = (
+    over: {
+      data?: `0x${string}`;
+      broadcast?: () => Promise<`0x${string}`>;
+      status?: 'reverted';
+    } = {},
+  ) => {
+    const { surface, seen } = surfaceWith(over.data === undefined ? {} : { data: over.data });
+    const pushed: `0x${string}`[] = [];
+    const run = {
+      action,
+      name: 'agent-action' as const,
+      surface,
+      anchors,
+      file,
+      receipt: () =>
+        Promise.resolve({
+          status: over.status ?? ('success' as const),
+          blockNumber: 11_680_500n,
+          contractAddress: null,
+          gasUsed: 120_000n,
+        }),
+      broadcast:
+        over.broadcast ??
+        ((data: `0x${string}`) => {
+          pushed.push(data);
+          return Promise.resolve(HASH);
+        }),
+    };
+    return { run, seen, pushed };
+  };
+
+  it('never reaches their API at all, because it refuses this call at the preparation', async () => {
+    const { run, seen, pushed } = routed();
+
+    await sendRoutedAction(run);
+
+    expect(seen.execute).toBe(0);
+    expect(seen.sends).toBe(0);
+    expect(pushed).toHaveLength(1);
+  });
+
+  it('carries no prepared id, because nothing prepared it', async () => {
+    const { run } = routed();
+
+    expect((await sendRoutedAction(run)).txId).toBe(NOT_PREPARED);
+  });
+
+  it('pushes the router call that carries our own transfer, and nothing else', async () => {
+    const { run, pushed } = routed();
+
+    await sendRoutedAction(run);
+
+    expect(pushed[0]?.toLowerCase()).toContain(
+      agentCalldata(action.to, action.amount).slice(2).toLowerCase(),
+    );
+  });
+
+  it('refuses a second send under a name the record already holds', async () => {
+    const first = routed();
+    await sendRoutedAction(first.run);
+
+    const again = routed();
+    const error = await captureError(() => sendRoutedAction(again.run));
+
+    expect(error.kind).toBe('alreadyCreated');
+    expect(again.pushed).toHaveLength(0);
+  });
+
+  it('calls a reverted broadcast a failure and never a settlement', async () => {
+    const { run } = routed({ status: 'reverted' });
+
+    expect((await captureError(() => sendRoutedAction(run))).kind).toBe('writeUnconfirmed');
+  });
+
+  it('writes the anchor the chain confirmed, so the record is never the hash we hoped for', async () => {
+    const { run } = routed();
+
+    await sendRoutedAction(run);
+    const [written] = readRecords<Anchor>(anchors);
+
+    expect(written?.transactionHash).toBe(HASH);
+    expect(written?.status).toBe('success');
   });
 });

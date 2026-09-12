@@ -36,6 +36,15 @@
         </div>
         <ul class="railList">
           <li>
+            <a href="#bids" title="Bids you can try">
+              <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M2.6 3.4h10.8v9.2H2.6z" />
+                <path d="M5.2 6.4h5.6M5.2 9.1h3.4" />
+              </svg>
+              <span class="label">Bids</span>
+            </a>
+          </li>
+          <li>
             <a href="#attack" title="Attack it yourself">
               <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
                 <circle cx="8" cy="8" r="5.2" />
@@ -89,14 +98,14 @@
             </a>
           </li>
           <li>
-            <a href="#log" title="What other people tried">
+            <a href="#log" title="Everything the agent has answered">
               <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
                 <path d="M6.2 4.4h7.2M6.2 8h7.2M6.2 11.6h7.2" />
                 <circle cx="3" cy="4.4" r=".85" />
                 <circle cx="3" cy="8" r=".85" />
                 <circle cx="3" cy="11.6" r=".85" />
               </svg>
-              <span class="label">Attempts</span>
+              <span class="label">History</span>
             </a>
           </li>
         </ul>
@@ -110,13 +119,34 @@
           <p class="eyebrow">Sepolia test network</p>
           <p class="lead">
             An investor's agent for tokenized real world assets. What it may actually do is fixed on
-            chain, by a permission the investor signed, rather than by the words in its prompt. Read
-            the mandate, then try to talk the agent past it.
+            chain, by a permission the investor signed, rather than by the words in its prompt. With
+            Execute on it sends real transactions from this page, so tell it to execute and the sale
+            it proposed goes to Sepolia while you watch. Read the mandate, then try to talk the
+            agent past it.
           </p>
         </header>
 
+        <details id="bids" class="drop" open>
+          <summary><span>Bids you can try</span><span id="bidCount" class="count"></span></summary>
+          <p class="note">
+            Eight offers written for this page. Put one in the box and watch what answers it. Most
+            bad offers never get past the agent's own judgement, so you will often see it decline
+            before any rule is reached. That is the ordinary case. The interesting one is when a
+            document talks it round and something after it says no anyway.
+          </p>
+          <div id="bidList" class="bidList"></div>
+        </details>
+
         <section id="attack" class="panel">
-          <h2>Attack it yourself</h2>
+          <div class="panelHead">
+            <h2>Attack it yourself</h2>
+            <div class="panelActions">
+              <button id="liveOpen" type="button" class="ghost">Live state</button>
+              <button id="checkOpen" type="button" class="ghost">Check an address</button>
+              <button id="executeOpen" type="button" class="ghost">Execute</button>
+              <button id="freshOpen" type="button" class="ghost">Start again</button>
+            </div>
+          </div>
           <p class="note">The document the agent is about to read. Change it however you like.</p>
           <div class="chat">
             <ol id="thread" class="thread" aria-live="polite"></ol>
@@ -144,14 +174,14 @@
           </p>
         </section>
 
-        <details id="situation" class="drop">
+        <details id="situation" class="drop" open>
           <summary>
             <span>The situation</span><span id="situationCount" class="count"></span>
           </summary>
           <ul id="scenario" class="lines"></ul>
         </details>
 
-        <details id="permission" class="drop">
+        <details id="permission" class="drop" open>
           <summary><span>The permission and the policy</span></summary>
           <div class="two">
             <div>
@@ -188,31 +218,7 @@
           <div id="evidence"></div>
         </details>
 
-        <details id="yours" class="drop" open>
-          <summary>
-            <span>Try it with your own address</span>
-          </summary>
-          <p class="note">
-            Type any address you like. Yours, or one you invent. This page asks the deployed
-            contracts what would happen if the agent tried to deliver to it, and shows the answer
-            they give. Nothing is sent and nothing moves.
-          </p>
-          <form id="yoursForm" class="yoursForm">
-            <label class="sr" for="yoursInput">An address on this test network</label>
-            <input
-              id="yoursInput"
-              class="yoursInput"
-              type="text"
-              autocomplete="off"
-              spellcheck="false"
-              placeholder="0x..."
-            />
-            <button id="yoursButton" class="yoursButton" type="submit">Ask the chain</button>
-          </form>
-          <div id="yoursAnswer" class="yoursAnswer"></div>
-        </details>
-
-        <details id="authority" class="drop">
+        <details id="authority" class="drop" open>
           <summary>
             <span>Authority changes</span><span id="authorityCount" class="count"></span>
           </summary>
@@ -222,9 +228,13 @@
 
         <details id="log" class="drop" open>
           <summary>
-            <span>What other people tried</span><span id="attemptCount" class="count"></span>
+            <span>Everything the agent has answered</span
+            ><span id="attemptCount" class="count"></span>
           </summary>
-          <p class="note">Their words open when you ask.</p>
+          <p class="note">
+            Every turn anyone has put to it, newest first, with what it proposed, what refused it
+            and what it sent. Their own words open when you ask for them.
+          </p>
           <div id="attempts"></div>
         </details>
 
@@ -233,40 +243,97 @@
             Sunrise Lodge is invented. The token is on a test network and is worth nothing.
           </p>
         </footer>
+        <dialog id="executeBox" class="sheet">
+          <form method="dialog" class="sheetTop">
+            <h2>Execute</h2>
+            <button class="sheetClose" aria-label="Close">&#215;</button>
+          </form>
+          <p class="note">
+            With this on, tell the agent to execute and its own approved sale goes to the chain. The
+            words are read by this page, not judged by the agent, and the sale still has to pass the
+            guard, the router, the mandate and the token.
+          </p>
+          <label class="switchRow" for="executeOn">
+            <input id="executeOn" type="checkbox" role="switch" />
+            <span class="switchTrack"><span class="switchKnob"></span></span>
+            <span class="switchWords">Let the agent execute transactions</span>
+          </label>
+          <p id="executeState" class="note"></p>
+        </dialog>
+
+        <dialog id="checkBox" class="sheet">
+          <form method="dialog" class="sheetTop">
+            <h2>Check your address eligibility</h2>
+            <button class="sheetClose" aria-label="Close">&#215;</button>
+          </form>
+          <form id="yoursForm" class="yoursForm">
+            <label class="sr" for="yoursInput">Address to check</label>
+            <input
+              id="yoursInput"
+              class="yoursInput"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="0x..."
+            />
+            <button id="yoursButton" class="yoursButton" type="submit" aria-label="Ask the chain">
+              <svg class="ic" viewBox="0 0 16 16" aria-hidden="true">
+                <path d="M2.4 8h10.4" />
+                <path d="M8.6 3.8 12.8 8l-4.2 4.2" />
+              </svg>
+            </button>
+          </form>
+          <div id="yoursAnswer" class="yoursAnswer"></div>
+        </dialog>
       </main>
 
       <aside class="status" aria-label="Live state">
-        <div class="statusBlock">
-          <p class="eyebrow">Read from the chain</p>
-          <p id="blockNow" class="figure big">reading</p>
+        <div class="railDeck">
+          <div class="deckBack b2"></div>
+          <div class="deckBack b1"></div>
+
+          <section class="deckCard" data-card="block">
+            <p class="eyebrow">Read from the chain</p>
+            <div class="blockNow">
+              <span class="num" id="blockNow">reading</span><span class="pulse"></span>
+            </div>
+            <p class="cardNote">The block every reading on this page was taken at.</p>
+          </section>
+
+          <section class="deckCard" data-card="layers" hidden>
+            <p class="eyebrow">Who can refuse</p>
+            <ul id="layerLive" class="layerLive">
+              <li class="layerCell" data-layer="app" data-state="idle">
+                <span class="stripe"></span><span class="layerName">This app</span
+                ><span class="layerState"><span>idle</span></span>
+              </li>
+              <li class="layerCell" data-layer="mandate" data-state="idle">
+                <span class="stripe"></span><span class="layerName">The permission</span
+                ><span class="layerState"><span>idle</span></span>
+              </li>
+              <li class="layerCell" data-layer="token" data-state="idle">
+                <span class="stripe"></span><span class="layerName">The token</span
+                ><span class="layerState"><span>idle</span></span>
+              </li>
+            </ul>
+            <p class="verdict" id="verdict">Nothing running.</p>
+          </section>
+
+          <section class="deckCard" data-card="bound" hidden>
+            <p class="eyebrow">The bound, right now</p>
+            <ul id="brief" class="bound"></ul>
+          </section>
         </div>
 
-        <div class="statusBlock">
-          <p class="eyebrow">Who can refuse</p>
-          <ul id="layerLive" class="layerLive">
-            <li class="layerCell" data-layer="app">
-              <span class="layerName">This app</span>
-              <span class="layerState">idle</span>
-            </li>
-            <li class="layerCell" data-layer="mandate">
-              <span class="layerName">The permission</span>
-              <span class="layerState">idle</span>
-            </li>
-            <li class="layerCell" data-layer="token">
-              <span class="layerName">The token</span>
-              <span class="layerState">idle</span>
-            </li>
-          </ul>
-          <p class="railNote">
-            This page holds no key and signs nothing. It asks the chain what would happen and reads
-            the answer back. Every answer names the layer that gave it.
-          </p>
+        <div class="deckDots" id="deckDots">
+          <button type="button" data-go="block" aria-label="Read from the chain"></button>
+          <button type="button" data-go="layers" aria-label="Who can refuse"></button>
+          <button type="button" data-go="bound" aria-label="The bound, right now"></button>
         </div>
 
-        <div class="statusBlock">
-          <p class="eyebrow">The bound, right now</p>
-          <ul id="brief" class="lines tight"></ul>
-        </div>
+        <p class="railNote" id="keyNote">
+          This page holds a key, and the mandate is what it may do.
+        </p>
       </aside>
     </div>
 

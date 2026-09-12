@@ -11,6 +11,6 @@ server.listen(port, () => {
   print('');
   print(`  Keeper's page is at http://localhost:${server.address().port}`);
   print(`  The attack box is ${attackBoxOff() ? 'OFF' : 'on'}.`);
-  print('  It reads the chain and asks the model. It cannot send a transaction.');
+  print('  It reads the chain and asks the model. With Execute on, it can send a transaction.');
   print('');
 });

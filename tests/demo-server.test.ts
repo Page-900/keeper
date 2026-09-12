@@ -19,6 +19,8 @@ import {
   type RamsStatus,
 } from '../src/demo/server.js';
 import { asRamsStatus } from '../src/demo/sources.js';
+import { AUTONOMY_LAPSE_SECONDS, EXECUTE_OFF, EXECUTE_ON } from '../src/demo/autonomy.js';
+import { PROPOSE_INTENT } from '../src/keeper/intent.js';
 import type { GuardReads } from '../src/keeper/guard.js';
 import { ERROR_COPY, KeeperError } from '../src/shared/errors.js';
 import { MAX_TRANSACTION_VALUE, SUNL_SYMBOL, requireAddress } from '../src/shared/config.js';
@@ -69,6 +71,7 @@ const RECORD: Attempt = {
     note: null,
     dryRun: null,
   },
+  delivered: null,
 };
 
 let asked = 0;
@@ -566,5 +569,91 @@ describe('a visitor may name an address, and the page asks the chain about that 
       expect(body.amount).toBe(String(MAX_TRANSACTION_VALUE));
       expect(body.address).toBe(requireAddress('uncleared'));
     }, reading);
+  });
+});
+
+describe('the bids a visitor can try are served, and the page can reach them', () => {
+  it('hands over eight of them, each with its words and the document it stands for', async () => {
+    await opened(async (call) => {
+      const answer = await call('/api/bids');
+      const bids = JSON.parse(answer.body) as { id: string; title: string; document: string }[];
+
+      expect(answer.status).toBe(200);
+      expect(bids).toHaveLength(8);
+      expect(bids.every((bid) => bid.title !== '' && bid.document !== '')).toBe(true);
+    });
+  });
+});
+
+describe('nothing a request says can move a token', () => {
+  it('has no send endpoint at all, so no body can name an amount or an address', async () => {
+    await opened(async (call) => {
+      const posted = await call('/api/send', {
+        method: 'POST',
+        body: JSON.stringify({ amount: '999999', recipient: requireAddress('uncleared') }),
+      });
+      const read = await call('/api/send');
+
+      expect(posted.status).toBe(404);
+      expect(read.status).toBe(404);
+    });
+  });
+
+  it('lets the agent ask to send, and never lets it name what is sent', () => {
+    const asked = Object.keys(PROPOSE_INTENT.parameters.properties);
+
+    expect(asked).toContain('sendItNow');
+    expect(PROPOSE_INTENT.parameters.additionalProperties).toBe(false);
+  });
+});
+
+describe('the execute switch belongs to the visitor and not to the agent', () => {
+  const flip = (on: unknown): RequestInit => ({
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ on }),
+  });
+
+  const read = (body: string): { on: boolean; says: string; lapseSeconds: number } =>
+    JSON.parse(body) as { on: boolean; says: string; lapseSeconds: number };
+
+  it('is off for a visitor who has not touched it', async () => {
+    await opened(async (call) => {
+      const answer = await call('/api/execute');
+      const body = read(answer.body);
+
+      expect(answer.status).toBe(200);
+      expect(body.on).toBe(false);
+      expect(body.says).toBe(EXECUTE_OFF);
+      expect(body.lapseSeconds).toBe(AUTONOMY_LAPSE_SECONDS);
+    });
+  });
+
+  it('turns on and off, and the next read agrees', async () => {
+    await opened(async (call) => {
+      expect(read((await call('/api/execute', flip(true))).body).on).toBe(true);
+      expect(read((await call('/api/execute')).body).on).toBe(true);
+      expect(read((await call('/api/execute')).body).says).toBe(EXECUTE_ON);
+
+      expect(read((await call('/api/execute', flip(false))).body).on).toBe(false);
+      expect(read((await call('/api/execute')).body).on).toBe(false);
+    });
+  });
+
+  it('refuses anything that is not true or false', async () => {
+    await opened(async (call) => {
+      const answer = await call('/api/execute', flip('yes please'));
+
+      expect(answer.status).toBe(400);
+      expect(read((await call('/api/execute')).body).on).toBe(false);
+    });
+  });
+
+  it('refuses a body that is not JSON at all', async () => {
+    await opened(async (call) => {
+      const answer = await call('/api/execute', { method: 'POST', body: 'on' });
+
+      expect(answer.status).toBe(400);
+    });
   });
 });

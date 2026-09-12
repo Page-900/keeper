@@ -187,6 +187,12 @@ describe('how much the buyer sent back is measured off the chain, never recorded
     expect(await returnedByBuyer({ chain: balancesAcross(RETURNED), anchors })).toBe(RETURNED);
   });
 
+  it('counts what the page itself sent back, not only what a reset sent back', async () => {
+    appendRecord(anchors, { ...anchorOf('page-return-1', 'success'), blockNumber: '11607079' });
+
+    expect(await returnedByBuyer({ chain: balancesAcross(RETURNED), anchors })).toBe(RETURNED);
+  });
+
   it('counts nothing from a return that reverted', async () => {
     appendRecord(anchors, { ...anchorOf('return-holding', 'reverted'), blockNumber: '11607079' });
 

@@ -143,7 +143,7 @@ const whole = (value: bigint): bigint => value / 10n ** BigInt(SUNL_DECIMALS);
 
 describe("the investor's mandate is what the demonstration spends, so it is pinned", () => {
   it('still carries the granted caps, which no anchor may be allowed to outgrow', () => {
-    expect(whole(KEEPER_MANDATE.maxTransactionValue)).toBe(250n);
+    expect(whole(KEEPER_MANDATE.maxTransactionValue)).toBe(25n);
     expect(whole(KEEPER_MANDATE.maxCumulativeValue)).toBe(1_750n);
   });
 

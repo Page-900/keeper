@@ -6,6 +6,9 @@ import { describe, expect, it } from 'vitest';
 
 const APP_ROOT = fileURLToPath(new URL('../', import.meta.url));
 
+/** Every gate here walks the whole repository, which is seconds of real work under a full run. */
+const SCAN_TIMEOUT = 30_000;
+
 /** Holds the patterns as literals, so it is the one file that cannot scan itself. */
 const THIS_FILE = 'tests/public-boundary.test.ts';
 const GENERATED = ['package-lock.json', 'LICENSE'];
@@ -21,16 +24,28 @@ const PRIVATE_REFERENCE: RegExp[] = [
   /\b(Core Law|Law \d|rule \d+|criterion \d+|subgoal \d|Milestone \d)\b/i,
 ];
 
-const trackedFiles = (): string[] =>
-  execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], {
-    encoding: 'utf8',
-    cwd: APP_ROOT,
-  })
-    .split('\n')
-    .filter((file) => file !== '' && file !== THIS_FILE && !GENERATED.includes(file));
+const listed = execFileSync('git', ['ls-files', '--cached', '--others', '--exclude-standard'], {
+  encoding: 'utf8',
+  cwd: APP_ROOT,
+})
+  .split('\n')
+  .filter((file) => file !== '' && file !== THIS_FILE && !GENERATED.includes(file));
+
+const held = new Map<string, string>();
+
+/** Every gate below walks the same files, and reading them three times times the run out. */
+const textOf = (file: string): string => {
+  const found = held.get(file);
+  if (found !== undefined) return found;
+  const text = readFileSync(join(APP_ROOT, file), 'utf8');
+  held.set(file, text);
+  return text;
+};
+
+const trackedFiles = (): string[] => listed;
 
 const offendingLines = (file: string): string[] =>
-  readFileSync(join(APP_ROOT, file), 'utf8')
+  textOf(file)
     .split('\n')
     .flatMap((line, index) =>
       PRIVATE_REFERENCE.some((pattern) => pattern.test(line))
@@ -39,7 +54,7 @@ const offendingLines = (file: string): string[] =>
     );
 
 describe('the repository explains itself to a stranger who holds only the repository', () => {
-  it('points at no document that is not published with it', () => {
+  it('points at no document that is not published with it', { timeout: SCAN_TIMEOUT }, () => {
     const offenders = trackedFiles().flatMap(offendingLines);
 
     expect(offenders).toEqual([]);
@@ -97,10 +112,8 @@ const PUBLISHED: Record<string, RegExp[]> = {
   'tests/registry.test.ts': [exact(RECORDER_ROLE)],
 };
 
-const scannable = (file: string): string => {
-  const text = readFileSync(join(APP_ROOT, file), 'utf8');
-  return (PUBLISHED[file] ?? []).reduce((clean, published) => clean.replace(published, ''), text);
-};
+const scannable = (file: string): string =>
+  (PUBLISHED[file] ?? []).reduce((clean, published) => clean.replace(published, ''), textOf(file));
 
 const leakingLines = (file: string): string[] =>
   scannable(file)
@@ -122,19 +135,26 @@ const envValues = (): string[] =>
     : [];
 
 describe('nothing we hold in confidence reaches git', () => {
-  it('carries no real email address and no 32-byte hex secret in any tracked file', () => {
-    const offenders = trackedFiles().flatMap(leakingLines);
+  it(
+    'carries no email and no 32-byte hex secret in any tracked file',
+    { timeout: SCAN_TIMEOUT },
+    () => {
+      const offenders = trackedFiles().flatMap(leakingLines);
 
-    expect(offenders).toEqual([]);
-  });
+      expect(offenders).toEqual([]);
+    },
+  );
 
-  it('carries no value from the local env file, in any shape or field', () => {
-    const secrets = envValues();
-    const offenders = trackedFiles().filter((file) => {
-      const text = readFileSync(join(APP_ROOT, file), 'utf8');
-      return secrets.some((secret) => text.includes(secret));
-    });
+  it(
+    'carries no value from the local env file, in any shape or field',
+    { timeout: SCAN_TIMEOUT },
+    () => {
+      const secrets = envValues();
+      const offenders = trackedFiles().filter((file) =>
+        secrets.some((secret) => textOf(file).includes(secret)),
+      );
 
-    expect(offenders).toEqual([]);
-  });
+      expect(offenders).toEqual([]);
+    },
+  );
 });

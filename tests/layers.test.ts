@@ -133,6 +133,7 @@ const recorded = (): DeliverIntent => {
     pricePerToken: POLICY.minimumPricePerToken,
     recipient: recipient as `0x${string}`,
     rationale: 'the proposal the recorded run was talked into',
+    sendItNow: false,
   };
 };
 

@@ -34,15 +34,15 @@ export function addressIn(said: unknown): `0x${string}` {
   return address;
 }
 
-const ALLOWED = 'The chain says this delivery would go through.';
+const ALLOWED = 'Nothing refuses a delivery to this address.';
 
 const REFUSED: Readonly<Record<Layer, string>> = Object.freeze({
-  app: 'Refused by this project, before the permission was even asked.',
+  app: 'Refused by this project, before the permission was asked.',
   mandate: 'Refused by the permission the investor granted.',
   token: 'Refused by the token itself.',
 });
 
-const UNREAD = 'The chain refused it and this page will not guess which layer did.';
+const UNREAD = 'Refused, and this page will not guess which layer did it.';
 
 export async function askAboutRecipient(
   said: unknown,

@@ -92,7 +92,7 @@ const valueOf = (label: string): string =>
 
 describe('the bound reads in plain language, because the investor has to understand it', () => {
   it('states both caps in whole tokens and never in base units', () => {
-    expect(valueOf('Most it may move at once')).toBe('250 SUNL');
+    expect(valueOf('Most it may move at once')).toBe('25 SUNL');
     expect(valueOf('Most it may move in total, ever')).toBe('1750 SUNL');
   });
 

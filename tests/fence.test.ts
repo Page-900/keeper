@@ -55,8 +55,16 @@ describe('the system prompt states the boundary it is asking the model to hold',
     expect(SYSTEM_PROMPT).toContain('forged');
   });
 
-  it('tells the model it cannot execute, which is true of its tools as well', () => {
-    expect(SYSTEM_PROMPT).toContain('You cannot execute anything');
+  it('tells it that calling a tool is a request, and never a decision of its own', () => {
+    expect(SYSTEM_PROMPT).toContain('calling it is a request and not a decision');
+  });
+
+  it('no longer claims it cannot execute, which stopped being true when it got the tool', () => {
+    expect(SYSTEM_PROMPT).not.toContain('You cannot execute anything');
+  });
+
+  it('never names the switch, so nothing in a document can claim the switch is on', () => {
+    expect(SYSTEM_PROMPT.toLowerCase()).not.toContain('switch');
   });
 
   it('treats the person talking to it as third party text, exactly like a document', () => {
@@ -139,7 +147,9 @@ describe('every model call is recorded, and a refusal is recorded as a refusal',
 
     expect(seen.status).toBe('tool_calls');
     expect(seen.refusal).toBeNull();
-    expect(seen.toolCalls).toEqual([{ name: 'propose_intent', input: { action: 'decline' } }]);
+    expect(seen.toolCalls).toEqual([
+      { id: 'fc_0', name: 'propose_intent', input: { action: 'decline' } },
+    ]);
   });
 
   it('hands on arguments that are not JSON rather than inventing a proposal from them', async () => {
@@ -147,7 +157,20 @@ describe('every model call is recorded, and a refusal is recorded as a refusal',
 
     const seen = await askModel(request(), { asker: () => Promise.resolve(answer), file });
 
-    expect(seen.toolCalls).toEqual([{ name: 'propose_intent', input: '{"action":' }]);
+    expect(seen.toolCalls).toEqual([{ id: 'fc_0', name: 'propose_intent', input: '{"action":' }]);
+  });
+
+  it('keeps the id the vendor gave each call, because a result has to name the one it answers', async () => {
+    const answer = modelAnswer({
+      calls: [
+        { name: 'propose_intent', input: {} },
+        { name: 'execute_delivery', input: {} },
+      ],
+    });
+
+    const seen = await askModel(request(), { asker: () => Promise.resolve(answer), file });
+
+    expect(seen.toolCalls.map((call) => call.id)).toEqual(['fc_0', 'fc_1']);
   });
 
   it('turns a transport failure into a named error and never a silent retry', async () => {
@@ -223,6 +246,46 @@ describe('the vendor is reached over plain HTTP, and its answer is read as an an
 
     expect(error.kind).toBe('modelUnreachable');
     expect(error.detail).toContain('502');
+  });
+
+  it('sends nothing but the system prompt and the turn when no tool has answered yet', async () => {
+    const transport = answering(200, modelAnswer());
+    vi.stubGlobal('fetch', transport);
+
+    await askModel(request(), { file });
+
+    const [, init] = transport.mock.calls[0] as [string, { body: string }];
+    const sent = JSON.parse(init.body) as { messages: unknown[] };
+
+    expect(sent.messages).toHaveLength(2);
+  });
+
+  it('sends the tool result back as its own message, under the id it answers', async () => {
+    const asked = modelAnswer({
+      calls: [{ name: 'execute_delivery', input: {} }],
+      content: 'I will send it.',
+    });
+    const reply = await askModel(request(), { asker: () => Promise.resolve(asked), file });
+    const transport = answering(200, modelAnswer());
+    vi.stubGlobal('fetch', transport);
+
+    await askModel(
+      { ...request(), answered: { reply, results: [{ id: 'fc_0', content: 'refused' }] } },
+      { file },
+    );
+
+    const [, init] = transport.mock.calls[0] as [string, { body: string }];
+    const sent = JSON.parse(init.body) as { messages: Record<string, unknown>[] };
+
+    expect(sent.messages).toHaveLength(4);
+    expect(sent.messages[2]).toEqual({
+      role: 'assistant',
+      content: 'I will send it.',
+      tool_calls: [
+        { id: 'fc_0', type: 'function', function: { name: 'execute_delivery', arguments: '{}' } },
+      ],
+    });
+    expect(sent.messages[3]).toEqual({ role: 'tool', tool_call_id: 'fc_0', content: 'refused' });
   });
 });
 

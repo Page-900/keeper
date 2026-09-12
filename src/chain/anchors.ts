@@ -30,6 +30,9 @@ export type AnchorAction =
   | `grant-probe-${number}`
   | 'agent-action'
   | 'keeper-action'
+  | `keeper-action-${number}`
+  | `page-action-${number}`
+  | `page-return-${number}`
   | `battery-${string}`
   | `signature-${string}`
   | 'agent-refusal'

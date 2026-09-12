@@ -15,8 +15,10 @@ import {
   ask,
   saidBy,
   waitFor,
+  EXPLORER_TX,
 } from './ui.js';
-import { growBox, wireChat } from './chat.js';
+import { growBox, startAgain, wireChat } from './chat.js';
+import { wirePanel } from './live.js';
 
 const evidenceRows = (rows) =>
   table(
@@ -73,6 +75,21 @@ const showHolders = (state) => {
   put(agreement, el('p', 'note', state.agreement.says));
 };
 
+const boundRow = (one) => {
+  const row = el('li');
+  const figure = put(
+    el('span', one.well ? 'b-fig b-ok' : 'b-fig'),
+    el('span', undefined, one.figure),
+  );
+  if (one.aside !== null) put(figure, el('em', undefined, ` ${one.aside}`));
+  return put(row, figure, el('span', 'b-say', one.say));
+};
+
+const showBound = (bound) => {
+  const box = clear(find('brief'));
+  for (const one of bound) put(box, boundRow(one));
+};
+
 const showState = (state) => {
   find('loading').remove();
   find('run').disabled = false;
@@ -81,7 +98,7 @@ const showState = (state) => {
   counted('situationCount', state.scenario.length);
   lines(find('mandate'), state.mandate);
   lines(find('policy'), state.policy);
-  lines(find('brief'), state.mandate);
+  showBound(state.bound);
   find('document').value = state.document;
   growBox(find('document'));
 
@@ -93,12 +110,25 @@ const showState = (state) => {
   counted('authorityCount', state.authority.length);
 };
 
+const whatItSent = (done) => {
+  const line = el('p', 'when');
+  if (done.sent !== true) return put(line, el('span', undefined, `Not sent: ${done.because}`));
+  put(line, el('span', undefined, 'Sent: '));
+  return put(line, link(`${EXPLORER_TX}${done.transactionHash}`, shortened(done.transactionHash)));
+};
+
+const HISTORY = 40;
+
 const attemptCard = (record) => {
   const acted = record.verdict !== null;
   const box = el('div', record.verdict === 'refused' ? 'card held' : 'card');
   put(box, el('h3', undefined, acted ? (VERDICT[record.verdict] ?? record.verdict) : 'Answered'));
   put(box, el('p', 'when', new Date(record.at).toUTCString()));
   put(box, el('p', undefined, proposal(record.intent)));
+  if (record.delivered !== null && record.delivered !== undefined)
+    put(box, whatItSent(record.delivered));
+  for (const refusal of record.refusals)
+    put(box, el('p', 'note', `${refusal.rule}, refused by the ${refusal.source}.`));
   const words = put(el('details', 'trace'), el('summary', undefined, 'What they wrote'));
   const text = el('pre', undefined, 'Reading it...');
   let read = false;
@@ -125,7 +155,7 @@ const showAttempts = async () => {
   counted('attemptCount', answer.body.length);
   if (answer.body.length === 0)
     return put(listing, el('p', 'note', 'Nobody has tried it yet. You would be the first.'));
-  for (const record of answer.body.slice(0, 10)) put(listing, attemptCard(record));
+  for (const record of answer.body.slice(0, HISTORY)) put(listing, attemptCard(record));
   return listing;
 };
 
@@ -136,30 +166,35 @@ const trouble = (heading, text) => {
   put(note, el('h3', undefined, heading), el('p', undefined, text));
   find('run').disabled = false;
   find('blockNow').textContent = 'not read';
-  lines(find('brief'), ['The chain could not be read just now, so nothing is shown here.']);
+  clear(find('brief'));
+  put(find('brief'), put(el('li'), el('span', 'b-say', 'The chain could not be read just now.')));
   find('document').placeholder = 'The offering document could not be read, so write your own.';
 };
 
 const NOT_FROM_MEMORY =
   'Nothing on this page is filled in from memory, so it shows you nothing rather than something stale.';
 
+const PANELS = () => Array.from(document.querySelectorAll('main > .panel, main > .drop'));
+
+const FIRST = 'attack';
+
+const showPanel = (wanted) => {
+  const panels = PANELS();
+  const known = panels.some((panel) => panel.id === wanted);
+  const chosen = known ? wanted : FIRST;
+  for (const panel of panels) panel.hidden = panel.id !== chosen;
+  for (const link of document.querySelectorAll('.railList a'))
+    link.className = link.getAttribute('href') === `#${chosen}` ? 'here' : '';
+  return chosen;
+};
+
+/** One panel at a time, chosen by the rail, so nothing is findable only by scrolling. */
 const watchRail = () => {
-  const links = Array.from(document.querySelectorAll('.railList a'));
-  const spy = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        if (!entry.isIntersecting) continue;
-        for (const one of links) one.className = '';
-        const here = links.find((one) => one.getAttribute('href') === `#${entry.target.id}`);
-        if (here !== undefined) here.className = 'here';
-      }
-    },
-    { rootMargin: '-10% 0px -70% 0px' },
-  );
-  for (const one of links) {
-    const target = find(one.getAttribute('href').slice(1));
-    if (target !== null) spy.observe(target);
-  }
+  showPanel(window.location.hash.slice(1));
+  window.addEventListener('hashchange', () => {
+    showPanel(window.location.hash.slice(1));
+    window.scrollTo({ top: 0 });
+  });
 };
 
 const RAIL_MIN = 168;
@@ -203,20 +238,15 @@ const dragRail = () => {
 const askedAnswer = (answer) => {
   const body = answer.body;
   if (answer.status !== 200)
-    return { tone: 'trouble', head: saidBy(answer) + waitFor(body.retryAfterSeconds), lines: [] };
-  const head = body.allowed
-    ? `Nothing refuses a delivery to that address.`
-    : `Refused: ${body.refusal === null ? 'no reason given' : body.refusal.error}`;
+    return {
+      tone: 'trouble',
+      head: saidBy(answer) + waitFor(body.retryAfterSeconds),
+      lines: [],
+    };
   return {
     tone: body.allowed ? 'allowed' : 'refused',
-    head,
-    lines: [
-      body.says,
-      `Read at block ${body.atBlock}. Nothing was sent.`,
-      body.layer === null
-        ? 'The layer is not named, so this page names none.'
-        : `Layer: ${LAYER[body.layer] ?? body.layer}`,
-    ],
+    head: body.allowed ? 'Allowed' : (body.refusal?.error ?? 'Refused'),
+    lines: [body.says, `Read at block ${body.atBlock}.`],
   };
 };
 
@@ -236,11 +266,20 @@ const wireYours = () => {
   const form = find('yoursForm');
   const input = find('yoursInput');
   const button = find('yoursButton');
+  const box = find('checkBox');
+  find('checkOpen').addEventListener('click', () => {
+    box.showModal();
+    input.focus();
+  });
   form.addEventListener('submit', (event) => {
     event.preventDefault();
     const address = input.value.trim();
     button.disabled = true;
-    clear(find('yoursAnswer')).textContent = 'Asking the chain.';
+    put(
+      clear(find('yoursAnswer')),
+      el('span', 'spinner'),
+      el('span', undefined, 'Asking the chain'),
+    );
     void ask('/api/recipient', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -258,12 +297,48 @@ const wireYours = () => {
   });
 };
 
+const bidCard = (bid) => {
+  const box = el('div', 'bidCard');
+  put(box, el('h3', undefined, bid.title));
+  put(box, el('p', 'note', bid.says));
+  put(box, el('pre', 'bidText', bid.document));
+  const use = el('button', 'ghost', 'Put it in the box');
+  use.type = 'button';
+  use.addEventListener('click', () => {
+    void startAgain();
+    const said = find('document');
+    said.value = bid.document;
+    window.location.hash = '#attack';
+    said.focus();
+    said.setSelectionRange(0, 0);
+    window.requestAnimationFrame(() => {
+      growBox(said);
+      said.scrollTop = 0;
+    });
+    use.textContent = 'In the box';
+    window.setTimeout(() => {
+      use.textContent = 'Put it in the box';
+    }, 1600);
+  });
+  return put(box, use);
+};
+
+const showBids = async () => {
+  const listing = clear(find('bidList'));
+  const answer = await ask('/api/bids');
+  if (answer.status !== 200) return put(listing, el('p', 'note', saidBy(answer)));
+  counted('bidCount', answer.body.length);
+  for (const bid of answer.body) put(listing, bidCard(bid));
+  return listing;
+};
+
 const start = async () => {
-  wireChat(() => showAttempts());
+  wireChat(() => showAttempts(), wirePanel());
   wireYours();
   foldRail();
   dragRail();
   watchRail();
+  void showBids();
   try {
     const answer = await ask('/api/state');
     if (answer.status === 200) showState(answer.body);

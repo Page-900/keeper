@@ -98,6 +98,17 @@ Listed so that no transaction this project ever sent is missing from this page.
 | The investor approved the executor a second time, so the permission stays the thing that refuses | went through | 11674232 | [0x20cfb28d…](https://sepolia.etherscan.io/tx/0x20cfb28d0581ae9a097b2121007ec77732b6f47a0b01cbbefad3cbba7b2b5d8d) |
 | The investor revoked the mandate, through the issuer own tool | went through | 11674259 | [0xfc85ee9b…](https://sepolia.etherscan.io/tx/0xfc85ee9bdeb64c319a2774d54fa088fd8e036071c36b9965bf4596cbd24b1d63) |
 | The investor granted a fresh mandate, this time to the router rather than to a wallet | went through | 11674266 | [0xa84a596a…](https://sepolia.etherscan.io/tx/0xa84a596a9c4beea4a6317de40240aa6b411b48f9db6d76015781863d8c830cdc) |
+| The investor revoked the mandate, through the issuer own tool | went through | 11680329 | [0x6f98e1c6…](https://sepolia.etherscan.io/tx/0x6f98e1c6245d4454a24f699f87efe0c0fd72479b67ac937a023053e418ee0f5d) |
+| The investor granted a fresh mandate, replacing the one revoked before it | went through | 11680335 | [0x5c92c00a…](https://sepolia.etherscan.io/tx/0x5c92c00aeea936f71d6875f0d108471acdfa1da973244c836c31fefcdcc6c795) |
+| keeper-action-2 | went through | 11680791 | [0x3a3b2d01…](https://sepolia.etherscan.io/tx/0x3a3b2d019174e59c35de52548739c8a4448afaf0a563572b98f1cd3a218dace1) |
+| page-action-1 | went through | 11689303 | [0xddb20976…](https://sepolia.etherscan.io/tx/0xddb20976dbe95b9c97c05c886080bb31901a1e5edb77712c3be4c9749e7b7951) |
+| page-return-2 | went through | 11689304 | [0x8ff32b40…](https://sepolia.etherscan.io/tx/0x8ff32b406451df4a5a0eb09ba19f0bb5c4bd9a9caae3821a9dee247b924ade77) |
+| page-action-2 | went through | 11689436 | [0x3979777c…](https://sepolia.etherscan.io/tx/0x3979777c138c16550c0975a40f62af54c9178466bad10012ab1909f01161cc6e) |
+| page-return-3 | went through | 11689437 | [0x14fa203e…](https://sepolia.etherscan.io/tx/0x14fa203eccaf92fb7b0b90b2eb3ffee89fa69a2bd11e05c323352bc483bd5113) |
+| page-action-3 | went through | 11689494 | [0x467c34c6…](https://sepolia.etherscan.io/tx/0x467c34c61f342e397d0c2ff815e2cbb02492cde63757a29c31f1afa5694d77cb) |
+| page-return-3 | went through | 11689496 | [0x682e98c9…](https://sepolia.etherscan.io/tx/0x682e98c9ddc74125751124e6a5c56f4d3f31e3416c042d73f52add502c63fb02) |
+| page-action-4 | went through | 11689754 | [0xb2b69445…](https://sepolia.etherscan.io/tx/0xb2b694453b4d2238bded093b121e96c8cc62dbd571fa03b31cae9b0821814e5c) |
+| page-return-4 | went through | 11689755 | [0x0b548066…](https://sepolia.etherscan.io/tx/0x0b548066475a0349c1bf9db79bc6f611e0adfc884eac87986a03f381b59417ec) |
 
 ## Measured off the shared network
 

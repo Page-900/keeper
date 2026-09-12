@@ -83,4 +83,18 @@ describe('a visitor names the address, so the answer cannot have been arranged f
       requireAddress('uncleared').toLowerCase(),
     );
   });
+
+  it('says each fact once, so the answer does not repeat itself back at the reader', () => {
+    const said = Object.values({
+      app: 'Refused by this project, before the permission was asked.',
+      mandate: 'Refused by the permission the investor granted.',
+      token: 'Refused by the token itself.',
+    });
+
+    for (const one of said) {
+      const words = one.toLowerCase().replace(/[.,]/g, '').split(' ');
+      const repeated = words.filter((w, at) => w.length > 4 && words.indexOf(w) !== at);
+      expect(repeated).toEqual([]);
+    }
+  });
 });

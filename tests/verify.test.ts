@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import { CHECKS, FAILED, PASSED, render, report } from '../scripts/checks.js';
@@ -85,5 +86,24 @@ describe('a failed row says why, because the operator cannot read the code to fi
 
   it('says nothing extra when the row passed, so a green run stays readable', () => {
     expect(render(report(everyCheckPassed()))).not.toContain('the sandbox answered 502');
+  });
+});
+
+describe('a numbered anchor name never leaves a check reading an older transaction', () => {
+  const SOURCE = readFileSync(
+    fileURLToPath(new URL('../scripts/confirmations.js', import.meta.url)),
+    'utf8',
+  );
+
+  const NUMBERED = ['keeper-action', 'grant-mandate', 'approve-executor', 'page-action'];
+
+  it('never matches a numbered anchor name exactly, which would pin the first one forever', () => {
+    const pinned = NUMBERED.filter((name) => SOURCE.includes(`action === '${name}'`));
+
+    expect(pinned).toEqual([]);
+  });
+
+  it('reads the agent action by prefix, so the latest one is the one confirmed', () => {
+    expect(SOURCE).toContain("action.startsWith('keeper-action')");
   });
 });

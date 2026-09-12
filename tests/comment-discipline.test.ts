@@ -4,6 +4,9 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
+/** This gate walks the whole repository, which is seconds of real work under a full run. */
+const SCAN_TIMEOUT = 30_000;
+
 const APP_ROOT = fileURLToPath(new URL('../', import.meta.url));
 
 const COMMENT = /^\s*(\/\/|\/\*|\*)/;
@@ -55,7 +58,7 @@ const crowdedFiles = (file: string): string[] => {
 };
 
 describe('a comment is a simple phrase, or it is nothing', () => {
-  it('runs no comment past a single line', () => {
+  it('runs no comment past a single line', { timeout: SCAN_TIMEOUT }, () => {
     expect(sources().flatMap(blocksOverOneLine)).toEqual([]);
   });
 
@@ -63,11 +66,19 @@ describe('a comment is a simple phrase, or it is nothing', () => {
     expect(sources().flatMap(linesOverWidth)).toEqual([]);
   });
 
-  it('writes no comment directly above a test case, which already reads as a sentence', () => {
-    expect(sources().flatMap(restatedCaseNames)).toEqual([]);
-  });
+  it(
+    'writes no comment directly above a test case, which already reads as a sentence',
+    { timeout: SCAN_TIMEOUT },
+    () => {
+      expect(sources().flatMap(restatedCaseNames)).toEqual([]);
+    },
+  );
 
-  it('leaves no file so annotated that the code has stopped speaking for itself', () => {
-    expect(sources().flatMap(crowdedFiles)).toEqual([]);
-  });
+  it(
+    'leaves no file so annotated that the code has stopped speaking for itself',
+    { timeout: SCAN_TIMEOUT },
+    () => {
+      expect(sources().flatMap(crowdedFiles)).toEqual([]);
+    },
+  );
 });

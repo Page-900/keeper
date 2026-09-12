@@ -86,8 +86,8 @@ export function offeringWindow(
   return { startDate: at(startsIn), endDate: at(startsIn + runsFor) };
 }
 
-/** Deliberately low, so a successful attack on the public demo stays cheap. */
-export const MAX_TRANSACTION_VALUE = sunl(250n);
+/** Low so a successful attack stays cheap, and so anyone may test the page many times over. */
+export const MAX_TRANSACTION_VALUE = sunl(25n);
 
 /** Lifetime total across the whole window, never a monthly or rolling allowance. */
 export const MAX_CUMULATIVE_VALUE = sunl(1_750n);

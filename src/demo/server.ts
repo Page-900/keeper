@@ -22,11 +22,21 @@ import {
   utcDay,
   type Limits,
 } from './limits.js';
+import { listBids } from './bids.js';
 import { ATTEMPT_FILE, listAttempts, withoutWords, wordsOf } from './log.js';
 import { askAboutRecipient, type Asked } from './recipient.js';
+import { createProposals, type Proposals } from './proposals.js';
+import { createSendClock, type SendClock } from './spend.js';
 import { createThreads, type Threads } from './thread.js';
 import { authorityTable, demoView, evidenceTable } from './view.js';
 import { warmed } from './warm.js';
+import {
+  AUTONOMY_LAPSE_SECONDS,
+  EXECUTE_OFF,
+  EXECUTE_ON,
+  createAutonomy,
+  type Autonomy,
+} from './autonomy.js';
 
 export const PUBLIC_DIRECTORY = fileURLToPath(new URL('../../public/', import.meta.url));
 
@@ -111,6 +121,9 @@ export interface DemoSources {
   recipient?: (said: unknown) => Promise<Asked>;
   threads?: Threads;
   limits?: Limits;
+  autonomy?: Autonomy;
+  clock?: SendClock;
+  proposals?: Proposals;
   files?: AttemptFiles;
   publicDirectory?: string;
   now?: () => number;
@@ -121,6 +134,7 @@ const PAGE: Readonly<Record<string, { file: string; type: string }>> = Object.fr
   '/app.js': { file: 'app.js', type: 'text/javascript; charset=utf-8' },
   '/ui.js': { file: 'ui.js', type: 'text/javascript; charset=utf-8' },
   '/chat.js': { file: 'chat.js', type: 'text/javascript; charset=utf-8' },
+  '/live.js': { file: 'live.js', type: 'text/javascript; charset=utf-8' },
   '/style.css': { file: 'style.css', type: 'text/css; charset=utf-8' },
 });
 
@@ -185,6 +199,19 @@ async function readBody(request: IncomingMessage): Promise<string> {
   return Buffer.concat(parts).toString('utf8');
 }
 
+const wantedIn = (body: string): boolean => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(body);
+  } catch {
+    throw new KeeperError('requestUnusable', 'the body is not JSON');
+  }
+  const wanted = (parsed as { on?: unknown } | null)?.on;
+  if (typeof wanted !== 'boolean')
+    throw new KeeperError('requestUnusable', 'on is not true or false');
+  return wanted;
+};
+
 const sayingIn = (body: string): string => {
   let parsed: unknown;
   try {
@@ -213,6 +240,9 @@ export function demoServer(sources: DemoSources): Server {
     recipient = askAboutRecipient,
     limits = createLimits(),
     threads = createThreads(),
+    autonomy = createAutonomy(),
+    clock = createSendClock(),
+    proposals = createProposals(),
     publicDirectory = PUBLIC_DIRECTORY,
     now = Date.now,
   } = sources;
@@ -260,6 +290,17 @@ export function demoServer(sources: DemoSources): Server {
     json(response, 200, await recipient(said));
   };
 
+  const switchState = (session: string): object => {
+    const on = autonomy.on(session);
+    return { on, lapseSeconds: AUTONOMY_LAPSE_SECONDS, says: on ? EXECUTE_ON : EXECUTE_OFF };
+  };
+
+  const switchFor = async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
+    const session = sessionOf(request);
+    autonomy.set(session, wantedIn(await readBody(request)));
+    json(response, 200, switchState(session));
+  };
+
   const attemptFor = async (request: IncomingMessage, response: ServerResponse): Promise<void> => {
     const said = sayingIn(await readBody(request));
     const session = sessionOf(request);
@@ -279,6 +320,7 @@ export function demoServer(sources: DemoSources): Server {
     const emit = streamed(response);
     const record = await attempt(threads.turns(session), {
       reads,
+      execute: { session, autonomy, clock, proposals },
       onStage: (stage: Stage) => {
         emit(stage);
       },
@@ -297,6 +339,14 @@ export function demoServer(sources: DemoSources): Server {
   ): Promise<void> => {
     if (path === '/api/state') {
       json(response, 200, await state.read());
+      return;
+    }
+    if (path === '/api/execute') {
+      json(response, 200, switchState(sessionOf(request)));
+      return;
+    }
+    if (path === '/api/bids') {
+      json(response, 200, listBids());
       return;
     }
     if (path === '/api/attempts') {
@@ -328,6 +378,16 @@ export function demoServer(sources: DemoSources): Server {
     if (request.method === 'POST' && path === '/api/attempt') return attemptFor(request, response);
     if (request.method === 'POST' && path === '/api/recipient')
       return recipientFor(request, response);
+    if (request.method === 'POST' && path === '/api/execute') return switchFor(request, response);
+    if (request.method === 'POST' && path === '/api/thread') {
+      threads.forget(sessionOf(request));
+      stated(
+        response,
+        200,
+        'That conversation is closed. The next thing you say starts a new one.',
+      );
+      return;
+    }
     if (request.method !== 'GET') {
       stated(response, 404, 'There is nothing at that address.');
       return;

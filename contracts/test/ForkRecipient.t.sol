@@ -22,7 +22,7 @@ contract ForkRecipientTest is Test {
 
     uint256 internal constant SEPOLIA = 11155111;
     uint256 internal constant FORK_BLOCK = 11598000;
-    uint256 internal constant PER_TRANSACTION_CAP = 250e18;
+    uint256 internal constant PER_TRANSACTION_CAP = 25e18;
 
     bytes4 internal constant TRANSFER_FROM = IHoldings.transferFrom.selector;
 

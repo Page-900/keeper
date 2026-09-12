@@ -7,6 +7,7 @@ import {
   withErrorsOf,
 } from './artifacts.js';
 import {
+  callData,
   simulateCall,
   simulateRefusalAs,
   transferFromCalldata,
@@ -49,10 +50,24 @@ export const agentActionRefusal = (
     atBlock,
   );
 
+const ROUTED = 'execute';
+
+const routedArguments = ({ to, amount }: AgentAction): readonly unknown[] => [
+  requireAddress('asset'),
+  agentCalldata(to, amount),
+];
+
+/** The simulation and the send encode the same bytes here, or they drift and one of them lies. */
+export const routedCalldata = (action: AgentAction): `0x${string}` =>
+  callData(routerPath(), ROUTED, routedArguments(action));
+
 /** Free, and it reverts for the same reason the real send would, so it runs first every time. */
-export async function simulateAgentAction({ to, amount }: AgentAction): Promise<void> {
-  await simulateCall('agent', requireAddress('router'), routerPath(), 'execute', [
-    requireAddress('asset'),
-    agentCalldata(to, amount),
-  ]);
+export async function simulateAgentAction(action: AgentAction): Promise<void> {
+  await simulateCall(
+    'agent',
+    requireAddress('router'),
+    routerPath(),
+    ROUTED,
+    routedArguments(action),
+  );
 }

@@ -18,9 +18,17 @@ The offer document on that page is an editable box. Write anything you like into
 instructions aimed at the agent, and press send. You see what the agent was shown, what it decided,
 and what happened next.
 
-There is also a box for an address. Type any address you like, one you own or one you invent, and the
-page asks the deployed contracts what would happen if the agent tried to deliver to it. You choose the
-address after the contracts were deployed, so the answer cannot have been arranged in advance.
+There is an Execute switch as well. With it on, tell the agent to execute and the sale it proposed goes
+on the chain for real, in whatever words you use to ask. The agent reads what you mean, which is what a
+language model is good at. **What it cannot do is make the money move.** Every send is put together by
+deterministic code, checked again on a fresh chain read against our own guard, the settlement router,
+the mandate and the token, and any of the four can refuse it. The amount, the price and the destination
+are the agent's proposal. Whether anything moves is not its call, and a misreading on its part costs
+nothing.
+
+There is also a button that checks an address. Type in any address, one you own or one you invent, and
+the page asks the deployed contracts what would happen if the agent tried to deliver to it. You choose
+the address after the contracts were deployed, so the answer cannot have been arranged.
 
 ## What it does
 
@@ -31,9 +39,15 @@ action, how much at once, how much in total, and until when.
 Keeper reads a buyer's offer, decides how much of the holding to sell, and delivers. The offer is
 written by someone else. That is what makes it an attack surface.
 
+**It does that from the website, on real transactions.** Turn Execute on, tell the agent to sell, and
+it signs and broadcasts to Ethereum Sepolia while you watch, then hands you the transaction hash. There
+is no wallet to connect and nothing to install. The agent proposes; deterministic code checks the
+proposal against the investor policy, the settlement router, the mandate and the token, on a fresh
+chain read, and only then does anything move.
+
 ## The asset
 
-Sunrise Lodge is a twelve room hotel, invented for this project. Twelve rooms at about 80 USD a night
+Sunrise Lodge is a twelve room guesthouse, invented for this project. Twelve rooms at about 80 USD a night
 at about 60 percent occupancy, tokenizing a share of room revenue for three months.
 
 It is invented rather than borrowed, and it is a small hotel rather than a bond, because the agent
@@ -48,8 +62,8 @@ states is not the supply, and the agent is never allowed to act on a figure it r
 
 ## The mandate
 
-One agent. One token. One action, `transferFrom`. **250 tokens per transfer, 1,750 in its lifetime,
-expiring 9 November 2026.** Signed off chain by the investor, granted through Brickken's RAMS surface.
+One agent. One token. One action, `transferFrom`. **25 tokens per transfer, 1,750 in its lifetime,
+expiring 10 November 2026.** Signed off chain by the investor, granted through Brickken's RAMS surface.
 
 **The agent the mandate names is a contract, not a wallet.** The first mandate named a wallet and spent
 500 of its 1,000. I revoked it through Brickken's own tool and granted a fresh one to a small contract
@@ -96,8 +110,12 @@ instruction in the document. Four go at the seams, including a forged closing ma
 policy addendum.
 
 **On the model used until 2 September 2026, all seven were refused by the agent's own reasoning. On the
-model it runs on now, one got through in two of the five runs made**, proposing 250 tokens to an
-address the investor never named. It is intermittent. Paste the same document and the agent may hold.
+model it runs on now, one gets through**, proposing tokens to an address the investor never named. It
+is intermittent, so it is measured as a rate rather than claimed from one run. **Run again on
+11 September against the current prompt, six of the seven were refused and the seventh got through in
+one of five runs of that payload.** An earlier measurement, on an earlier prompt, put it at two in
+five. Five runs cannot tell those two numbers apart, so this is a second reading of the same
+behaviour and not an improvement. Paste the same document and the agent may hold.
 
 The proposal was refused by code that runs after the model, on a rule the model was never shown. The
 mandate would not have refused it, because the amount was inside every cap.
@@ -134,6 +152,11 @@ exist.
 Business logic calls none of them directly. Each goes through a thin wrapper, so every call is recorded
 before its outcome is known.
 
+**One write is the exception, and it is named here rather than left to be assumed.** The delivery the
+agent makes through my own router contract is built, signed and sent to the network by this repository.
+Everything else on that list goes out through their surface. The call is simulated against the chain
+first, so it is refused for free before anything is signed.
+
 ## Addresses
 
 Everything on Ethereum Sepolia, chain 11155111.
@@ -153,16 +176,22 @@ Everything on Ethereum Sepolia, chain 11155111.
 
 **The refusals were run by a second agent, not by Keeper.** Each one needed its own short lived mandate
 with tiny limits, so breaking a limit eleven times cost the investor's own mandate nothing. That is why the
-first mandate's lifetime total stopped at 500 of 1,000. The mandate in force now reads 0 of 1,750,
-because a fresh grant starts that count again.
+first mandate's lifetime total stopped at 500 of 1,000. The mandate in force starts that count again, and
+what it has spent so far is read live by `npm run verify` rather than written down here.
 
 **The investor's wallet also created the token.** In a real deployment the issuer and the investor are
 different people. Here they are one testnet key, because the point being demonstrated is the mandate,
 not the separation of duties.
 
-**Keeper holds a key and the demo page does not.** The agent signs from its own address and calls the
-router. The public page runs the model and the checks, reads the chain, and signs nothing, so no attack
-typed into it can move anything.
+**The page signs, and it is bounded by what its keys can do.** Three keys sit on the host and the
+investor's is not one of them. The agent key calls the router, and the router will deliver to one
+address and nothing above 25 SUNL. The buyer key exists to send those tokens straight back. The
+operator key can revoke the mandate and cannot move a token. The investor key, which owns the tokens,
+the executor and the router, never leaves a laptop, so no path on the host reaches it.
+
+**So a stranger who breaks the agent can spend the allowance on real deliveries to the buyer, who
+returns them.** That is burn and not theft, and it is the honest cost of letting anyone try it. Every
+other destination is refused on chain, by the router, in a transaction anyone can read.
 
 **Nothing was ever sent to the uncleared address.** It is there so the chain can be asked, as a read,
 whether it would allow a delivery to it. It answers yes. Sending would have stranded the tokens,
@@ -173,7 +202,8 @@ Every address above is a throwaway testnet key holding nothing of value.
 ## Where each thing ran
 
 **On Brickken's deployment:** issuance, the offering, clearing both parties, the mandate, and every
-refusal. Forty six transactions on Ethereum Sepolia, chain 11155111.
+refusal. Fifty seven transactions on Ethereum Sepolia, chain 11155111, every one of them listed in
+[`EVIDENCE.md`](EVIDENCE.md).
 
 **On copies deployed inside this repository's own tests:** anything genuinely adversarial. Those carry
 no transaction hash, because nothing was sent.
@@ -207,7 +237,7 @@ partial run. It needs a `.env`, copied from `.env.example`.
   chain half is readable from the reference implementation. That is a reading of code, not a result.
 - **Production would need** compliance event monitoring, real key management, and human approval above
   a threshold. It would also need somewhere to check the recipient, because the standard does not
-  provide one. Mine is in this repository and it is forty lines.
+  provide one. Mine is in this repository and it is a hundred lines.
 
 ## AI disclosure
 

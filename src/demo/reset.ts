@@ -67,7 +67,9 @@ export async function returnedByBuyer({
 }: ReturnedRun = {}): Promise<bigint> {
   const buyer = requireAddress('counterparty');
   const returns = readRecords<Anchor>(anchors).filter(
-    (anchor) => anchor.action === 'return-holding' && anchor.status === 'success',
+    (anchor) =>
+      (anchor.action === 'return-holding' || anchor.action.startsWith('page-return-')) &&
+      anchor.status === 'success',
   );
   let total = 0n;
   for (const anchor of returns) {

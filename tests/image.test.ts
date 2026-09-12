@@ -2,6 +2,9 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
+/** This gate walks the whole repository, which is seconds of real work under a full run. */
+const SCAN_TIMEOUT = 30_000;
+
 const APP_ROOT = new URL('../', import.meta.url);
 const DOCKERFILE = readFileSync(new URL('Dockerfile', APP_ROOT), 'utf8');
 const DOCKERIGNORE = readFileSync(new URL('.dockerignore', APP_ROOT), 'utf8');
@@ -50,10 +53,14 @@ const copiedIn = (directory: string): boolean =>
   new RegExp(String.raw`^COPY[^\n]*/${directory}\s`, 'm').test(DOCKERFILE);
 
 describe('the image carries everything the published page reaches for', () => {
-  it('finds the directories the page reads, rather than trusting a list', () => {
-    expect(directoriesRead()).toContain('evidence');
-    expect(reachedFrom(ENTRIES).map((file) => fileURLToPath(file)).length).toBeGreaterThan(10);
-  });
+  it(
+    'finds the directories the page reads, rather than trusting a list',
+    { timeout: SCAN_TIMEOUT },
+    () => {
+      expect(directoriesRead()).toContain('evidence');
+      expect(reachedFrom(ENTRIES).map((file) => fileURLToPath(file)).length).toBeGreaterThan(10);
+    },
+  );
 
   it('copies every one of them into the image that is deployed', () => {
     const missing = directoriesRead().filter((directory) => !copiedIn(directory));

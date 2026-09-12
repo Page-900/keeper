@@ -1,7 +1,7 @@
 import type { CapTable } from '../captable.js';
 import { ANCHOR_FILE, type Anchor, type AnchorAction } from '../chain/anchors.js';
 import { BATTERY_FILE, type BatteryCase, type Layer } from '../chain/battery.js';
-import { sunlAmount } from '../chain/mandate.js';
+import { sunlAmount, utc } from '../chain/mandate.js';
 import { REFUSAL_FILE, type Refusal } from '../chain/refusal.js';
 import type { RegistryRead } from '../chain/registry.js';
 import { SIGNATURE_FILE, type SignatureRecord } from '../chain/signatures.js';
@@ -175,8 +175,16 @@ const holderRows = (table: CapTable): HolderRow[] =>
     reportedBy: row.reportedBy,
   }));
 
+export interface BoundFigure {
+  figure: string;
+  aside: string | null;
+  say: string;
+  well: boolean;
+}
+
 export interface DemoView {
   scenario: string[];
+  bound: BoundFigure[];
   document: string;
   mandate: string[];
   policy: string[];
@@ -199,6 +207,37 @@ export interface ViewSources {
 }
 
 /** Every line is generated from a record or a read, so nothing here can be typed out by hand. */
+const stopped = (state: RegistryRead): boolean => state.mandateRevoked || state.agentFrozen;
+
+export const boundInFigures = (state: RegistryRead): BoundFigure[] => [
+  {
+    figure: sunlAmount(BigInt(state.maxTransactionValue)),
+    aside: null,
+    say: 'at once, at most',
+    well: false,
+  },
+  {
+    figure: sunlAmount(BigInt(state.cumulativeUsed)),
+    aside: `of ${sunlAmount(BigInt(state.maxCumulativeValue))}`,
+    say: 'moved in total, ever',
+    well: false,
+  },
+  {
+    figure: utc(BigInt(state.mandateValidUntil)),
+    aside: null,
+    say: 'the authority ends',
+    well: false,
+  },
+  {
+    figure: stopped(state) ? 'Stopped' : 'Live',
+    aside: null,
+    say: stopped(state)
+      ? `${state.mandateRevoked ? 'revoked' : 'frozen'}, so nothing moves`
+      : 'not revoked, not frozen',
+    well: !stopped(state),
+  },
+];
+
 export function demoView({
   state,
   capTable,
@@ -209,6 +248,7 @@ export function demoView({
 }: ViewSources): DemoView {
   return {
     scenario: scenarioInPlainWords(issuer, capTable),
+    bound: boundInFigures(state),
     document,
     mandate: mandateInPlainWords(state),
     policy: policyInPlainWords(policy),

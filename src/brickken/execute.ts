@@ -1,6 +1,6 @@
-import { agentCalldata, firstAction, type AgentAction } from '../chain/action.js';
+import { agentCalldata, firstAction, routedCalldata, type AgentAction } from '../chain/action.js';
 import { ANCHOR_FILE, confirmAnchor, refuseRepeat, type AnchorAction } from '../chain/anchors.js';
-import { transactionReceipt, type Receipt } from '../chain/client.js';
+import { sendDirect, transactionReceipt, type Receipt } from '../chain/client.js';
 import { CHAIN_ID, requireAddress } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
 import { createBrickkenClient, type TransactionStatus } from './client.js';
@@ -82,6 +82,27 @@ export interface ActionRun {
   anchors?: string;
   file?: string;
   receipt?: (hash: `0x${string}`) => Promise<Receipt>;
+}
+
+export const NOT_PREPARED = '';
+
+export interface RoutedRun extends ActionRun {
+  broadcast?: (data: `0x${string}`) => Promise<`0x${string}`>;
+}
+
+/** Their API refuses a routed action at the preparation, so the wallet builds and sends it. */
+export async function sendRoutedAction({
+  action = firstAction(),
+  name = ACTION,
+  anchors = ANCHOR_FILE,
+  receipt = transactionReceipt,
+  broadcast = (data) => sendDirect(SIGNER, requireAddress('router'), 0n, data),
+}: RoutedRun = {}): Promise<Settlement> {
+  refuseRepeat(name, anchors);
+  const transactionHash = await broadcast(routedCalldata(action));
+  const { status } = await confirmAnchor(name, transactionHash, { file: anchors, receipt });
+  if (status !== 'success') throw new KeeperError('writeUnconfirmed', `the action is ${status}`);
+  return { txId: NOT_PREPARED, transactionHash };
 }
 
 export async function sendAgentAction({

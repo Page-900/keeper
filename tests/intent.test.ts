@@ -12,6 +12,7 @@ const proposal = (over: Record<string, unknown> = {}): unknown => ({
   pricePerToken: '47',
   recipient: ADDRESS,
   rationale: 'the bid clears the floor and the occupancy note argues for a small size',
+  sendItNow: false,
   ...over,
 });
 

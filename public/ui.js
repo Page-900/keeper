@@ -28,6 +28,34 @@ const link = (href, text) => {
 
 const shortened = (hash) => `${hash.slice(0, 10)}...${hash.slice(-6)}`;
 
+const EXPLORER_TX = 'https://sepolia.etherscan.io/tx/';
+
+const A_HASH = /0x[0-9a-fA-F]{64}/g;
+
+export const hashParts = (text) => {
+  const said = String(text);
+  const parts = [];
+  let at = 0;
+  for (const found of said.matchAll(A_HASH)) {
+    if (found.index > at) parts.push({ said: said.slice(at, found.index), hash: null });
+    parts.push({ said: shortened(found[0]), hash: found[0] });
+    at = found.index + found[0].length;
+  }
+  if (at < said.length) parts.push({ said: said.slice(at), hash: null });
+  return parts;
+};
+
+const linked = (node, text) => {
+  for (const part of hashParts(text))
+    put(
+      node,
+      part.hash === null
+        ? el('span', undefined, part.said)
+        : link(`${EXPLORER_TX}${part.hash}`, part.said),
+    );
+  return node;
+};
+
 const lines = (node, texts) => {
   clear(node);
   for (const text of texts) put(node, el('li', undefined, text));
@@ -47,13 +75,13 @@ const plainWords = (text) =>
 const spoken = (node, text) => {
   clear(node);
   for (const line of plainWords(text).split(/\r?\n/))
-    if (line.trim() !== '') put(node, el('p', undefined, line.trim()));
+    if (line.trim() !== '') put(node, linked(el('p'), line.trim()));
   return node;
 };
 
 const card = (className, heading, texts) => {
   const box = put(el('div', className), el('h3', undefined, heading));
-  for (const text of texts) put(box, el('p', undefined, text));
+  for (const text of texts) put(box, linked(el('p'), text));
   return box;
 };
 
@@ -122,7 +150,9 @@ export {
   clear,
   find,
   link,
+  linked,
   shortened,
+  EXPLORER_TX,
   lines,
   spoken,
   card,

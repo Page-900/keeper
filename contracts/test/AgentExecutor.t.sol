@@ -21,7 +21,7 @@ contract AgentExecutorTest is Test {
 
     bytes4 internal constant TRANSFER_FROM = MockToken.transferFrom.selector;
     uint8 internal constant AMOUNT_INDEX = 2;
-    uint256 internal constant AMOUNT = 250e18;
+    uint256 internal constant AMOUNT = 25e18;
 
     function setUp() public {
         rams = new MockAgentMandate();

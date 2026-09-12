@@ -14,6 +14,7 @@ const INTENT: DeliverIntent = {
   pricePerToken: 50n,
   recipient: ATTACKER,
   rationale: 'the bid clears the floor',
+  sendItNow: false,
 };
 
 const serving = (revert: RevertReason | null): DryRunReads => ({

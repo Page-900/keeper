@@ -1,11 +1,20 @@
-import { sendAgentAction, type ActionRun } from '../brickken/execute.js';
+import { sendRoutedAction, type ActionRun } from '../brickken/execute.js';
 import { simulateAgentAction, type AgentAction } from '../chain/action.js';
 import { KeeperError } from '../shared/errors.js';
 import { readRecords } from '../shared/jsonl.js';
+import { ANCHOR_FILE, type Anchor, type AnchorAction } from '../chain/anchors.js';
 import { GUARD_FILE, guardIntent, type Decision, type GuardReads } from './guard.js';
 import type { DeliverIntent } from './intent.js';
 import { POLICY, type Policy } from './policy.js';
 import type { Settlement } from '../brickken/settlement.js';
+
+const ACTED = 'keeper-action';
+
+/** An action is refused under a name already used, so each fresh one takes the next number. */
+export const nextKeeperAction = (file: string = ANCHOR_FILE): AnchorAction => {
+  const sent = readRecords<Anchor>(file).filter((anchor) => anchor.action.startsWith(ACTED));
+  return sent.length === 0 ? ACTED : (`keeper-action-${String(sent.length + 1)}` as AnchorAction);
+};
 
 export function lastProceed(file: string = GUARD_FILE): Decision {
   const found = readRecords<Decision>(file)
@@ -26,12 +35,14 @@ export function intentOf(decision: Decision): DeliverIntent {
     pricePerToken: BigInt(decision.pricePerToken),
     recipient: decision.recipient,
     rationale: decision.rationale,
+    sendItNow: false,
   };
 }
 
 export interface ActRun {
   reads: GuardReads;
   file?: string;
+  anchors?: string;
   policy?: Policy;
   simulate?: (action: AgentAction) => Promise<void>;
   send?: (run: ActionRun) => Promise<Settlement>;
@@ -43,10 +54,8 @@ export interface KeeperAction {
   settlement: Settlement;
 }
 
-/** The guard runs again on a fresh read, because the recorded one is already out of date. */
-export async function actOnDecision(run: ActRun): Promise<KeeperAction> {
-  const recorded = lastProceed(run.file);
-  const intent = intentOf(recorded);
+/** The guard runs again on a fresh read, because whatever approved this is already out of date. */
+export async function actOnIntent(intent: DeliverIntent, run: ActRun): Promise<KeeperAction> {
   const action: AgentAction = { to: intent.recipient, amount: intent.amount };
 
   const again = await guardIntent(intent, {
@@ -62,6 +71,10 @@ export async function actOnDecision(run: ActRun): Promise<KeeperAction> {
     );
 
   await (run.simulate ?? simulateAgentAction)(action);
-  const settlement = await (run.send ?? sendAgentAction)({ action, name: 'keeper-action' });
+  const name = nextKeeperAction(run.anchors);
+  const settlement = await (run.send ?? sendRoutedAction)({ action, name });
   return { decision: again, settlement };
 }
+
+export const actOnDecision = (run: ActRun): Promise<KeeperAction> =>
+  actOnIntent(intentOf(lastProceed(run.file)), run);

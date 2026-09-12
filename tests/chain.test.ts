@@ -1,7 +1,13 @@
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { agentActionRefusal, firstAction, simulateAgentAction } from '../src/chain/action.js';
+import {
+  agentActionRefusal,
+  agentCalldata,
+  firstAction,
+  routedCalldata,
+  simulateAgentAction,
+} from '../src/chain/action.js';
 import { blockNumber, sendDirect, signerAddress } from '../src/chain/client.js';
 import { CHAIN_ID, requireAddress } from '../src/shared/config.js';
 import { KeeperError } from '../src/shared/errors.js';
@@ -178,5 +184,25 @@ describe('the dry run asks as the agent without holding the agent key', () => {
     callServing(EMPTY_RETURN);
 
     await expect(simulateAgentAction(firstAction())).rejects.toThrow(/AGENT_PRIVATE_KEY/);
+  });
+});
+
+describe('the send and the simulation cannot drift apart', () => {
+  it('wraps the exact transfer the guard approved, inside one call to the router', () => {
+    const action = { to: requireAddress('counterparty'), amount: 25n * 10n ** 18n };
+    const inner = agentCalldata(action.to, action.amount).slice(2).toLowerCase();
+
+    const data = routedCalldata(action).toLowerCase();
+
+    expect(data).toContain(inner);
+    expect(data).toContain(requireAddress('asset').slice(2).toLowerCase());
+  });
+
+  it('carries the recipient and the amount the caller asked for, and nothing else', () => {
+    const one = routedCalldata({ to: requireAddress('counterparty'), amount: 25n * 10n ** 18n });
+    const other = routedCalldata({ to: requireAddress('counterparty'), amount: 26n * 10n ** 18n });
+
+    expect(one).not.toBe(other);
+    expect(one.startsWith('0x')).toBe(true);
   });
 });

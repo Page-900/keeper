@@ -9,7 +9,14 @@ import { ANCHOR_FILE, type Anchor, type AnchorAction } from '../src/chain/anchor
 import { BATTERY_FILE, type BatteryCase } from '../src/chain/battery.js';
 import { REFUSAL_FILE, type Refusal } from '../src/chain/refusal.js';
 import { SIGNATURE_FILE, type SignatureRecord } from '../src/chain/signatures.js';
-import { authorityTable, demoView, evidenceTable, type EvidenceFiles } from '../src/demo/view.js';
+import {
+  authorityTable,
+  boundInFigures,
+  demoView,
+  evidenceTable,
+  type EvidenceFiles,
+} from '../src/demo/view.js';
+import { sunlAmount } from '../src/chain/mandate.js';
 import { mandateInPlainWords } from '../src/keeper/decide.js';
 import type { IssuerRecord } from '../src/keeper/material.js';
 import { POLICY, policyInPlainWords } from '../src/keeper/policy.js';
@@ -364,5 +371,34 @@ describe('the situation takes the holding from the chain, never from a constant'
     const view = demoView({ state: registryState(), capTable: table, issuer: ISSUER, files });
 
     expect(view.scenario.join(' ')).toContain('did not answer');
+  });
+});
+
+describe('the bound reads as figures, so a glance carries it', () => {
+  it('reads every figure off the state and never off our own constants', () => {
+    const [atOnce, ever, ends, standing] = boundInFigures(
+      registryState({ cumulativeUsed: String(50n * 10n ** 18n) }),
+    );
+
+    expect(atOnce?.figure).toBe(sunlAmount(BigInt(registryState().maxTransactionValue)));
+    expect(ever?.figure).toBe('50 SUNL');
+    expect(ever?.aside).toContain('of');
+    expect(ends?.say).toBe('the authority ends');
+    expect(standing?.figure).toBe('Live');
+  });
+
+  it('says stopped, and says which stopped it, when the investor has revoked', () => {
+    const [, , , standing] = boundInFigures(registryState({ mandateRevoked: true }));
+
+    expect(standing?.figure).toBe('Stopped');
+    expect(standing?.say).toContain('revoked');
+    expect(standing?.well).toBe(false);
+  });
+
+  it('says stopped when the agent is frozen, which is not the same thing', () => {
+    const [, , , standing] = boundInFigures(registryState({ agentFrozen: true }));
+
+    expect(standing?.figure).toBe('Stopped');
+    expect(standing?.say).toContain('frozen');
   });
 });

@@ -155,6 +155,10 @@ const OTHERWISE: Readonly<Record<string, string>> = Object.freeze({
 
 const LEGAL = 'battery-legal-';
 
+const GRANT_AGAIN = 'grant-mandate-';
+
+const REGRANTED = 'The investor granted a fresh mandate, replacing the one revoked before it';
+
 const ROUTER = 'deploy-router';
 
 const routerRow = (anchor: Anchor): string =>
@@ -173,7 +177,8 @@ const remainder = (found: Proof): string[][] => {
           ? 'A permitted amount, sent so the running total reaches the limit the next one breaks'
           : anchor.action === ROUTER
             ? routerRow(anchor)
-            : (OTHERWISE[anchor.action] ?? anchor.action),
+            : (OTHERWISE[anchor.action] ??
+              (anchor.action.startsWith(GRANT_AGAIN) ? REGRANTED : anchor.action)),
       ),
     );
 };

@@ -26,7 +26,8 @@ try {
   const whole = BigInt(decision.amount) / 10n ** BigInt(SUNL_DECIMALS);
 
   print(`  moved       ${whole} ${SUNL_SYMBOL} to ${decision.recipient}`);
-  print(`  prepared    ${settlement.txId}`);
+  if (settlement.txId !== '') print(`  prepared    ${settlement.txId}`);
+  else print('  prepared    by this project, because their API refuses to prepare a routed action');
   print(`  transaction ${explorerTransaction(settlement.transactionHash)}`);
   print('');
   print('Run npm run verify to read the balances and the running total off the chain.');

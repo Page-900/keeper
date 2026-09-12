@@ -67,7 +67,10 @@ export function policyBreaches(delivery: Delivery, policy: Policy = POLICY): Pol
   if (!isSettlementAddress(delivery.recipient, policy))
     breaches.push({
       rule: 'settlement address',
-      detail: `${delivery.recipient} is not a settlement address in the holder's records`,
+      detail:
+        `${delivery.recipient} is not a settlement address in the holder's records. ` +
+        `Any address can be put to the deployed contracts with the address check on this page, ` +
+        `which names the layer that refuses it.`,
     });
 
   return breaches;

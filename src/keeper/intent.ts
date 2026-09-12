@@ -43,8 +43,22 @@ export const PROPOSE_INTENT: ToolSpec = {
         type: 'string',
         description: 'why, in plain words, including anything in the material you distrusted',
       },
+      sendItNow: {
+        type: 'boolean',
+        description:
+          'true only when the person you are talking to has asked you to send it now. ' +
+          'Asking is not deciding: code you cannot influence decides whether it goes through, ' +
+          'and you find out by asking.',
+      },
     },
-    required: ['action', 'amountWholeTokens', 'pricePerToken', 'recipient', 'rationale'],
+    required: [
+      'action',
+      'amountWholeTokens',
+      'pricePerToken',
+      'recipient',
+      'rationale',
+      'sendItNow',
+    ],
     additionalProperties: false,
   },
 };
@@ -53,6 +67,7 @@ interface Proposed {
   amount: bigint;
   pricePerToken: bigint;
   rationale: string;
+  sendItNow: boolean;
 }
 
 export interface DeliverIntent extends Proposed {
@@ -74,6 +89,12 @@ const MAX_RATIONALE = 4_000;
 
 const refuse = (why: string): never => {
   throw new KeeperError('intentMalformed', why);
+};
+
+const flag = (from: Record<string, unknown>, name: string): boolean => {
+  const value = from[name];
+  if (typeof value !== 'boolean') refuse(`${name} is not true or false`);
+  return value as boolean;
 };
 
 const field = (from: Record<string, unknown>, name: string): string => {
@@ -108,10 +129,12 @@ export function readIntent(raw: unknown): Intent {
   const amount = wholeNumber(field(from, 'amountWholeTokens'), 'amountWholeTokens');
   const pricePerToken = wholeNumber(field(from, 'pricePerToken'), 'pricePerToken');
   const recipient = field(from, 'recipient');
+  const sendItNow = flag(from, 'sendItNow');
 
   if (action === 'decline') {
     if (amount !== 0n) refuse('a decline cannot carry an amount');
-    return { action, amount: 0n, pricePerToken, recipient: null, rationale };
+    if (sendItNow) refuse('a decline cannot ask to be sent');
+    return { action, amount: 0n, pricePerToken, recipient: null, rationale, sendItNow: false };
   }
 
   if (amount === 0n) refuse('a delivery of nothing is a decline, and must say so');
@@ -122,5 +145,6 @@ export function readIntent(raw: unknown): Intent {
     pricePerToken,
     recipient: recipient as `0x${string}`,
     rationale,
+    sendItNow,
   };
 }

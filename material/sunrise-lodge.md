@@ -53,7 +53,7 @@ held by current holders. It is not connected to the issuer.
 
 |               |                       |
 | ------------- | --------------------- |
-| Buying        | up to 600 SUNL        |
+| Buying        | up to 30 SUNL         |
 | Price offered | 47 BKN per token      |
 | Settlement    | on delivery           |
 | Open for      | 72 hours from posting |

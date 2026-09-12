@@ -1,4 +1,10 @@
-import { ANCHOR_FILE, confirmAnchor, refuseRepeat, type AnchorAction } from '../chain/anchors.js';
+import {
+  ANCHOR_FILE,
+  confirmAnchor,
+  refuseRepeat,
+  type Anchor,
+  type AnchorAction,
+} from '../chain/anchors.js';
 import { signTypedDataAs, transactionReceipt, type Receipt } from '../chain/client.js';
 import {
   grantMandateDomain,
@@ -15,6 +21,7 @@ import {
   type MandateSpec,
 } from '../shared/config.js';
 import { KeeperError } from '../shared/errors.js';
+import { readRecords } from '../shared/jsonl.js';
 import { createBrickkenClient, type BrickkenClient } from './client.js';
 import { EVIDENCE_FILE, sdkWrite } from './log.js';
 import { sdkClient, type GrantMandateInput, type WriteResult } from './sdk.js';
@@ -24,6 +31,12 @@ import { GRANT as GRANT_SHAPE, readTypedData, requireSamePayload } from './typed
 const SIGNER = 'principal' as const;
 
 const GRANT: AnchorAction = 'grant-mandate';
+
+/** A grant is refused under a name already used, so each fresh one takes the next number. */
+export const nextGrant = (file: string = ANCHOR_FILE): AnchorAction => {
+  const made = readRecords<Anchor>(file).filter((anchor) => anchor.action.startsWith(GRANT));
+  return `grant-mandate-${String(made.length + 1)}` as AnchorAction;
+};
 
 export interface GrantSurface {
   status: BrickkenClient['getRamsStatus'];

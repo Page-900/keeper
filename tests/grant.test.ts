@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { grantMandate, reviewGrant, type GrantSurface } from '../src/brickken/grant.js';
+import { grantMandate, nextGrant, reviewGrant, type GrantSurface } from '../src/brickken/grant.js';
 import { grantMandateDomain, grantMandateMessage } from '../src/chain/mandate.js';
 import {
   KEEPER_MANDATE,
@@ -12,8 +12,8 @@ import {
   requireAddress,
   type MandateSpec,
 } from '../src/shared/config.js';
-import { readRecords } from '../src/shared/jsonl.js';
-import type { Anchor } from '../src/chain/anchors.js';
+import { appendRecord, readRecords } from '../src/shared/jsonl.js';
+import type { Anchor, AnchorAction } from '../src/chain/anchors.js';
 import type { RequestRecord } from '../src/brickken/log.js';
 import { captureError } from './support/capture-error.js';
 
@@ -313,5 +313,30 @@ describe('a second agent gets its own mandate, so no test spends the granted one
 
     expect(error.kind).toBe('alreadyCreated');
     await expect(run('grant-probe-2')).resolves.toBeDefined();
+  });
+});
+
+describe('a fresh grant never collides with a name the record already holds', () => {
+  it('takes the next number after every grant already written down', () => {
+    const file = join(mkdtempSync(join(tmpdir(), 'keeper-grants-')), 'chain-anchors.jsonl');
+    const wrote = (action: AnchorAction): void => {
+      appendRecord(file, {
+        at: '2026-09-11T00:00:00.000Z',
+        action,
+        chainId: 11155111,
+        transactionHash: `0x${'cd'.repeat(32)}`,
+        blockNumber: '1',
+        status: 'success',
+        contract: null,
+        gasUsed: '1',
+      } satisfies Anchor);
+    };
+
+    expect(nextGrant(file)).toBe('grant-mandate-1');
+    wrote('grant-mandate');
+    wrote('grant-mandate-2');
+    wrote('revoke-mandate');
+
+    expect(nextGrant(file)).toBe('grant-mandate-3');
   });
 });

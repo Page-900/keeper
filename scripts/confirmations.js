@@ -199,7 +199,7 @@ const confirmKeeper = async () => {
   const { SUNL_DECIMALS, SUNL_SYMBOL } = await import('../dist/shared/config.js');
 
   const anchor = readRecords(ANCHOR_FILE)
-    .filter((record) => record.action === 'keeper-action')
+    .filter((record) => record.action.startsWith('keeper-action'))
     .at(-1);
   if (anchor === undefined)
     throw new Error('The agent has not acted on a decision yet, so there is nothing to read.');

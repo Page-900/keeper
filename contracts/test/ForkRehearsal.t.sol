@@ -47,7 +47,7 @@ contract ForkRehearsalTest is Test {
     uint8 internal constant AMOUNT_INDEX = 2;
     uint48 internal constant WINDOW_SECONDS = 60 days;
     uint256 internal constant HOLDING = 2000e18;
-    uint256 internal constant PER_TRANSACTION_CAP = 250e18;
+    uint256 internal constant PER_TRANSACTION_CAP = 25e18;
     uint256 internal constant CUMULATIVE_CAP = 1750e18;
 
     address internal agent = makeAddr("agent");

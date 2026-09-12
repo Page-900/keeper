@@ -20,17 +20,34 @@ export const MODEL_CALL_FILE = fileURLToPath(
   new URL('../../evidence/model-calls.jsonl', import.meta.url),
 );
 
+export interface ToolCall {
+  id: string;
+  name: string;
+  input: unknown;
+}
+
+export interface ToolResult {
+  id: string;
+  content: string;
+}
+
+export interface Answered {
+  reply: ModelReply;
+  results: ToolResult[];
+}
+
 export interface ModelRequest {
   system: string;
   user: string;
   tools: ToolSpec[];
+  answered?: Answered;
 }
 
 export interface ModelReply {
   status: string;
   refusal: string | null;
   reasoning: string;
-  toolCalls: { name: string; input: unknown }[];
+  toolCalls: ToolCall[];
   text: string;
   inputTokens: number;
   outputTokens: number;
@@ -67,10 +84,14 @@ const parsed = (text: string): unknown => {
 
 const choiceOf = (answer: Fields): Fields => fieldsOf(listOf(answer['choices'])[0]);
 
-const callsIn = (message: Fields): { name: string; input: unknown }[] =>
+const callsIn = (message: Fields): ToolCall[] =>
   listOf(message['tool_calls']).map((call) => {
     const called = fieldsOf(call['function']);
-    return { name: stringOf(called['name']), input: parsed(stringOf(called['arguments'])) };
+    return {
+      id: stringOf(call['id']),
+      name: stringOf(called['name']),
+      input: parsed(stringOf(called['arguments'])),
+    };
   });
 
 const FILTERED = 'content_filter';
@@ -122,14 +143,36 @@ const asFunction = (tool: ToolSpec): unknown => ({
   function: { name: tool.name, description: tool.description, parameters: tool.parameters },
 });
 
+const asTurn = (reply: ModelReply): unknown => ({
+  role: 'assistant',
+  content: reply.text,
+  tool_calls: reply.toolCalls.map((call) => ({
+    id: call.id,
+    type: 'function',
+    function: { name: call.name, arguments: JSON.stringify(call.input) },
+  })),
+});
+
+/** A result is worth nothing without the turn that asked for it, so both go back together. */
+const messagesIn = ({ system, user, answered }: ModelRequest): unknown[] => {
+  const opening = [
+    { role: 'system', content: system },
+    { role: 'user', content: user },
+  ];
+  if (answered === undefined) return opening;
+  const results = answered.results.map((result) => ({
+    role: 'tool',
+    tool_call_id: result.id,
+    content: result.content,
+  }));
+  return [...opening, asTurn(answered.reply), ...results];
+};
+
 /** tool_choice stays auto: forcing a call would hide the model declining, which is a result. */
 const asked = (request: ModelRequest): string =>
   JSON.stringify({
     model: MODEL,
-    messages: [
-      { role: 'system', content: request.system },
-      { role: 'user', content: request.user },
-    ],
+    messages: messagesIn(request),
     tools: request.tools.map(asFunction),
     tool_choice: 'auto',
     max_completion_tokens: MAX_OUTPUT_TOKENS,

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import type { GuardRefusal, Verdict } from '../keeper/guard.js';
 import type { Intent } from '../keeper/intent.js';
 import { appendRecord, readRecords } from '../shared/jsonl.js';
+import type { Delivered } from './deliver.js';
 import type { LayerWalk } from './layers.js';
 
 const evidence = (name: string): string =>
@@ -43,6 +44,7 @@ export interface Attempt {
   verdict: Verdict | null;
   refusals: GuardRefusal[];
   layers: LayerWalk | null;
+  delivered: Delivered | null;
 }
 
 export type AttemptClaim = Omit<Attempt, 'at' | 'id'>;
@@ -64,6 +66,7 @@ export const withoutWords = (attempt: Attempt): ListedAttempt => ({
   verdict: attempt.verdict,
   refusals: attempt.refusals,
   layers: attempt.layers,
+  delivered: attempt.delivered,
 });
 
 /** A stranger's own words are served when they are asked for by name, and never in the list. */
